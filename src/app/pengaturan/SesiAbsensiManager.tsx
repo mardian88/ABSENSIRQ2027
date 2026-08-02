@@ -201,7 +201,7 @@ export function SesiAbsensiManager() {
                   <Label className="text-emerald-700 mb-1">Jam Mulai Masuk</Label>
                   <DatePicker
                     selected={parseTime(formData.waktuMulaiMasuk)}
-                    onChange={(date) => setFormData({...formData, waktuMulaiMasuk: formatTime(date)})}
+                    onChange={(date: Date | null) => setFormData({...formData, waktuMulaiMasuk: formatTime(date)})}
                     showTimeSelect
                     showTimeSelectOnly
                     timeIntervals={15}
@@ -215,7 +215,7 @@ export function SesiAbsensiManager() {
                   <Label className="text-orange-600 mb-1">Jam Batas Masuk <br/><span className="text-xs font-normal">(&gt; Terlambat)</span></Label>
                   <DatePicker
                     selected={parseTime(formData.waktuBatasMasuk)}
-                    onChange={(date) => setFormData({...formData, waktuBatasMasuk: formatTime(date)})}
+                    onChange={(date: Date | null) => setFormData({...formData, waktuBatasMasuk: formatTime(date)})}
                     showTimeSelect
                     showTimeSelectOnly
                     timeIntervals={15}
@@ -232,7 +232,7 @@ export function SesiAbsensiManager() {
                   <Label className="text-blue-700 mb-1">Jam Mulai Pulang</Label>
                   <DatePicker
                     selected={parseTime(formData.waktuMulaiPulang)}
-                    onChange={(date) => setFormData({...formData, waktuMulaiPulang: formatTime(date)})}
+                    onChange={(date: Date | null) => setFormData({...formData, waktuMulaiPulang: formatTime(date)})}
                     showTimeSelect
                     showTimeSelectOnly
                     timeIntervals={15}
@@ -246,7 +246,7 @@ export function SesiAbsensiManager() {
                   <Label className="text-indigo-600 mb-1">Jam Normal Pulang <br/><span className="text-xs font-normal">(&lt; Pulang Cepat)</span></Label>
                   <DatePicker
                     selected={parseTime(formData.waktuNormalPulang)}
-                    onChange={(date) => setFormData({...formData, waktuNormalPulang: formatTime(date)})}
+                    onChange={(date: Date | null) => setFormData({...formData, waktuNormalPulang: formatTime(date)})}
                     showTimeSelect
                     showTimeSelectOnly
                     timeIntervals={15}
@@ -262,7 +262,7 @@ export function SesiAbsensiManager() {
                 <Label className="text-rose-600 mb-1">Jam Mesin Tutup (Batas Akhir)</Label>
                 <DatePicker
                   selected={parseTime(formData.waktuTutup)}
-                  onChange={(date) => setFormData({...formData, waktuTutup: formatTime(date)})}
+                  onChange={(date: Date | null) => setFormData({...formData, waktuTutup: formatTime(date)})}
                   showTimeSelect
                   showTimeSelectOnly
                   timeIntervals={15}
