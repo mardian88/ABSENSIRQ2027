@@ -198,7 +198,7 @@ export default function PindaiQR() {
     if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
       try {
         await html5QrCodeRef.current.applyVideoConstraints({
-          advanced: [{ torch: !isTorchOn }]
+          advanced: [{ torch: !isTorchOn } as any]
         });
         setIsTorchOn(!isTorchOn);
       } catch (err) {

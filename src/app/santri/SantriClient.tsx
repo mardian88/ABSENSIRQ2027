@@ -172,7 +172,6 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       idHalaqoh: santri.idHalaqoh || "",
       idSesiAbsensi: santri.idSesiAbsensi || "",
       kontakOrtu: santri.kontakOrtu,
-      statusSantri: santri.statusSantri,
       statusSantri: santri.statusSantri || "aktif",
       tempatLahir: santri.tempatLahir || "",
       tanggalLahir: santri.tanggalLahir || "",
