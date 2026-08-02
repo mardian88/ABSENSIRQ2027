@@ -54,7 +54,7 @@ export default function PindaiQR() {
 
     try {
       const res = await recordAbsensiByQR(decodedText, jenisAbsenRef.current);
-      if (res.success && res.data) {
+      if (res.success && 'data' in res && res.data) {
         new Audio('/notif/berhasil.wav').play().catch(e => console.error("Audio error:", e));
         setScanResult({
           nama: res.data.namaLengkap,
@@ -63,7 +63,7 @@ export default function PindaiQR() {
         });
       } else {
         setScanResult({
-          nama: res.message || "Santri tidak ditemukan",
+          nama: (res as any).message || "Santri tidak ditemukan",
           waktu: formatTimeID(new Date()),
           jenis: "error"
         });
