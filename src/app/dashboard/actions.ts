@@ -129,7 +129,7 @@ export async function getRecentScans() {
 
   // Ambil 10 teratas dan sesuaikan field-nya agar mirip dengan format sebelumnya
   return sorted.slice(0, 10).map(item => ({
-    id: item.idSantri + item.statusKehadiran,
+    id: item.santri.id + item.statusKehadiran,
     waktuScan: item.waktuPulang || item.waktuMasuk || new Date().getTime(), // fallback ke date sekarang untuk izin/alpa jika tidak ada jam
     metodeScan: item.metodePulang || item.metodeMasuk || '-',
     jenisAbsen: item.waktuPulang ? 'pulang' : 'masuk',
