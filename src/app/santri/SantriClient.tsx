@@ -427,6 +427,41 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
     }
   };
 
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        "NIS": "12345",
+        "Nama Lengkap": "Ahmad Fulan",
+        "Halaqoh": "Halaqoh Abu Bakar",
+        "Kontak Wali": "081234567890",
+        "Status": "aktif"
+      },
+      {
+        "NIS": "12346",
+        "Nama Lengkap": "Budi Santoso",
+        "Halaqoh": "Halaqoh Umar",
+        "Kontak Wali": "081298765432",
+        "Status": "nonaktif"
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Santri");
+    
+    // Auto-adjust column widths
+    const maxWidths = [
+      { wch: 15 }, // NIS
+      { wch: 30 }, // Nama Lengkap
+      { wch: 25 }, // Halaqoh
+      { wch: 20 }, // Kontak Wali
+      { wch: 15 }, // Status
+    ];
+    worksheet["!cols"] = maxWidths;
+
+    XLSX.writeFile(workbook, "Template_Import_Santri.xlsx");
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -439,6 +474,13 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
             ref={fileInputRef}
             onChange={handleImport}
           />
+          <button 
+            onClick={downloadTemplate}
+            className="flex items-center gap-2 px-3 py-2 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg font-medium transition-colors border border-slate-200"
+          >
+            <Download className="w-4 h-4" />
+            Template
+          </button>
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
