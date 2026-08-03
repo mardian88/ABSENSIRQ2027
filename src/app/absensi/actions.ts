@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { absensi, santri, halaqoh, sesiAbsensi } from "@/db/schema";
-import { eq, and, desc, between } from "drizzle-orm";
+import { eq, or, and, desc, between } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { sendTemplatedMessage } from "@/lib/fonnte";
@@ -12,8 +12,8 @@ import { auth } from "@/lib/auth";
 import { formatTimeID } from "@/lib/date";
 
 export async function recordAbsensiByQR(kodeQr: string, jenisAbsen: 'masuk' | 'pulang') {
-  // 1. Cari santri berdasarkan kode QR
-  const [santriData] = await db.select().from(santri).where(eq(santri.kodeQr, kodeQr));
+  // 1. Cari santri berdasarkan kode QR atau Nomor Induk (sebagai fallback)
+  const [santriData] = await db.select().from(santri).where(or(eq(santri.kodeQr, kodeQr), eq(santri.nomorInduk, kodeQr)));
   
   if (!santriData) {
     return { success: false, message: "QR Code tidak terdaftar" };
