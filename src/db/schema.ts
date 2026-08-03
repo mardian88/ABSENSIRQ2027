@@ -81,6 +81,7 @@ export const absensi = sqliteTable('absensi', {
   metodeScan: text('metode_scan').notNull(),
   statusKehadiran: text('status_kehadiran').notNull(),
   jenisAbsen: text('jenis_absen').notNull(), // 'masuk' or 'pulang'
+  isArchived: integer('is_archived').notNull().default(0), // 0: active, 1: archived (soft deleted)
 });
 
 export const poinSantri = sqliteTable('poin_santri', {

@@ -89,13 +89,15 @@ export async function getLaporanAbsensi(filterPeriod: string) {
         .from(absensi)
         .innerJoin(santri, eq(absensi.idSantri, santri.id))
         .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
-        .where(and(eq(santri.idCabang, userCabang), gte(absensi.waktuScan, startWaktu))) as any;
+        .where(and(eq(santri.idCabang, userCabang), gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0))) as any;
     } else {
-       query = query.where(gte(absensi.waktuScan, startWaktu)) as any;
+       query = query.where(and(gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0))) as any;
     }
   } else {
     if (role !== "superadmin" && userCabang) {
-      query = query.where(eq(santri.idCabang, userCabang)) as any;
+      query = query.where(and(eq(santri.idCabang, userCabang), eq(absensi.isArchived, 0))) as any;
+    } else {
+      query = query.where(eq(absensi.isArchived, 0)) as any;
     }
   }
 
@@ -138,15 +140,11 @@ export async function getLaporanAbsensi(filterPeriod: string) {
     } else if (r.jenisAbsen === 'pulang') {
       group.waktuPulang = d.getTime();
       group.metodePulang = r.metodeScan;
-      // Jika belum ada absen masuk (secara teori sekarang diblokir, tapi data lama mungkin ada), gunakan status pulangnya
-      if (!group.waktuMasuk) {
-        group.statusKehadiran = r.statusKehadiran;
-      }
     }
   }
 
-  // Convert map to array and sort by date desc, then waktu masuk desc
-  const finalResults = Array.from(grouped.values()).sort((a, b) => {
+  return Array.from(grouped.values()).sort((a, b) => {
+    // sort desc by tanggalWIB then waktuMasuk
     if (a.tanggalWIB !== b.tanggalWIB) {
       return b.tanggalWIB.localeCompare(a.tanggalWIB);
     }
@@ -156,4 +154,35 @@ export async function getLaporanAbsensi(filterPeriod: string) {
   });
 
   return finalResults;
+}
+export async function archiveSemuaAbsensi() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session?.user?.role !== "superadmin") {
+    return { success: false, message: "Hanya Superadmin yang dapat melakukan arsip data." };
+  }
+
+  try {
+    await db.update(absensi).set({ isArchived: 1 });
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
+}
+
+export async function deleteSemuaAbsensi(password: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session?.user?.role !== "superadmin") {
+    return { success: false, message: "Hanya Superadmin yang dapat menghapus data permanen." };
+  }
+
+  if (password !== "rqm2828") {
+    return { success: false, message: "Password salah." };
+  }
+
+  try {
+    await db.delete(absensi);
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, message: e.message };
+  }
 }
