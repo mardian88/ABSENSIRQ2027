@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Camera, CheckCircle2, ArrowLeft, CheckCircle, XCircle, Loader2, RefreshCcw, Flashlight } from "lucide-react";
 import Link from "next/link";
 import { recordAbsensiById } from "../absensi/actions";
-import { getAllSantriFaceVectors } from "../santri/actions";
+import { getFaces } from "./actions";
 import { useRouter } from "next/navigation";
 import { formatTimeID } from "@/lib/date";
 import { showError } from "@/lib/sweetalert";
@@ -52,7 +52,7 @@ export default function PindaiWajah() {
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
         ]);
 
-        const dataSantri = await getAllSantriFaceVectors();
+        const dataSantri = await getFaces();
         
         const labeledDescriptors = dataSantri.map((santri: any) => {
           try {
