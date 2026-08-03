@@ -12,8 +12,17 @@ import { auth } from "@/lib/auth";
 import { formatTimeID } from "@/lib/date";
 
 export async function recordAbsensiByQR(kodeQr: string, jenisAbsen: 'masuk' | 'pulang') {
-  // 1. Cari santri berdasarkan kode QR atau Nomor Induk (sebagai fallback)
-  const [santriData] = await db.select().from(santri).where(or(eq(santri.kodeQr, kodeQr), eq(santri.nomorInduk, kodeQr)));
+  let searchKey = kodeQr;
+
+  // Deteksi format kartu lama: {"id":"S<NIS>","type":"santri"} atau sejenisnya
+  // Menggunakan regex untuk mengekstrak NIS setelah huruf "S"
+  const legacyMatch = kodeQr.match(/"id"\s*[:=]\s*"S(\d+)"/i);
+  if (legacyMatch && legacyMatch[1]) {
+    searchKey = legacyMatch[1]; // Ambil NIS-nya saja
+  }
+
+  // 1. Cari santri berdasarkan kode QR (exact match) atau Nomor Induk (fallback)
+  const [santriData] = await db.select().from(santri).where(or(eq(santri.kodeQr, searchKey), eq(santri.nomorInduk, searchKey)));
   
   if (!santriData) {
     return { success: false, message: "QR Code tidak terdaftar" };
