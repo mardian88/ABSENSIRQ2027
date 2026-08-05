@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { pengaturanAbsensiGlobal, pengaturanHariAktif, hariLibur, santri, absensi } from "@/db/schema";
 import { eq, and, gte, lt } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
+import { sendTemplatedMessage } from "@/lib/fonnte";
+import { halaqoh, pengaturanHumas } from "@/db/schema";
 
 export async function GET(request: Request) {
   // Verifikasi (Opsional): 
@@ -62,6 +64,9 @@ export async function GET(request: Request) {
     // Sampai 23:59:59 hari ini
     const endOfDayWIB = new Date(`${todayWIBString}T23:59:59.999+07:00`);
 
+    // Ambil Pengaturan Humas untuk info Admin
+    const [humas] = await db.select().from(pengaturanHumas).limit(1);
+
     let jumlahAlpa = 0;
 
     for (const s of daftarSantri) {
@@ -85,6 +90,31 @@ export async function GET(request: Request) {
           statusKehadiran: 'alpa',
           jenisAbsen: 'masuk'
         });
+        
+        // -------------------------------------------------------------
+        // Fonnte API Messaging for Alpa Otomatis
+        // -------------------------------------------------------------
+        const [halaqohData] = s.idHalaqoh 
+          ? await db.select().from(halaqoh).where(eq(halaqoh.id, s.idHalaqoh)) 
+          : [null];
+
+        const payload = {
+          namaSantri: s.namaLengkap,
+          nis: s.nomorInduk || "-",
+          waktu: new Intl.DateTimeFormat('id-ID', { timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(now),
+          tanggal: new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Jakarta' }).format(now),
+          halaqah: halaqohData ? halaqohData.namaHalaqoh : "Belum Ada Halaqoh",
+          keterangan: "Tanpa Keterangan (Alpa)"
+        };
+
+        // 1. Pesan Alpa ke Orang Tua
+        await sendTemplatedMessage(s.kontakOrtu, "alpa_ortu", payload);
+
+        // 2. Info Alpa ke Admin
+        if (humas && humas.nomorAdmin && humas.isAktif) {
+          await sendTemplatedMessage(humas.nomorAdmin, "alpa_admin", payload);
+        }
+
         jumlahAlpa++;
       }
     }

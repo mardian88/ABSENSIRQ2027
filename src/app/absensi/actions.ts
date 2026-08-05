@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { absensi, santri, halaqoh, sesiAbsensi } from "@/db/schema";
+import { absensi, santri, halaqoh, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanHumas } from "@/db/schema";
 import { eq, or, and, desc, between } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
@@ -44,6 +44,22 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
   const startOfDayWIB = new Date(`${wibDateString}T00:00:00.000+07:00`);
   const endOfDayWIB = new Date(`${wibDateString}T23:59:59.999+07:00`);
 
+  // --- CEK HARI AKTIF & LIBUR ---
+  const dayIndex = now.getDay();
+  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const todayName = dayNames[dayIndex];
+
+  const [hariAktif] = await db.select().from(pengaturanHariAktif).where(eq(pengaturanHariAktif.namaHari, todayName));
+  if (hariAktif && !hariAktif.isAktif) {
+    return { success: false, message: "Hari ini sistem absensi dinonaktifkan (Hari Libur Rutin)" };
+  }
+
+  const liburData = await db.select().from(hariLibur).where(eq(hariLibur.tanggal, wibDateString));
+  if (liburData.length > 0) {
+    return { success: false, message: `Sistem absensi libur: ${liburData[0].keterangan}` };
+  }
+  // -----------------------------
+
   // Cek apakah sudah absen (masuk/pulang) hari ini
   const existingAbsen = await db.select().from(absensi).where(
     and(
@@ -68,11 +84,26 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
     );
 
     if (absenMasuk.length === 0) {
-      return { success: false, message: "Belum absen masuk hari ini" };
+      // Trigger gagal_absen_masuk if no check-in exists
+      const payload = {
+        namaSantri: santriData.namaLengkap,
+        nis: santriData.nomorInduk || "-",
+        waktu: formatTimeID(now),
+        tanggal: new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Jakarta' }).format(now),
+        halaqah: "Belum Ada Halaqoh",
+        keterangan: "Gagal Pulang, Belum Absen Masuk"
+      };
+      const [h] = santriData.idHalaqoh ? await db.select().from(halaqoh).where(eq(halaqoh.id, santriData.idHalaqoh)) : [null];
+      if (h) payload.halaqah = h.namaHalaqoh;
+
+      await sendTemplatedMessage(santriData.kontakOrtu, "gagal_absen_masuk", payload);
+      
+      return { success: false, message: "Absen gagal, silakan melakukan absen masuk" };
     }
   }
 
   let statusFinal = statusKehadiran;
+  let isLupaAbsenMasuk = false;
 
   // Logika Sesi Absensi untuk menentukan Terlambat atau Pulang Cepat
   // Hanya dihitung jika status awal adalah 'hadir' atau 'pulang' (bukan sakit/izin/manual override)
@@ -85,7 +116,10 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
       const currentHHmm = `${nowWIB.getHours().toString().padStart(2, '0')}:${nowWIB.getMinutes().toString().padStart(2, '0')}`;
       
       if (jenisAbsen === 'masuk') {
-        if (currentHHmm > sesiData.waktuBatasMasuk) {
+        if (currentHHmm >= sesiData.waktuMulaiPulang) {
+          statusFinal = 'hadir';
+          isLupaAbsenMasuk = true;
+        } else if (currentHHmm > sesiData.waktuBatasMasuk) {
           statusFinal = 'terlambat';
         } else {
           statusFinal = 'hadir';
@@ -115,7 +149,8 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
   // Determine jenisPesan
   let jenisPesan = "";
   if (jenisAbsen === "masuk") {
-    if (statusFinal === "terlambat") jenisPesan = "absen_telat";
+    if (isLupaAbsenMasuk) jenisPesan = "lupa_absen_masuk";
+    else if (statusFinal === "terlambat") jenisPesan = "absen_telat";
     else jenisPesan = "absen_masuk";
   } else if (jenisAbsen === "pulang") {
     if (statusFinal === "pulang cepat") jenisPesan = "absen_pulang_cepat";

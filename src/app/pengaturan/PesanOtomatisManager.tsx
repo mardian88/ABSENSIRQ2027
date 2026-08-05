@@ -23,9 +23,12 @@ const JENIS_PESAN_OPTIONS = [
   { value: "absen_telat", label: "Terlambat Masuk" },
   { value: "absen_pulang_cepat", label: "Pulang Cepat" },
   { value: "reminder_absen", label: "Reminder Belum Absen" },
-  { value: "izin_admin", label: "Info Izin ke Admin" },
   { value: "izin_ortu", label: "Keterangan Izin ke Orang Tua" },
-  { value: "alpa_ortu", label: "Alpa (Tanpa Keterangan)" },
+  { value: "alpa_ortu", label: "Alpa (Tanpa Keterangan) ke Orang Tua" },
+  { value: "alpa_admin", label: "Info Alpa ke Admin" },
+  { value: "gagal_absen_masuk", label: "Peringatan Pulang Sebelum Masuk" },
+  { value: "lupa_absen_masuk", label: "Lupa Absen Masuk (Siang/Sore)" },
+  { value: "reminder_absen_admin", label: "Reminder Belum Absen (Admin)" },
 ];
 
 export function PesanOtomatisManager() {
@@ -33,9 +36,10 @@ export function PesanOtomatisManager() {
   
   // Fonnte Settings
   const [humasId, setHumasId] = useState("");
-  const [tokenFonnte, setTokenFonnte] = useState("");
   const [nomorAdmin, setNomorAdmin] = useState("");
   const [isFonnteAktif, setIsFonnteAktif] = useState(false);
+  const [nomorReminder, setNomorReminder] = useState("");
+  const [isReminderAktif, setIsReminderAktif] = useState(false);
   const [savingFonnte, setSavingFonnte] = useState(false);
 
   // Templates
@@ -54,10 +58,11 @@ export function PesanOtomatisManager() {
   const loadData = async (silent: boolean = false) => {
     if (!silent) setLoading(true);
     const humas = await getPengaturanHumas();
-    setHumasId(humas.id);
     setTokenFonnte(humas.tokenFonnte || "");
     setNomorAdmin(humas.nomorAdmin || "");
     setIsFonnteAktif(humas.isAktif ?? false);
+    setNomorReminder(humas.nomorReminder || "");
+    setIsReminderAktif(humas.isReminderAktif ?? false);
 
     const tmpls = await getTemplatePesanList();
     // Sort templates by jenisPesan to group them together
@@ -69,10 +74,13 @@ export function PesanOtomatisManager() {
   const handleSaveFonnte = async () => {
     setSavingFonnte(true);
     try {
-      await updatePengaturanHumas(humasId, {
+      await updatePengaturanHumas({
+        id: humasId,
         tokenFonnte,
         nomorAdmin,
-        isAktif: isFonnteAktif
+        isAktif: isFonnteAktif,
+        nomorReminder,
+        isReminderAktif
       });
       toast.success("Pengaturan Fonnte berhasil disimpan!");
     } catch (e) {
@@ -190,7 +198,7 @@ export function PesanOtomatisManager() {
                 placeholder="Contoh: 081234567890"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-4">
               <input 
                 type="checkbox"
                 id="fonnteAktif"
@@ -200,6 +208,28 @@ export function PesanOtomatisManager() {
               />
               <Label htmlFor="fonnteAktif" className="font-medium">Aktifkan Pengiriman Pesan Otomatis</Label>
             </div>
+            
+            <hr className="my-4" />
+            
+            <div className="space-y-2">
+              <Label>Nomor WhatsApp Pengingat / Reminder</Label>
+              <Input 
+                value={nomorReminder}
+                onChange={(e) => setNomorReminder(e.target.value)}
+                placeholder="Contoh: 081234567890"
+              />
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <input 
+                type="checkbox"
+                id="reminderAktif"
+                checked={isReminderAktif}
+                onChange={(e) => setIsReminderAktif(e.target.checked)}
+                className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+              />
+              <Label htmlFor="reminderAktif" className="font-medium">Aktifkan Reminder Otomatis (Cron)</Label>
+            </div>
+
             <Button onClick={handleSaveFonnte} disabled={savingFonnte} className="bg-emerald-600 hover:bg-emerald-700">
               {savingFonnte ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Simpan Pengaturan

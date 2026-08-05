@@ -97,7 +97,16 @@ export const pengaturanHumas = sqliteTable('pengaturan_humas', {
   id: text('id').primaryKey(),
   tokenFonnte: text('token_fonnte'),
   nomorAdmin: text('nomor_admin'), // WhatsApp Admin penerima notif
-  isAktif: integer('is_aktif', { mode: 'boolean' }).default(false)
+  isAktif: integer('is_aktif', { mode: 'boolean' }).default(false),
+  nomorReminder: text('nomor_reminder'),
+  isReminderAktif: integer('is_reminder_aktif', { mode: 'boolean' }).default(false)
+});
+
+export const logReminder = sqliteTable('log_reminder', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  tanggal: text('tanggal').notNull(), // Format YYYY-MM-DD
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 });
 
 export const templatePesan = sqliteTable('template_pesan', {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { CheckCircle2, QrCode, Camera, Keyboard, Flashlight, RefreshCcw } from "lucide-react";
+import { CheckCircle2, QrCode, Camera, Keyboard, Flashlight, RefreshCcw, XCircle } from "lucide-react";
 import { Html5Qrcode, CameraDevice } from "html5-qrcode";
 import { showError } from "@/lib/sweetalert";
 import { recordAbsensiByQR, simulateQRScanAbsen } from "../absensi/actions";
@@ -368,9 +368,19 @@ export default function PindaiQR() {
 
           {scanResult && (
             <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-10 animate-in fade-in zoom-in duration-300 p-6 text-center">
-              <CheckCircle2 className={`w-20 h-20 md:w-24 md:h-24 mb-4 ${scanResult.jenis === 'masuk' ? 'text-emerald-500' : 'text-amber-500'}`} />
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Absen {scanResult.jenis === 'masuk' ? 'Masuk' : 'Pulang'} Berhasil</h2>
-              <p className={`text-3xl md:text-4xl font-extrabold px-4 ${scanResult.jenis === 'masuk' ? 'text-emerald-400' : 'text-amber-400'}`}>{scanResult.nama}</p>
+              {scanResult.jenis === 'error' ? (
+                <>
+                  <XCircle className="w-20 h-20 md:w-24 md:h-24 mb-4 text-amber-500" />
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Peringatan</h2>
+                  <p className="text-2xl md:text-3xl font-extrabold px-4 text-amber-400">{scanResult.nama}</p>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className={`w-20 h-20 md:w-24 md:h-24 mb-4 ${scanResult.jenis === 'masuk' ? 'text-emerald-500' : 'text-amber-500'}`} />
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Absen {scanResult.jenis === 'masuk' ? 'Masuk' : 'Pulang'} Berhasil</h2>
+                  <p className={`text-3xl md:text-4xl font-extrabold px-4 ${scanResult.jenis === 'masuk' ? 'text-emerald-400' : 'text-amber-400'}`}>{scanResult.nama}</p>
+                </>
+              )}
               <p className="text-slate-400 mt-4 text-lg md:text-xl">Waktu: {scanResult.waktu}</p>
             </div>
           )}

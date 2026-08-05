@@ -230,8 +230,9 @@ export async function getPengaturanHumas() {
   return data;
 }
 
-export async function updatePengaturanHumas(id: string, data: { tokenFonnte: string, nomorAdmin?: string, isAktif: boolean }) {
-  await db.update(pengaturanHumas).set(data).where(eq(pengaturanHumas.id, id));
+export async function updatePengaturanHumas(data: { id: string, tokenFonnte: string, nomorAdmin?: string, isAktif: boolean, nomorReminder?: string, isReminderAktif?: boolean }) {
+  const { id, ...updateData } = data;
+  await db.update(pengaturanHumas).set(updateData).where(eq(pengaturanHumas.id, id));
   revalidatePath("/pengaturan");
   return true;
 }
