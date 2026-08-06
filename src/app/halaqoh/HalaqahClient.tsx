@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, Trash2, Printer, X, GripVertical, 
   Save, ArrowDownAZ, ArrowUpZA, Clock, FileDown,
-  MoreVertical, Search
+  MoreVertical, Search, Maximize, Minimize
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { 
@@ -43,6 +43,29 @@ const HalaqahBoard = () => {
   // Native Drag and Drop States
   const [draggedInfo, setDraggedInfo] = useState<{ type: string; colId: string; item?: SantriItem; index: number } | null>(null);
   const [dragOverColId, setDragOverColId] = useState<string | null>(null);
+  
+  // Fullscreen State
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const fetchBoardData = async () => {
     setIsLoading(true);
@@ -299,28 +322,32 @@ const HalaqahBoard = () => {
   }
 
   return (
-    <div className="min-h-[85vh] bg-slate-50 p-4 md:p-6 font-sans border border-slate-200 rounded-xl">
+    <div className={`font-sans border-slate-200 transition-all duration-300 ${isFullscreen ? 'fixed inset-0 z-[100] w-screen h-screen overflow-y-auto p-4 md:p-8 bg-gradient-to-br from-indigo-50/50 via-slate-50 to-violet-50/50 border-0' : 'min-h-[85vh] bg-slate-50 p-4 md:p-6 border rounded-xl'}`}>
       {/* HEADER SECTION */}
-      <div className="mb-6 print:hidden flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+      <div className="mb-6 print:hidden flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 bg-white/70 backdrop-blur-md p-5 rounded-2xl shadow-sm border border-slate-100">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-            Board Penentuan Halaqah
-            {isSaving && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full animate-pulse flex items-center"><Save className="w-3 h-3 mr-1" /> Menyimpan</span>}
+          <h1 className="text-2xl font-black bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent flex items-center gap-3">
+            Board Halaqah
+            {isSaving && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full animate-pulse flex items-center shadow-sm"><Save className="w-3 h-3 mr-1" /> Menyimpan</span>}
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">Kelola pembagian kelompok belajar santri dengan fitur geser/tarik.</p>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Kelola pembagian kelompok belajar santri secara interaktif.</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-          <button onClick={handleAddHalaqah} className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm">
-            <Plus className="w-4 h-4" /> Halaqah Baru
+          <button onClick={toggleFullscreen} className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl font-semibold transition-all shadow-sm hover:shadow text-sm">
+            {isFullscreen ? <><Minimize className="w-4 h-4" /> Tutup Layar Penuh</> : <><Maximize className="w-4 h-4" /> Layar Penuh</>}
           </button>
           
-          <button onClick={handleExportExcel} disabled={isExporting} className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm disabled:opacity-50">
-            <FileDown className="w-4 h-4" /> {isExporting ? 'Exporting...' : 'Export Excel'}
+          <button onClick={handleAddHalaqah} className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-3 py-2 rounded-xl font-bold transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-sm">
+            <Plus className="w-4 h-4" /> Tambah Halaqah
+          </button>
+          
+          <button onClick={handleExportExcel} disabled={isExporting} className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl font-semibold transition-all shadow-sm hover:shadow text-sm disabled:opacity-50">
+            <FileDown className="w-4 h-4 text-emerald-600" /> {isExporting ? 'Exporting...' : 'Export Excel'}
           </button>
 
-          <button onClick={() => window.print()} className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm">
-            <Printer className="w-4 h-4" /> Export PDF
+          <button onClick={() => window.print()} className="flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl font-semibold transition-all shadow-sm hover:shadow text-sm">
+            <Printer className="w-4 h-4 text-rose-600" /> Print / PDF
           </button>
         </div>
       </div>
@@ -352,13 +379,13 @@ const HalaqahBoard = () => {
             key={column.id}
             onDragOver={(e) => handleDragOver(e, column.id)}
             onDrop={(e) => handleDrop(e, column.id)}
-            className={`flex flex-col rounded-xl overflow-hidden print:bg-white print:border print:border-slate-300 print:break-inside-avoid
-              ${dragOverColId === column.id ? 'bg-teal-50 ring-2 ring-teal-400' : 'bg-slate-100 border border-slate-200 shadow-sm'}
-              transition-all duration-200 print:shadow-none print:h-auto
+            className={`flex flex-col rounded-2xl overflow-hidden print:bg-white print:border print:border-slate-300 print:break-inside-avoid
+              ${dragOverColId === column.id ? 'bg-indigo-50/80 ring-2 ring-indigo-400 shadow-inner' : 'bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]'}
+              transition-all duration-300 print:shadow-none print:h-auto
             `}
           >
             {/* COLUMN HEADER */}
-            <div className={`p-3 flex justify-between items-center border-b relative group ${column.isProtected ? 'bg-slate-200 border-slate-300 print:bg-slate-100' : 'bg-white border-slate-200 print:border-b-2 print:border-slate-800'}`}>
+            <div className={`p-4 flex justify-between items-center border-b relative group ${column.isProtected ? 'bg-gradient-to-r from-slate-100 to-slate-50 border-slate-200 print:bg-slate-100' : 'bg-gradient-to-r from-indigo-50/50 to-transparent border-slate-200/60 print:border-b-2 print:border-slate-800'}`}>
               
               <div className="flex items-center gap-2 flex-1 w-full overflow-hidden">
                 {editingColumnId === column.id ? (
@@ -428,8 +455,8 @@ const HalaqahBoard = () => {
                   draggable="true"
                   onDragStart={(e) => handleItemDragStart(e, column.id, item, index)}
                   onDragEnd={handleDragEnd}
-                  className={`group flex items-center justify-between bg-white py-1.5 px-2 rounded-md text-sm border cursor-grab active:cursor-grabbing
-                    ${draggedInfo?.type === 'item' && draggedInfo.item?.id === item.id ? 'shadow-md border-indigo-400' : 'border-slate-200 hover:border-indigo-200 shadow-sm print:border-slate-300 print:shadow-none'}
+                  className={`group flex items-center justify-between bg-white py-2 px-3 rounded-xl text-sm border cursor-grab active:cursor-grabbing transition-all duration-200
+                    ${draggedInfo?.type === 'item' && draggedInfo.item?.id === item.id ? 'shadow-lg border-indigo-400 scale-105 z-10' : 'border-slate-100 hover:border-indigo-200 shadow-sm hover:shadow-md print:border-slate-300 print:shadow-none'}
                   `}
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">

@@ -1,10 +1,13 @@
-import { getHalaqohList } from "./actions";
-import { HalaqohClient } from "./HalaqohClient";
+import HalaqahBoard from "./HalaqahClient";
 
-export const dynamic = "force-dynamic";
+export const metadata = {
+  title: "Pengaturan Halaqoh | ABSENSIRQ2027",
+};
 
-export default async function HalaqohPage() {
-  const data = await getHalaqohList();
-
-  return <HalaqohClient initialData={data} />;
+export default function PengaturanHalaqohPage() {
+  return (
+    <div className="flex-1 w-full flex flex-col">
+      <HalaqahBoard />
+    </div>
+  );
 }
