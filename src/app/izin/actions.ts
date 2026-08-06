@@ -6,8 +6,13 @@ import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import path from "path";
+import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 import { sendTemplatedMessage } from "@/lib/fonnte";
 import { halaqoh } from "@/db/schema";
 
@@ -80,18 +85,20 @@ export async function submitIzin(formData: FormData) {
   if (buktiFile && buktiFile.size > 0) {
     try {
       const buffer = Buffer.from(await buktiFile.arrayBuffer());
-      const ext = path.extname(buktiFile.name) || '.jpg';
-      const filename = `${uuidv4()}${ext}`;
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'izin');
       
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      
-      fs.writeFileSync(path.join(uploadDir, filename), buffer);
-      buktiUrl = `/uploads/izin/${filename}`;
+      const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: "izin_santri" },
+          (error, result) => {
+            if (error || !result) reject(error || new Error("Unknown upload error"));
+            else resolve(result);
+          }
+        ).end(buffer);
+      });
+
+      buktiUrl = uploadResult.secure_url;
     } catch (e) {
-      console.error("Gagal mengunggah bukti:", e);
+      console.error("Gagal mengunggah bukti ke Cloudinary:", e);
     }
   }
 
