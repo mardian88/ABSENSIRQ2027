@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { santri, absensi, halaqoh, sesiAbsensi, pengaturanHumas, logReminder, perizinanSantri } from "@/db/schema";
-import { eq, and, gte, lt } from "drizzle-orm";
+import { eq, and, gte, lt, lte } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendTemplatedMessage } from "@/lib/fonnte";
 
