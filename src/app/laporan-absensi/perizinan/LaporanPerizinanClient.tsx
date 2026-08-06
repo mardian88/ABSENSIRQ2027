@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { getDaftarPerizinan, PerizinanData, getLaporanAlpa, AlpaData, updateStatusAlpa, resetLaporanIzin, resetLaporanAlpa } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
-import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, Edit, X, Trash2 } from "lucide-react";
+import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, Edit, X, Trash2, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 
@@ -41,6 +41,27 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  // Refresh
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    try {
+      if (activeTab === "izin") {
+        const newData = await getDaftarPerizinan(filterPeriod);
+        setDataIzin(newData);
+      } else {
+        await fetchAlpaData(filterPeriod);
+      }
+      setLastRefresh(new Date());
+      toast.success("Data berhasil diperbarui");
+    } catch (e) {
+      toast.error("Gagal memperbarui data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleTabChange = async (tab: "izin" | "alpa") => {
     setActiveTab(tab);
@@ -280,6 +301,17 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
           <p className="text-slate-500">Kelola dan ekspor data izin, sakit, maupun alpa santri.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center text-sm font-medium text-slate-500 mr-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
+            <span className="mr-2 hidden sm:inline">Pembaruan terakhir: {formatTimeID(lastRefresh)}</span>
+            <button 
+              onClick={handleRefresh} 
+              disabled={isLoading}
+              className="text-slate-500 hover:text-slate-800 transition-colors disabled:opacity-50"
+              title="Refresh Data"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
           <button
             onClick={exportToExcel}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
@@ -439,7 +471,10 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                                 <ExternalLink className="w-4 h-4" />
                               </button>
                             ) : (
-                              <span className="inline-flex items-center justify-center p-2 bg-slate-50 text-slate-400 rounded-md">
+                              <span 
+                                className="inline-flex items-center justify-center p-2 bg-slate-50 text-slate-400 rounded-md cursor-not-allowed"
+                                title="Tidak ada foto bukti dilampirkan"
+                              >
                                 <ImageIcon className="w-4 h-4" />
                               </span>
                             )}
