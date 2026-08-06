@@ -405,11 +405,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                       const izinItem = item as PerizinanData;
                       
                       return (
-                        <tr 
-                          key={izinItem.id} 
-                          onClick={() => { setSelectedIzin(izinItem); setIsDetailModalOpen(true); }}
-                          className="bg-white hover:bg-slate-50/80 transition-colors cursor-pointer"
-                        >
+                        <tr key={izinItem.id} className="bg-white hover:bg-slate-50/80 transition-colors">
                           <td className="px-4 py-4 align-top">
                             <div className="font-bold text-slate-800">{izinItem.santri.namaLengkap}</div>
                             <div className="text-xs text-slate-500 mt-0.5">NIS: {izinItem.santri.nomorInduk}</div>
@@ -433,11 +429,15 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                           <td className="px-4 py-4 align-top max-w-xs">
                             <p className="text-sm text-slate-700 italic truncate" title={izinItem.keterangan}>"{izinItem.keterangan}"</p>
                           </td>
-                          <td className="px-4 py-4 align-top" onClick={e => e.stopPropagation()}>
+                          <td className="px-4 py-4 align-top">
                             {izinItem.buktiUrl ? (
-                              <a href={izinItem.buktiUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2 bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-colors" title="Lihat Bukti" onClick={e => e.stopPropagation()}>
+                              <button 
+                                onClick={() => { setSelectedIzin(izinItem); setIsDetailModalOpen(true); }}
+                                className="inline-flex items-center justify-center p-2 bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-colors" 
+                                title="Lihat Bukti"
+                              >
                                 <ExternalLink className="w-4 h-4" />
-                              </a>
+                              </button>
                             ) : (
                               <span className="inline-flex items-center justify-center p-2 bg-slate-50 text-slate-400 rounded-md">
                                 <ImageIcon className="w-4 h-4" />
@@ -601,64 +601,31 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
         </div>
       )}
 
-      {/* Modal Detail Izin */}
-      {isDetailModalOpen && selectedIzin && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onClick={() => setIsDetailModalOpen(false)}>
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setIsDetailModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-slate-100 p-2 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-              Detail Pengajuan
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ml-2 ${
-                selectedIzin.kategori === 'Sakit' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
-              }`}>
-                {selectedIzin.kategori.toUpperCase()}
-              </span>
-            </h2>
-            
-            <div className="space-y-4 mb-6">
-              <div>
-                <p className="text-sm text-slate-500 font-medium">Nama Santri (NIS)</p>
-                <p className="text-lg font-bold text-slate-800">{selectedIzin.santri.namaLengkap} <span className="text-slate-500 font-normal">({selectedIzin.santri.nomorInduk})</span></p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500 font-medium">Tanggal Mulai</p>
-                  <p className="text-base font-semibold text-slate-700">{formatDateID(selectedIzin.tanggalMulai)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 font-medium">Tanggal Selesai</p>
-                  <p className="text-base font-semibold text-slate-700">{formatDateID(selectedIzin.tanggalSelesai)}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500 font-medium mb-1">Keterangan / Alasan</p>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 leading-relaxed italic">
-                  "{selectedIzin.keterangan}"
-                </div>
-              </div>
-            </div>
+      {/* Modal Detail Izin (Hanya Image) */}
+      {isDetailModalOpen && selectedIzin && selectedIzin.buktiUrl && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 z-[60]" onClick={() => setIsDetailModalOpen(false)}>
+          <button
+            onClick={() => setIsDetailModalOpen(false)}
+            className="absolute top-4 right-4 text-white hover:text-rose-500 bg-white/10 p-2 rounded-full transition-colors z-[70]"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          <div className="relative w-full max-w-4xl max-h-[85vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
+            <img 
+              src={selectedIzin.buktiUrl} 
+              alt={`Bukti ${selectedIzin.kategori} - ${selectedIzin.santri.namaLengkap}`} 
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
+            />
+          </div>
 
-            {selectedIzin.buktiUrl && (
-              <div className="mt-6 border-t border-slate-100 pt-6">
-                <div className="flex justify-between items-center mb-3">
-                  <p className="text-sm text-slate-500 font-medium">Lampiran Bukti / Surat</p>
-                  <button 
-                    onClick={() => handleDownloadImage(selectedIzin.buktiUrl!, `Bukti_${selectedIzin.kategori}_${selectedIzin.santri.namaLengkap.replace(/\s+/g, '_')}.jpg`)}
-                    className="flex items-center gap-2 text-sm font-semibold bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-200 transition-colors"
-                  >
-                    <Download className="w-4 h-4" /> Save Image
-                  </button>
-                </div>
-                <div className="bg-slate-100 rounded-xl overflow-hidden border border-slate-200 max-h-80 flex items-center justify-center relative group">
-                  <img src={selectedIzin.buktiUrl} alt="Bukti" className="w-full h-full object-contain" />
-                </div>
-              </div>
-            )}
+          <div className="mt-6 flex gap-4 z-[70]" onClick={e => e.stopPropagation()}>
+             <button 
+                onClick={() => handleDownloadImage(selectedIzin.buktiUrl!, `Bukti_${selectedIzin.kategori}_${selectedIzin.santri.namaLengkap.replace(/\s+/g, '_')}.jpg`)}
+                className="flex items-center gap-2 text-sm font-semibold bg-emerald-600 text-white px-6 py-3 rounded-full hover:bg-emerald-700 transition-colors shadow-lg"
+             >
+                <Download className="w-5 h-5" /> Download Image
+             </button>
           </div>
         </div>
       )}
