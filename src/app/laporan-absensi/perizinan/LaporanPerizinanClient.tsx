@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { getDaftarPerizinan, PerizinanData, getLaporanAlpa, AlpaData, updateStatusAlpa } from "./actions";
+import { getDaftarPerizinan, PerizinanData, getLaporanAlpa, AlpaData, updateStatusAlpa, resetLaporanIzin, resetLaporanAlpa } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
-import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, Edit, X } from "lucide-react";
+import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, Edit, X, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 
@@ -24,6 +24,15 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
   const [editPassword, setEditPassword] = useState("");
   const [editStatus, setEditStatus] = useState<"hadir" | "izin">("hadir");
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Modal Detail Izin
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedIzin, setSelectedIzin] = useState<PerizinanData | null>(null);
+
+  // Modal Reset
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetPassword, setResetPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   // Sorting
   const [sortField, setSortField] = useState<"waktuPengajuan" | "namaLengkap">("waktuPengajuan");
@@ -209,6 +218,60 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     { id: 'tahun_ini', label: 'Tahun Ini' },
   ];
 
+  const handleResetLaporan = async () => {
+    if (!resetPassword) {
+      toast.error("Password wajib diisi!");
+      return;
+    }
+    
+    setIsResetting(true);
+    try {
+      let result;
+      if (activeTab === "izin") {
+        result = await resetLaporanIzin(resetPassword);
+      } else {
+        result = await resetLaporanAlpa(resetPassword);
+      }
+
+      if (result.success) {
+        toast.success(result.message);
+        setIsResetModalOpen(false);
+        setResetPassword("");
+        // Reload data
+        if (activeTab === "izin") {
+           const newData = await getDaftarPerizinan(filterPeriod);
+           setDataIzin(newData);
+        } else {
+           await fetchAlpaData(filterPeriod);
+        }
+      } else {
+        toast.error(result.message);
+      }
+    } catch (e) {
+      toast.error("Gagal mereset laporan");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleDownloadImage = async (url: string, fileName: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      toast.error("Gagal mengunduh gambar");
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -216,13 +279,22 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
           <h1 className="text-2xl font-bold tracking-tight text-slate-800">Laporan Kehadiran & Perizinan</h1>
           <p className="text-slate-500">Kelola dan ekspor data izin, sakit, maupun alpa santri.</p>
         </div>
-        <button
-          onClick={exportToExcel}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
-        >
-          <Download className="w-4 h-4" />
-          Export Excel
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={exportToExcel}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+          <button
+            onClick={() => setIsResetModalOpen(true)}
+            className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+          >
+            <Trash2 className="w-4 h-4" />
+            Reset Laporan
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -331,31 +403,39 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                   paginatedData.map((item: any) => {
                     if (activeTab === "izin") {
                       const izinItem = item as PerizinanData;
-                      const durasi = Math.round((new Date(izinItem.tanggalSelesai).getTime() - new Date(izinItem.tanggalMulai).getTime()) / (1000 * 60 * 60 * 24)) + 1;
                       
                       return (
-                        <tr key={izinItem.id} className="bg-white hover:bg-slate-50/80 transition-colors">
+                        <tr 
+                          key={izinItem.id} 
+                          onClick={() => { setSelectedIzin(izinItem); setIsDetailModalOpen(true); }}
+                          className="bg-white hover:bg-slate-50/80 transition-colors cursor-pointer"
+                        >
                           <td className="px-4 py-4 align-top">
                             <div className="font-bold text-slate-800">{izinItem.santri.namaLengkap}</div>
                             <div className="text-xs text-slate-500 mt-0.5">NIS: {izinItem.santri.nomorInduk}</div>
                           </td>
-                          <td className="px-4 py-4 font-medium text-slate-900 align-top">
-                            {formatDateID(izinItem.waktuPengajuan)}
-                          </td>
                           <td className="px-4 py-4 align-top">
-                            <div className="font-medium text-slate-700">
-                              {durasi === 1 
-                                ? formatDateID(izinItem.tanggalMulai) 
-                                : `${formatDateID(izinItem.tanggalMulai)} - ${formatDateID(izinItem.tanggalSelesai)}`}
+                            <div className="text-sm font-semibold text-slate-700">
+                              {formatDateID(izinItem.tanggalMulai)}
                             </div>
-                            <div className="text-xs text-slate-500 mt-0.5">({durasi} Hari)</div>
+                            {izinItem.tanggalSelesai > izinItem.tanggalMulai && (
+                              <div className="text-xs text-slate-500 mt-0.5">
+                                s/d {formatDateID(izinItem.tanggalSelesai)}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 align-top text-center">
+                            <div className="font-medium text-slate-700">
+                              {Math.round((new Date(izinItem.tanggalSelesai).getTime() - new Date(izinItem.tanggalMulai).getTime()) / (1000 * 60 * 60 * 24)) + 1}
+                            </div>
+                            <div className="text-xs text-slate-500 mt-0.5">Hari</div>
                           </td>
                           <td className="px-4 py-4 align-top max-w-xs">
                             <p className="text-sm text-slate-700 italic truncate" title={izinItem.keterangan}>"{izinItem.keterangan}"</p>
                           </td>
-                          <td className="px-4 py-4 align-top">
+                          <td className="px-4 py-4 align-top" onClick={e => e.stopPropagation()}>
                             {izinItem.buktiUrl ? (
-                              <a href={izinItem.buktiUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2 bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-colors" title="Lihat Bukti">
+                              <a href={izinItem.buktiUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2 bg-emerald-50 text-emerald-600 rounded-md hover:bg-emerald-100 transition-colors" title="Lihat Bukti" onClick={e => e.stopPropagation()}>
                                 <ExternalLink className="w-4 h-4" />
                               </a>
                             ) : (
@@ -473,71 +553,149 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
         )}
       </div>
 
-      {/* Modal Edit Alpa */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-4 border-b border-slate-100">
-              <h3 className="font-bold text-lg text-slate-800">Edit Status Alpa</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-5 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Ubah Menjadi Status</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button 
-                    onClick={() => setEditStatus("hadir")}
-                    className={`py-2 px-3 text-sm font-semibold border rounded-lg transition-colors ${
-                      editStatus === "hadir" 
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-700 ring-1 ring-emerald-500" 
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Hadir
-                  </button>
-                  <button 
-                    onClick={() => setEditStatus("izin")}
-                    className={`py-2 px-3 text-sm font-semibold border rounded-lg transition-colors ${
-                      editStatus === "izin" 
-                        ? "bg-amber-50 border-amber-500 text-amber-700 ring-1 ring-amber-500" 
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    Izin / Sakit
-                  </button>
-                </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm relative shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">Ubah Status Alpa</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Status Baru</label>
+                <select 
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500"
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as any)}
+                >
+                  <option value="hadir">Hadir (Batal Alpa)</option>
+                  <option value="izin">Izin / Sakit</option>
+                </select>
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Password Admin Khusus (RQM)</label>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Password Admin</label>
                 <input 
                   type="password"
+                  placeholder="Masukkan password..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
-                  placeholder="Masukkan password rqm"
-                  className="w-full p-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
             </div>
-
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+            <div className="flex justify-end gap-3 mt-6">
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                className="px-4 py-2 rounded-lg text-slate-500 hover:bg-slate-100 font-medium transition-colors"
                 disabled={isUpdating}
               >
                 Batal
               </button>
               <button 
                 onClick={handleSubmitEdit}
-                disabled={isUpdating || !editPassword}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                disabled={isUpdating}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit className="w-4 h-4" />}
-                Simpan Perubahan
+                {isUpdating && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isUpdating ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Izin */}
+      {isDetailModalOpen && selectedIzin && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onClick={() => setIsDetailModalOpen(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setIsDetailModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 bg-slate-100 p-2 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              Detail Pengajuan
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ml-2 ${
+                selectedIzin.kategori === 'Sakit' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+              }`}>
+                {selectedIzin.kategori.toUpperCase()}
+              </span>
+            </h2>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <p className="text-sm text-slate-500 font-medium">Nama Santri (NIS)</p>
+                <p className="text-lg font-bold text-slate-800">{selectedIzin.santri.namaLengkap} <span className="text-slate-500 font-normal">({selectedIzin.santri.nomorInduk})</span></p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500 font-medium">Tanggal Mulai</p>
+                  <p className="text-base font-semibold text-slate-700">{formatDateID(selectedIzin.tanggalMulai)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 font-medium">Tanggal Selesai</p>
+                  <p className="text-base font-semibold text-slate-700">{formatDateID(selectedIzin.tanggalSelesai)}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-slate-500 font-medium mb-1">Keterangan / Alasan</p>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 leading-relaxed italic">
+                  "{selectedIzin.keterangan}"
+                </div>
+              </div>
+            </div>
+
+            {selectedIzin.buktiUrl && (
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <div className="flex justify-between items-center mb-3">
+                  <p className="text-sm text-slate-500 font-medium">Lampiran Bukti / Surat</p>
+                  <button 
+                    onClick={() => handleDownloadImage(selectedIzin.buktiUrl!, `Bukti_${selectedIzin.kategori}_${selectedIzin.santri.namaLengkap.replace(/\s+/g, '_')}.jpg`)}
+                    className="flex items-center gap-2 text-sm font-semibold bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-200 transition-colors"
+                  >
+                    <Download className="w-4 h-4" /> Save Image
+                  </button>
+                </div>
+                <div className="bg-slate-100 rounded-xl overflow-hidden border border-slate-200 max-h-80 flex items-center justify-center relative group">
+                  <img src={selectedIzin.buktiUrl} alt="Bukti" className="w-full h-full object-contain" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Reset Laporan */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm relative shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-rose-600 mb-2 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" /> Reset Laporan {activeTab === 'izin' ? 'Izin' : 'Alpa'}
+            </h2>
+            <p className="text-sm text-slate-600 mb-6">
+              Tindakan ini akan menghapus permanen semua rekam jejak laporan {activeTab === 'izin' ? 'izin & sakit' : 'alpa'}. Masukkan password admin untuk melanjutkan.
+            </p>
+            <input 
+              type="password"
+              placeholder="Masukkan password..."
+              className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 mb-6 font-mono tracking-widest text-center"
+              value={resetPassword}
+              onChange={(e) => setResetPassword(e.target.value)}
+              autoFocus
+            />
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => { setIsResetModalOpen(false); setResetPassword(''); }}
+                className="px-4 py-2 rounded-lg text-slate-500 hover:bg-slate-100 font-medium transition-colors"
+                disabled={isResetting}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleResetLaporan}
+                disabled={isResetting || !resetPassword}
+                className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isResetting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isResetting ? 'Meriset...' : 'Ya, Reset Data'}
               </button>
             </div>
           </div>

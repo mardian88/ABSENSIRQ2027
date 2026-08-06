@@ -187,3 +187,25 @@ export async function updateStatusAlpa(idAbsensi: string, passwordAdmin: string,
     return { success: false, message: 'Terjadi kesalahan sistem' };
   }
 }
+
+export async function resetLaporanIzin(password: string): Promise<{success: boolean, message: string}> {
+  if (password !== 'rqm2828') return { success: false, message: 'Password salah!' };
+  try {
+    await db.delete(perizinanSantri);
+    revalidatePath('/laporan-absensi/perizinan');
+    return { success: true, message: 'Berhasil mereset laporan izin' };
+  } catch (error) {
+    return { success: false, message: 'Terjadi kesalahan sistem' };
+  }
+}
+
+export async function resetLaporanAlpa(password: string): Promise<{success: boolean, message: string}> {
+  if (password !== 'rqm2828') return { success: false, message: 'Password salah!' };
+  try {
+    await db.delete(absensi).where(eq(absensi.statusKehadiran, 'alpa'));
+    revalidatePath('/laporan-absensi/perizinan');
+    return { success: true, message: 'Berhasil mereset laporan alpa' };
+  } catch (error) {
+    return { success: false, message: 'Terjadi kesalahan sistem' };
+  }
+}
