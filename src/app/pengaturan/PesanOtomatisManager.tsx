@@ -36,6 +36,7 @@ export function PesanOtomatisManager() {
   
   // Fonnte Settings
   const [humasId, setHumasId] = useState("");
+  const [tokenFonnte, setTokenFonnte] = useState("");
   const [nomorAdmin, setNomorAdmin] = useState("");
   const [isFonnteAktif, setIsFonnteAktif] = useState(false);
   const [nomorReminder, setNomorReminder] = useState("");

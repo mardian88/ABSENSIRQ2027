@@ -112,7 +112,7 @@ export async function getRecentScans() {
   const laporan = await getLaporanAbsensi('hari_ini');
   
   // Urutkan berdasarkan waktu (Masuk/Pulang) terbaru. Untuk izin/alpa, taruh di bawah atau urut abjad
-  const sorted = laporan.sort((a, b) => {
+  const sorted = laporan.sort((a: any, b: any) => {
     // If it's already a number, use it directly. Otherwise try to convert from string/Date.
     const timeA = Math.max(
       a.waktuMasuk ? new Date(a.waktuMasuk).getTime() : 0, 
@@ -128,7 +128,7 @@ export async function getRecentScans() {
   });
 
   // Ambil 10 teratas dan sesuaikan field-nya agar mirip dengan format sebelumnya
-  return sorted.slice(0, 10).map(item => ({
+  return sorted.slice(0, 10).map((item: any) => ({
     id: item.santri.id + item.statusKehadiran,
     waktuScan: item.waktuPulang || item.waktuMasuk || new Date().getTime(), // fallback ke date sekarang untuk izin/alpa jika tidak ada jam
     metodeScan: item.metodePulang || item.metodeMasuk || '-',

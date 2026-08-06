@@ -152,8 +152,6 @@ export async function getLaporanAbsensi(filterPeriod: string) {
     const bTime = Math.max(b.waktuMasuk || 0, b.waktuPulang || 0);
     return bTime - aTime;
   });
-
-  return finalResults;
 }
 export async function archiveSemuaAbsensi() {
   const session = await auth.api.getSession({ headers: await headers() });

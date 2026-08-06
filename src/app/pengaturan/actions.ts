@@ -225,7 +225,7 @@ export async function getPengaturanHumas() {
       nomorAdmin: "",
       isAktif: false
     });
-    return { id: newId, tokenFonnte: "", nomorAdmin: "", isAktif: false };
+    return { id: newId, tokenFonnte: "", nomorAdmin: "", isAktif: false, nomorReminder: "", isReminderAktif: false };
   }
   return data;
 }
