@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { absensi, santri, halaqoh } from "@/db/schema";
-import { eq, desc, and, gte } from "drizzle-orm";
+import { eq, desc, and, gte, notInArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -69,6 +69,8 @@ export async function getLaporanAbsensi(filterPeriod: string) {
     .innerJoin(santri, eq(absensi.idSantri, santri.id))
     .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id));
 
+  const excludedStatuses = ['Izin', 'Sakit', 'Alpa'];
+
   // Time filtering & Role filtering combined
   if (startWaktu) {
     if (role !== "superadmin" && userCabang) {
@@ -89,15 +91,15 @@ export async function getLaporanAbsensi(filterPeriod: string) {
         .from(absensi)
         .innerJoin(santri, eq(absensi.idSantri, santri.id))
         .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
-        .where(and(eq(santri.idCabang, userCabang), gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0))) as any;
+        .where(and(eq(santri.idCabang, userCabang), gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     } else {
-       query = query.where(and(gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0))) as any;
+       query = query.where(and(gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     }
   } else {
     if (role !== "superadmin" && userCabang) {
-      query = query.where(and(eq(santri.idCabang, userCabang), eq(absensi.isArchived, 0))) as any;
+      query = query.where(and(eq(santri.idCabang, userCabang), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     } else {
-      query = query.where(eq(absensi.isArchived, 0)) as any;
+      query = query.where(and(eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     }
   }
 
