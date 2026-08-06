@@ -67,9 +67,8 @@ export async function GET(request: Request) {
       const [sudahIzin] = await db.select().from(perizinanSantri).where(
         and(
           eq(perizinanSantri.idSantri, s.id),
-          eq(perizinanSantri.statusIzin, 'disetujui'), 
-          gte(perizinanSantri.tanggalMulai, startOfDayWIB),
-          lt(perizinanSantri.tanggalMulai, endOfDayWIB)
+          gte(perizinanSantri.tanggalSelesai, startOfDayWIB),
+          lte(perizinanSantri.tanggalMulai, endOfDayWIB)
         )
       ).limit(1);
       

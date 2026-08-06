@@ -49,7 +49,7 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
   const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   const todayName = dayNames[dayIndex];
 
-  const [hariAktif] = await db.select().from(pengaturanHariAktif).where(eq(pengaturanHariAktif.namaHari, todayName));
+  const [hariAktif] = await db.select().from(pengaturanHariAktif).where(eq(pengaturanHariAktif.hari, todayName));
   if (hariAktif && !hariAktif.isAktif) {
     return { success: false, message: "Hari ini sistem absensi dinonaktifkan (Hari Libur Rutin)" };
   }
