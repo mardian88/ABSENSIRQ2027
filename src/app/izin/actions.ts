@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { santri, perizinanSantri, absensi, pengaturanHumas } from "@/db/schema";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
@@ -154,6 +155,9 @@ export async function submitIzin(formData: FormData) {
       await sendTemplatedMessage(humas.nomorAdmin, "izin_admin", payload);
     }
   }
+  
+  revalidatePath("/laporan-absensi");
+  revalidatePath("/laporan-absensi/perizinan");
 
   return { success: true, message: "Pengajuan izin berhasil" };
 }
