@@ -14,6 +14,18 @@ export default function FormIzinPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [jumlahHari, setJumlahHari] = useState(1);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -50,12 +62,25 @@ export default function FormIzinPage() {
       }
 
       formData.append("idSantri", session.id);
+      
+      setUploadProgress(10);
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) return prev;
+          return prev + 15;
+        });
+      }, 300);
+
       const res = await submitIzin(formData);
       
+      clearInterval(interval);
+      setUploadProgress(100);
+      
       if (res.success) {
-        router.push("/izin/sukses");
+        setTimeout(() => router.push("/izin/sukses"), 400);
       } else {
         toast.error(res.message || "Gagal mengirim pengajuan");
+        setLoading(false);
       }
     } catch (err) {
       toast.error("Terjadi kesalahan sistem");
@@ -122,17 +147,37 @@ export default function FormIzinPage() {
           {jumlahHari >= 2 && (
             <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
               <Label className="text-slate-700">Lampiran Bukti <span className="text-rose-500">*</span></Label>
-              <p className="text-xs text-slate-500 -mt-1">Wajib menyertakan surat keterangan dari dokter atau foto bukti lainnya.</p>
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors cursor-pointer group">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <div className="flex gap-2 mb-2 text-slate-400 group-hover:text-emerald-500 transition-colors">
-                    <Camera className="w-6 h-6" />
-                    <Upload className="w-6 h-6" />
+              <p className="text-xs text-slate-500 -mt-1">Wajib menyertakan foto surat sakit atau bukti lainnya.</p>
+              
+              <label className="flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed border-slate-300 rounded-xl bg-white hover:bg-slate-50 transition-colors cursor-pointer group relative overflow-hidden">
+                {previewUrl ? (
+                  <div className="relative w-full h-48">
+                    <img src={previewUrl} alt="Preview Bukti" className="w-full h-full object-contain bg-slate-100" />
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-8 h-8 text-white mb-2" />
+                      <p className="text-white text-sm font-medium">Ubah Foto</p>
+                    </div>
                   </div>
-                  <p className="text-sm font-medium text-slate-600">Ambil Foto / Pilih Berkas</p>
-                </div>
-                <input type="file" name="buktiFile" className="hidden" accept="image/*" capture="environment" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <div className="flex gap-2 mb-2 text-slate-400 group-hover:text-emerald-500 transition-colors">
+                      <Camera className="w-6 h-6" />
+                      <Upload className="w-6 h-6" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600">Ambil Foto / Pilih Galeri</p>
+                    <p className="text-xs text-slate-400 mt-1">Tap di sini untuk memilih</p>
+                  </div>
+                )}
+                <input type="file" name="buktiFile" className="hidden" accept="image/*" onChange={handleFileChange} />
               </label>
+
+              {loading && uploadProgress > 0 && (
+                <div className="w-full bg-slate-200 rounded-full h-3 mt-3 overflow-hidden shadow-inner">
+                  <div className="bg-emerald-500 h-3 rounded-full transition-all duration-300 ease-out flex items-center justify-center text-[8px] font-bold text-white" style={{ width: `${uploadProgress}%` }}>
+                    {uploadProgress}%
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
