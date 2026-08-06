@@ -2,7 +2,7 @@ import { getOrtuSession } from "../actions";
 import { redirect } from "next/navigation";
 import { FileText, PlusCircle } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import { ProfileHeader } from "./ProfileHeader";
 
 export default async function OrtuDashboardPage() {
   const santri = await getOrtuSession();
@@ -14,25 +14,7 @@ export default async function OrtuDashboardPage() {
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Header Profile */}
-      <div className="bg-emerald-600 text-white p-6 rounded-b-3xl shadow-md">
-        <div className="flex justify-between items-start mb-6">
-          <h1 className="text-xl font-bold">Perizinan</h1>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
-            {santri.urlFotoWajah ? (
-              <Image src={santri.urlFotoWajah} alt={santri.namaLengkap} width={64} height={64} className="object-cover w-full h-full" />
-            ) : (
-              <span className="text-emerald-600 font-bold text-2xl">{santri.namaLengkap.charAt(0)}</span>
-            )}
-          </div>
-          <div>
-            <h2 className="text-lg font-bold">{santri.namaLengkap}</h2>
-            <p className="text-emerald-100 text-sm opacity-90">NIS: {santri.nomorInduk}</p>
-          </div>
-        </div>
-      </div>
+      <ProfileHeader santri={santri} />
 
       {/* Main Actions */}
       <div className="flex-1 p-6 flex flex-col gap-4 mt-4">

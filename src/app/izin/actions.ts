@@ -175,3 +175,42 @@ export async function getRiwayatIzin(idSantri: string) {
     .where(eq(perizinanSantri.idSantri, idSantri))
     .orderBy(desc(perizinanSantri.waktuPengajuan));
 }
+
+export async function updateFotoProfil(idSantri: string, formData: FormData): Promise<{success: boolean, message: string, url?: string}> {
+  const fotoFile = formData.get("fotoFile") as File | null;
+  if (!fotoFile || fotoFile.size === 0) return { success: false, message: "File kosong" };
+
+  try {
+    const buffer = Buffer.from(await fotoFile.arrayBuffer());
+    
+    const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: "profil_santri" },
+        (error, result) => {
+          if (error || !result) reject(error || new Error("Unknown upload error"));
+          else resolve(result);
+        }
+      ).end(buffer);
+    });
+
+    const newUrl = uploadResult.secure_url;
+    await db.update(santri).set({ urlFotoWajah: newUrl }).where(eq(santri.id, idSantri));
+    revalidatePath("/izin/dashboard");
+    return { success: true, message: "Foto profil berhasil diperbarui", url: newUrl };
+  } catch (error) {
+    console.error("Upload error:", error);
+    return { success: false, message: "Gagal mengunggah foto profil" };
+  }
+}
+
+export async function resetFotoProfil(idSantri: string): Promise<{success: boolean, message: string}> {
+  try {
+    // Optionally delete from cloudinary if it's a cloudinary URL, but we can skip it to be safe 
+    // or if we had a specific function. We'll just reset DB.
+    await db.update(santri).set({ urlFotoWajah: null }).where(eq(santri.id, idSantri));
+    revalidatePath("/izin/dashboard");
+    return { success: true, message: "Foto profil direset ke default" };
+  } catch (error) {
+    return { success: false, message: "Gagal mereset foto profil" };
+  }
+}
