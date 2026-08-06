@@ -4,6 +4,13 @@ import { db } from "@/db";
 import { perizinanSantri, santri, absensi } from "@/db/schema";
 import { desc, eq, gte, and, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 export type PerizinanData = {
   id: string;
@@ -191,10 +198,17 @@ export async function updateStatusAlpa(idAbsensi: string, passwordAdmin: string,
 export async function resetLaporanIzin(password: string): Promise<{success: boolean, message: string}> {
   if (password !== 'rqm2828') return { success: false, message: 'Password salah!' };
   try {
+    try {
+      await cloudinary.api.delete_resources_by_prefix("izin_santri/");
+    } catch (cErr) {
+      console.error("Gagal menghapus gambar di Cloudinary:", cErr);
+    }
+
     await db.delete(perizinanSantri);
     revalidatePath('/laporan-absensi/perizinan');
-    return { success: true, message: 'Berhasil mereset laporan izin' };
+    return { success: true, message: 'Berhasil mereset laporan izin beserta gambarnya' };
   } catch (error) {
+    console.error(error);
     return { success: false, message: 'Terjadi kesalahan sistem' };
   }
 }
