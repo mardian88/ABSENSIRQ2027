@@ -18,7 +18,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     { name: "Database Alumni", href: "/alumni", icon: GraduationCap },
     { name: "Board Halaqah", href: "/halaqoh", icon: BookOpen },
     { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
-    { name: "Laporan Absensi", href: "/laporan-absensi", icon: ClipboardList },
+    { name: "Laporan Hadir", href: "/laporan-absensi", icon: ClipboardList },
     { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText },
     // { name: "Keuangan (SIMKEU)", href: "https://muharrik-finance.vercel.app/", icon: Wallet },
     { name: "Hasil PSB", href: "/admin-psb", icon: Users },

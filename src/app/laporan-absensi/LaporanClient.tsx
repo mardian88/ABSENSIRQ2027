@@ -154,8 +154,8 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Laporan Absensi</h1>
-            <p className="text-sm text-slate-500">Lihat dan ekspor rekapitulasi data absensi santri.</p>
+            <h1 className="text-2xl font-bold text-slate-900">Laporan Hadir</h1>
+            <p className="text-sm text-slate-500">Lihat dan ekspor rekapitulasi data kehadiran santri.</p>
           </div>
           
           <div className="flex items-center gap-3">

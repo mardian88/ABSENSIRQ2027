@@ -69,7 +69,7 @@ export async function getLaporanAbsensi(filterPeriod: string) {
     .innerJoin(santri, eq(absensi.idSantri, santri.id))
     .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id));
 
-  const excludedStatuses = ['Izin', 'Sakit', 'Alpa'];
+  const excludedStatuses = ['Izin', 'Sakit', 'Alpa', 'izin', 'sakit', 'alpa', 'IZIN', 'SAKIT', 'ALPA'];
 
   // Time filtering & Role filtering combined
   if (startWaktu) {

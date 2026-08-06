@@ -16,10 +16,17 @@ export default function FormIzinPage() {
   const [jumlahHari, setJumlahHari] = useState(1);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [keterangan, setKeterangan] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error("File terlalu besar. Maksimal ukuran gambar adalah 50 MB.");
+        e.target.value = "";
+        setPreviewUrl(null);
+        return;
+      }
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     } else {
@@ -138,10 +145,16 @@ export default function FormIzinPage() {
             <Textarea 
               name="keterangan" 
               placeholder="Jelaskan alasan izin / sakit secara rinci (Minimal 50 huruf)..." 
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
               required 
               className="min-h-[120px] bg-white resize-none"
             />
-            <p className="text-[10px] text-slate-400 mt-1">Minimal 50 huruf (tidak termasuk tanda baca & spasi).</p>
+            <p className={`text-[11px] mt-1 ${keterangan.replace(/[^a-zA-Z0-9]/g, "").length < 50 ? "text-rose-500 font-medium" : "text-emerald-500 font-medium"}`}>
+              {keterangan.replace(/[^a-zA-Z0-9]/g, "").length < 50 
+                ? `Minimal 50 huruf (tidak termasuk tanda baca & spasi). Kurang ${50 - keterangan.replace(/[^a-zA-Z0-9]/g, "").length} huruf lagi.` 
+                : `Minimal tercapai (${keterangan.replace(/[^a-zA-Z0-9]/g, "").length} huruf).`}
+            </p>
           </div>
 
           {jumlahHari >= 2 && (
