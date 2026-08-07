@@ -25,8 +25,8 @@ type SantriItem = {
 type HalaqahColumn = {
   id: string;
   title: string;
-  namaPengajar?: string;
-  kontakPengajar?: string;
+  namaPengajar?: string | null;
+  kontakPengajar?: string | null;
   isProtected: boolean;
   items: SantriItem[];
 };
