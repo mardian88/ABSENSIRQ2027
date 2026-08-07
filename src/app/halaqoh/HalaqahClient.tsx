@@ -12,7 +12,8 @@ import {
   updateSantriHalaqoh, 
   createHalaqoh, 
   renameHalaqoh, 
-  deleteHalaqoh 
+  deleteHalaqoh,
+  updateHalaqohDetails
 } from './actions';
 
 type SantriItem = {
@@ -24,6 +25,8 @@ type SantriItem = {
 type HalaqahColumn = {
   id: string;
   title: string;
+  namaPengajar?: string;
+  kontakPengajar?: string;
   isProtected: boolean;
   items: SantriItem[];
 };
@@ -32,6 +35,8 @@ const HalaqahBoard = () => {
   const [columns, setColumns] = useState<HalaqahColumn[]>([]);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editColumnText, setEditColumnText] = useState('');
+  const [editingHalaqoh, setEditingHalaqoh] = useState<HalaqahColumn | null>(null);
+  const [editForm, setEditForm] = useState({ namaHalaqoh: '', namaPengajar: '', kontakPengajar: '' });
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -220,29 +225,34 @@ const HalaqahBoard = () => {
   };
 
   const saveColumnEdit = async () => {
-    if (!editColumnText.trim() || !editingColumnId) return;
+    if (!editForm.namaHalaqoh.trim() || !editingHalaqoh) return;
     
-    const colIndex = columns.findIndex(col => col.id === editingColumnId);
-    if (columns[colIndex].title === editColumnText.trim()) {
-       setEditingColumnId(null);
-       return; // No change
-    }
-
+    const colIndex = columns.findIndex(col => col.id === editingHalaqoh.id);
+    
     const newColumns = [...columns];
     if (colIndex !== -1) {
-      newColumns[colIndex].title = editColumnText.trim();
+      newColumns[colIndex].title = editForm.namaHalaqoh.trim();
+      newColumns[colIndex].namaPengajar = editForm.namaPengajar.trim() || '-';
+      newColumns[colIndex].kontakPengajar = editForm.kontakPengajar.trim();
       setColumns(newColumns);
     }
     
     setIsSaving(true);
-    const res = await renameHalaqoh(editingColumnId, editColumnText.trim());
+    const res = await updateHalaqohDetails(
+      editingHalaqoh.id, 
+      editForm.namaHalaqoh.trim(), 
+      editForm.namaPengajar.trim() || '-', 
+      editForm.kontakPengajar.trim()
+    );
     setIsSaving(false);
     
     if (!res.success) {
-       toast.error("Gagal mengubah nama halaqah");
+       toast.error("Gagal mengubah detail halaqah");
        fetchBoardData();
+    } else {
+       toast.success("Detail halaqah berhasil disimpan");
     }
-    setEditingColumnId(null);
+    setEditingHalaqoh(null);
   };
 
   const handleSort = (colId: string, sortType: string) => {
@@ -387,25 +397,28 @@ const HalaqahBoard = () => {
             {/* COLUMN HEADER */}
             <div className={`p-4 flex justify-between items-center border-b relative group ${column.isProtected ? 'bg-gradient-to-r from-slate-100 to-slate-50 border-slate-200 print:bg-slate-100' : 'bg-gradient-to-r from-indigo-50/50 to-transparent border-slate-200/60 print:border-b-2 print:border-slate-800'}`}>
               
-              <div className="flex items-center gap-2 flex-1 w-full overflow-hidden">
-                {editingColumnId === column.id ? (
-                  <input
-                    autoFocus
-                    value={editColumnText}
-                    onChange={(e) => setEditColumnText(e.target.value)}
-                    onBlur={saveColumnEdit}
-                    onKeyDown={(e) => e.key === 'Enter' && saveColumnEdit()}
-                    className="w-full px-1 py-0.5 border border-indigo-300 rounded font-bold text-slate-700 outline-none text-sm"
-                  />
-                ) : (
-                  <h3 
-                    className={`font-bold text-slate-800 truncate text-sm flex-1 ${!column.isProtected && 'cursor-pointer hover:text-indigo-600 print:text-black'}`}
-                    onClick={() => !column.isProtected && setEditingColumnId(column.id) || setEditColumnText(column.title)}
-                  >
-                    {column.title}
-                  </h3>
-                )}
-              </div>
+                  <div className="flex flex-col flex-1 w-full overflow-hidden">
+                    <h3 
+                      className={`font-bold text-slate-800 truncate text-sm ${!column.isProtected && 'cursor-pointer hover:text-indigo-600 print:text-black'}`}
+                      onClick={() => {
+                        if (!column.isProtected) {
+                          setEditingHalaqoh(column);
+                          setEditForm({
+                            namaHalaqoh: column.title,
+                            namaPengajar: column.namaPengajar || '',
+                            kontakPengajar: column.kontakPengajar || ''
+                          });
+                        }
+                      }}
+                    >
+                      {column.title}
+                    </h3>
+                    {!column.isProtected && (
+                      <p className="text-xs text-slate-500 truncate mt-0.5" title={column.namaPengajar}>
+                        Guru: <span className="font-medium text-slate-600">{column.namaPengajar || '-'}</span>
+                      </p>
+                    )}
+                  </div>
               
               <div className="flex items-center gap-1.5 shrink-0 ml-2">
                 <span className="bg-slate-300/80 text-slate-700 text-xs font-bold px-2 py-0.5 rounded-full print:bg-transparent print:text-black">
@@ -508,6 +521,60 @@ const HalaqahBoard = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}} />
+
+      {/* DIALOG EDIT HALAQOH */}
+      {editingHalaqoh && (
+        <div className="fixed inset-0 z-[110] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <h2 className="text-lg font-bold text-slate-800">Edit Halaqah</h2>
+              <button onClick={() => setEditingHalaqoh(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700">Nama Halaqah</label>
+                <input 
+                  type="text" 
+                  value={editForm.namaHalaqoh}
+                  onChange={(e) => setEditForm({...editForm, namaHalaqoh: e.target.value})}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700">Nama Guru / Pengajar</label>
+                <input 
+                  type="text" 
+                  value={editForm.namaPengajar}
+                  onChange={(e) => setEditForm({...editForm, namaPengajar: e.target.value})}
+                  placeholder="Misal: Ust. Fulan"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700">No. WA Guru</label>
+                <input 
+                  type="text" 
+                  value={editForm.kontakPengajar}
+                  onChange={(e) => setEditForm({...editForm, kontakPengajar: e.target.value})}
+                  placeholder="Misal: 08123456789"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+              <button onClick={() => setEditingHalaqoh(null)} className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-100 transition-colors">
+                Batal
+              </button>
+              <button onClick={saveColumnEdit} disabled={isSaving} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow flex items-center gap-2 disabled:opacity-50">
+                {isSaving ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

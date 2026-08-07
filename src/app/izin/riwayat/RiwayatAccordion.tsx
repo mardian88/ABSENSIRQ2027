@@ -12,7 +12,7 @@ export function RiwayatAccordion({ data }: { data: any[] }) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-w-md mx-auto">
       {data.map((item) => {
         const isSakit = item.kategori?.toLowerCase() === "sakit";
         const isOpen = openId === item.id;
@@ -31,10 +31,10 @@ export function RiwayatAccordion({ data }: { data: any[] }) {
             {/* Header / Bar */}
             <button 
               onClick={() => toggleOpen(item.id)}
-              className={`w-full flex items-center justify-between p-3 text-left focus:outline-none hover:${bgColor} transition-colors ${isOpen ? bgColor : "bg-white"}`}
+              className={`w-full flex items-center justify-between py-2 px-3 text-left focus:outline-none hover:${bgColor} transition-colors ${isOpen ? bgColor : "bg-white"}`}
             >
               <div className="flex items-center gap-3">
-                <div className={`w-1.5 h-10 rounded-full ${accentColor}`}></div>
+                <div className={`w-1.5 h-9 rounded-full ${accentColor}`}></div>
                 <div>
                   <div className={`text-sm font-bold uppercase tracking-wider ${textColor}`}>
                     {item.kategori}

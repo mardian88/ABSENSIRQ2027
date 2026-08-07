@@ -161,6 +161,11 @@ export async function submitIzin(formData: FormData) {
     if (humas && humas.nomorAdmin && humas.isAktif) {
       await sendTemplatedMessage(humas.nomorAdmin, "izin_admin", payload);
     }
+
+    // 3. Info Izin ke Guru
+    if (halaqohData && halaqohData.kontakPengajar) {
+      await sendTemplatedMessage(halaqohData.kontakPengajar, "izin_guru", payload);
+    }
   }
   
   revalidatePath("/laporan-absensi");

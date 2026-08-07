@@ -38,6 +38,8 @@ export async function getHalaqahBoardData() {
       columns.push({
         id: h.id,
         title: h.namaHalaqoh,
+        namaPengajar: h.namaPengajar,
+        kontakPengajar: h.kontakPengajar,
         isProtected: false,
         items
       });
@@ -95,6 +97,26 @@ export async function renameHalaqoh(id: string, newTitle: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Error renaming halaqoh:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function updateHalaqohDetails(id: string, namaHalaqoh: string, namaPengajar: string, kontakPengajar: string) {
+  if (id === 'unassigned') return { success: false, message: "Kolom ini dilindungi" };
+  
+  try {
+    await db.update(halaqoh)
+      .set({ 
+        namaHalaqoh,
+        namaPengajar,
+        kontakPengajar 
+      })
+      .where(eq(halaqoh.id, id));
+      
+    revalidatePath("/pengaturan-halaqoh");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating halaqoh details:", error);
     return { success: false, message: error.message };
   }
 }

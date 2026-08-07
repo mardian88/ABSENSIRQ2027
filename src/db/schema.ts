@@ -23,6 +23,7 @@ export const halaqoh = sqliteTable('halaqoh', {
   id: text('id').primaryKey(),
   namaHalaqoh: text('nama_halaqoh').notNull(),
   namaPengajar: text('nama_pengajar').notNull(),
+  kontakPengajar: text('kontak_pengajar'), // Nomor WA Guru
   idSesiAbsensi: text('id_sesi_absensi').references(() => sesiAbsensi.id)
 });
 

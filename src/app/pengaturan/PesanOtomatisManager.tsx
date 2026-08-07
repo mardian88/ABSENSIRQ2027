@@ -24,6 +24,8 @@ const JENIS_PESAN_OPTIONS = [
   { value: "absen_pulang_cepat", label: "Pulang Cepat" },
   { value: "reminder_absen", label: "Reminder Belum Absen" },
   { value: "izin_ortu", label: "Keterangan Izin ke Orang Tua" },
+  { value: "izin_admin", label: "Keterangan Izin ke Admin" },
+  { value: "izin_guru", label: "Keterangan Izin ke Guru" },
   { value: "alpa_ortu", label: "Alpa (Tanpa Keterangan) ke Orang Tua" },
   { value: "alpa_admin", label: "Info Alpa ke Admin" },
   { value: "gagal_absen_masuk", label: "Peringatan Pulang Sebelum Masuk" },
