@@ -62,6 +62,7 @@ export default function PindaiQR() {
           jenis: jenisAbsenRef.current
         });
       } else {
+        new Audio('/notif/gagal.wav').play().catch(e => console.error("Audio error:", e));
         setScanResult({
           nama: (res as any).message || "Santri tidak ditemukan",
           waktu: formatTimeID(new Date()),
@@ -70,6 +71,7 @@ export default function PindaiQR() {
       }
     } catch (e: any) {
       console.error(e);
+      new Audio('/notif/gagal.wav').play().catch(err => console.error("Audio error:", err));
       setScanResult({
         nama: e.message || "Gagal Server",
         waktu: formatTimeID(new Date()),
@@ -372,7 +374,7 @@ export default function PindaiQR() {
                 <>
                   <XCircle className="w-20 h-20 md:w-24 md:h-24 mb-4 text-amber-500" />
                   <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Peringatan</h2>
-                  <p className="text-2xl md:text-3xl font-extrabold px-4 text-amber-400">{scanResult.nama}</p>
+                  <p className="text-lg md:text-xl font-bold px-4 max-w-sm text-amber-400">{scanResult.nama}</p>
                 </>
               ) : (
                 <>

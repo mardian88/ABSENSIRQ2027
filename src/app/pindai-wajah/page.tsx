@@ -246,14 +246,15 @@ export default function PindaiWajah() {
           jenis: currentJenis
         });
       } else {
-         setScanResult({
+        new Audio('/notif/gagal.wav').play().catch(err => console.error("Audio error:", err));
+        setScanResult({
           nama: res.message || "Gagal Absen",
           waktu: formatTimeID(new Date()),
           jenis: "error"
         });
       }
     } catch (e: any) {
-      console.error(e);
+      new Audio('/notif/gagal.wav').play().catch(err => console.error("Audio error:", err));
       setScanResult({
         nama: "Gagal Sistem",
         waktu: formatTimeID(new Date()),
@@ -380,7 +381,7 @@ export default function PindaiWajah() {
                 <p className="text-white/70 text-xs font-semibold tracking-wider uppercase mb-1">
                   {scanResult.jenis === 'error' ? 'Gagal' : scanResult.jenis === 'masuk' ? 'Berhasil Masuk' : 'Berhasil Pulang'}
                 </p>
-                <h3 className="text-white font-bold text-2xl tracking-tight leading-tight max-w-[250px] truncate">{scanResult.nama}</h3>
+                <h3 className={`text-white font-bold leading-tight ${scanResult.jenis === 'error' ? 'text-lg md:text-xl max-w-[320px] mx-auto' : 'text-2xl tracking-tight max-w-[250px] truncate'}`}>{scanResult.nama}</h3>
                 {scanResult.waktu && <p className="text-white/60 text-sm mt-2 font-medium">{scanResult.waktu}</p>}
               </div>
             </div>
