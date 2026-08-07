@@ -19,7 +19,13 @@ export default function PindaiWajah() {
   
   const [scanResult, setScanResult] = useState<{ nama: string; waktu: string; jenis: string } | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [jenisAbsen, setJenisAbsen] = useState<"masuk" | "pulang">("masuk");
+  const [jenisAbsen, setJenisAbsenState] = useState<"masuk" | "pulang">("masuk");
+  const jenisAbsenRef = useRef<"masuk" | "pulang">("masuk");
+
+  const setJenisAbsen = (val: "masuk" | "pulang") => {
+    setJenisAbsenState(val);
+    jenisAbsenRef.current = val;
+  };
 
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
@@ -228,14 +234,16 @@ export default function PindaiWajah() {
     lastScannedId.current = id;
     lastScannedTime.current = Date.now();
     
+    const currentJenis = jenisAbsenRef.current;
+    
     try {
-      const res = await recordAbsensiById(id, jenisAbsen, 'wajah', 'hadir');
+      const res = await recordAbsensiById(id, currentJenis, 'wajah', 'hadir');
       if (res.success) {
         new Audio('/notif/berhasil.wav').play().catch(e => console.error("Audio error:", e));
         setScanResult({
           nama: nama,
           waktu: res.data?.waktu || formatTimeID(new Date()),
-          jenis: jenisAbsen
+          jenis: currentJenis
         });
       } else {
          setScanResult({

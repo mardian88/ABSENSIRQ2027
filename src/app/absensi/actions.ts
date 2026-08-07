@@ -182,7 +182,12 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
 }
 
 export async function getSantriForManualAbsen() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  let session = null;
+  try {
+    session = await auth.api.getSession({ headers: await headers() });
+  } catch (err) {
+    console.warn("Kiosk mode session check bypassed", err);
+  }
   const role = session?.user?.role || "admin_cabang";
   const userCabang = session?.user?.idCabang;
 
