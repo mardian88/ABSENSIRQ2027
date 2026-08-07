@@ -45,9 +45,12 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
   const endOfDayWIB = new Date(`${wibDateString}T23:59:59.999+07:00`);
 
   // --- CEK HARI AKTIF & LIBUR ---
-  const dayIndex = now.getDay();
-  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  const todayName = dayNames[dayIndex];
+  const wibWeekdayEn = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', weekday: 'long' }).format(now);
+  const dayNameMap: Record<string, string> = {
+    'Sunday': 'Minggu', 'Monday': 'Senin', 'Tuesday': 'Selasa',
+    'Wednesday': 'Rabu', 'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu'
+  };
+  const todayName = dayNameMap[wibWeekdayEn];
 
   const [hariAktif] = await db.select().from(pengaturanHariAktif).where(eq(pengaturanHariAktif.hari, todayName));
   if (hariAktif && !hariAktif.isAktif) {
