@@ -21,7 +21,16 @@ export async function getHalaqahBoardData() {
       .filter(s => !s.idHalaqoh)
       .map(s => ({ id: s.id, content: s.namaLengkap, nis: s.nomorInduk }));
 
-    const columns = [
+    type BoardColumn = {
+      id: string;
+      title: string;
+      namaPengajar?: string | null;
+      kontakPengajar?: string | null;
+      isProtected: boolean;
+      items: typeof unassignedItems;
+    };
+
+    const columns: BoardColumn[] = [
       { 
         id: 'unassigned', 
         title: 'Belum ada halaqah', 
