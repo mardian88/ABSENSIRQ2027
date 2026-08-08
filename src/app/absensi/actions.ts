@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { absensi, santri, halaqoh, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanHumas } from "@/db/schema";
+import { absensi, absensiGuru, santri, guru, halaqoh, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanHumas } from "@/db/schema";
 import { eq, or, and, desc, between } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
@@ -21,20 +21,33 @@ export async function recordAbsensiByQR(kodeQr: string, jenisAbsen: 'masuk' | 'p
     searchKey = legacyMatch[1]; // Ambil NIS-nya saja
   }
 
-  // 1. Cari santri berdasarkan kode QR (exact match) atau Nomor Induk (fallback)
+  // 1. Cari santri atau guru berdasarkan kode QR (exact match) atau Nomor Induk/NIP (fallback)
   const [santriData] = await db.select().from(santri).where(or(eq(santri.kodeQr, searchKey), eq(santri.nomorInduk, searchKey)));
   
-  if (!santriData) {
-    return { success: false, message: "QR Code tidak terdaftar" };
+  if (santriData) {
+    return await recordAbsensiById(santriData.id, jenisAbsen, 'qr', 'hadir');
   }
 
-  // Call the unified record method, passing 'hadir' as placeholder for calculation
-  return await recordAbsensiById(santriData.id, jenisAbsen, 'qr', 'hadir');
+  const [guruData] = await db.select().from(guru).where(or(eq(guru.kodeQr, searchKey), eq(guru.nip, searchKey)));
+  
+  if (guruData) {
+    return await recordAbsensiGuruById(guruData.id, jenisAbsen, 'qr', 'hadir');
+  }
+
+  return { success: false, message: "QR Code tidak terdaftar" };
 }
 
-export async function recordAbsensiById(idSantri: string, jenisAbsen: string, metode: string, statusKehadiran: string) {
-  const [santriData] = await db.select().from(santri).where(eq(santri.id, idSantri));
-  if (!santriData) return { success: false, message: "Santri tidak ditemukan" };
+export async function recordAbsensiById(idSantriOrGuru: string, jenisAbsen: string, metode: string, statusKehadiran: string) {
+  // Cek Guru dulu (karena ini fallback jika id dari Pindai Wajah)
+  const [guruData] = await db.select().from(guru).where(eq(guru.id, idSantriOrGuru));
+  if (guruData) {
+    return await recordAbsensiGuruById(guruData.id, jenisAbsen, metode, statusKehadiran);
+  }
+
+  const [santriData] = await db.select().from(santri).where(eq(santri.id, idSantriOrGuru));
+  if (!santriData) return { success: false, message: "ID tidak ditemukan" };
+  
+  const idSantri = idSantriOrGuru;
 
   const now = new Date();
   
@@ -182,6 +195,55 @@ export async function recordAbsensiById(idSantri: string, jenisAbsen: string, me
   revalidatePath("/");
   revalidatePath("/absensi/manual");
   return { success: true, data: { namaLengkap: santriData.namaLengkap, waktu: formatTimeID(now) } };
+}
+
+export async function recordAbsensiGuruById(idGuru: string, jenisAbsen: string, metode: string, statusKehadiran: string) {
+  const [guruData] = await db.select().from(guru).where(eq(guru.id, idGuru));
+  if (!guruData) return { success: false, message: "Guru tidak ditemukan" };
+
+  const now = new Date();
+  const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const wibDateString = dateFormatter.format(now);
+  const startOfDayWIB = new Date(`${wibDateString}T00:00:00.000+07:00`);
+  const endOfDayWIB = new Date(`${wibDateString}T23:59:59.999+07:00`);
+
+  // Cek apakah sudah absen hari ini
+  const existingAbsen = await db.select().from(absensiGuru).where(
+    and(
+      eq(absensiGuru.idGuru, idGuru),
+      eq(absensiGuru.jenisAbsen, jenisAbsen),
+      between(absensiGuru.waktuScan, startOfDayWIB, endOfDayWIB)
+    )
+  );
+
+  if (existingAbsen.length > 0) {
+    return { success: false, message: `Sudah absen ${jenisAbsen} hari ini` };
+  }
+
+  await db.insert(absensiGuru).values({
+    id: uuidv4(),
+    idGuru,
+    waktuScan: now,
+    metodeScan: metode,
+    statusKehadiran: 'hadir',
+    jenisAbsen
+  });
+
+  const payload = {
+    namaSantri: guruData.namaLengkap, // menggunakan template yang sama [NAMA_SANTRI]
+    nis: guruData.nip || "-",
+    waktu: formatTimeID(now),
+    tanggal: new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Jakarta' }).format(now),
+    halaqah: "Pengurus/Guru",
+    keterangan: "-"
+  };
+  
+  // Trigger notif khusus guru
+  const jenisPesan = jenisAbsen === "masuk" ? "absen_guru_masuk" : "absen_guru_pulang";
+  await sendTemplatedMessage(guruData.kontakWa, jenisPesan, payload);
+
+  revalidatePath("/");
+  return { success: true, data: { namaLengkap: guruData.namaLengkap, waktu: formatTimeID(now) } };
 }
 
 export async function getSantriForManualAbsen() {

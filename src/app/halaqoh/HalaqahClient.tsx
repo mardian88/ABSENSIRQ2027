@@ -13,8 +13,15 @@ import {
   createHalaqoh, 
   renameHalaqoh, 
   deleteHalaqoh,
-  updateHalaqohDetails
+  updateHalaqohDetails,
+  getGuruList
 } from './actions';
+
+type GuruItem = {
+  id: string;
+  namaLengkap: string;
+  kontakWa: string;
+};
 
 type SantriItem = {
   id: string;
@@ -27,6 +34,7 @@ type HalaqahColumn = {
   title: string;
   namaPengajar?: string | null;
   kontakPengajar?: string | null;
+  idGuru?: string | null;
   isProtected: boolean;
   items: SantriItem[];
 };
@@ -36,7 +44,8 @@ const HalaqahBoard = () => {
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editColumnText, setEditColumnText] = useState('');
   const [editingHalaqoh, setEditingHalaqoh] = useState<HalaqahColumn | null>(null);
-  const [editForm, setEditForm] = useState({ namaHalaqoh: '', namaPengajar: '', kontakPengajar: '' });
+  const [editForm, setEditForm] = useState({ namaHalaqoh: '', namaPengajar: '', kontakPengajar: '', idGuru: '' });
+  const [guruList, setGuruList] = useState<GuruItem[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -88,8 +97,20 @@ const HalaqahBoard = () => {
     }
   };
 
+  const fetchGuruList = async () => {
+    try {
+      const res = await getGuruList();
+      if (res.success && res.data) {
+        setGuruList(res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching guru:", error);
+    }
+  };
+
   useEffect(() => {
     fetchBoardData();
+    fetchGuruList();
   }, []);
 
   const handleItemDragStart = (e: React.DragEvent, colId: string, item: SantriItem, index: number) => {
@@ -234,6 +255,7 @@ const HalaqahBoard = () => {
       newColumns[colIndex].title = editForm.namaHalaqoh.trim();
       newColumns[colIndex].namaPengajar = editForm.namaPengajar.trim() || '-';
       newColumns[colIndex].kontakPengajar = editForm.kontakPengajar.trim();
+      newColumns[colIndex].idGuru = editForm.idGuru || null;
       setColumns(newColumns);
     }
     
@@ -242,7 +264,8 @@ const HalaqahBoard = () => {
       editingHalaqoh.id, 
       editForm.namaHalaqoh.trim(), 
       editForm.namaPengajar.trim() || '-', 
-      editForm.kontakPengajar.trim()
+      editForm.kontakPengajar.trim(),
+      editForm.idGuru || undefined
     );
     setIsSaving(false);
     
@@ -406,7 +429,8 @@ const HalaqahBoard = () => {
                           setEditForm({
                             namaHalaqoh: column.title,
                             namaPengajar: column.namaPengajar || '',
-                            kontakPengajar: column.kontakPengajar || ''
+                            kontakPengajar: column.kontakPengajar || '',
+                            idGuru: column.idGuru || ''
                           });
                         }
                       }}
@@ -414,7 +438,7 @@ const HalaqahBoard = () => {
                       {column.title}
                     </h3>
                     {!column.isProtected && (
-                      <p className="text-xs text-slate-500 truncate mt-0.5" title={column.namaPengajar}>
+                      <p className="text-xs text-slate-500 truncate mt-0.5" title={column.namaPengajar || ""}>
                         Guru: <span className="font-medium text-slate-600">{column.namaPengajar || '-'}</span>
                       </p>
                     )}
@@ -544,13 +568,31 @@ const HalaqahBoard = () => {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Nama Guru / Pengajar</label>
-                <input 
-                  type="text" 
-                  value={editForm.namaPengajar}
-                  onChange={(e) => setEditForm({...editForm, namaPengajar: e.target.value})}
-                  placeholder="Misal: Ust. Fulan"
+                <select
+                  value={editForm.idGuru || ''}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    if (selectedId === '') {
+                       setEditForm({...editForm, idGuru: '', namaPengajar: '', kontakPengajar: ''});
+                    } else {
+                       const guru = guruList.find(g => g.id === selectedId);
+                       if (guru) {
+                         setEditForm({
+                           ...editForm,
+                           idGuru: guru.id,
+                           namaPengajar: guru.namaLengkap,
+                           kontakPengajar: guru.kontakWa || ''
+                         });
+                       }
+                    }
+                  }}
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                />
+                >
+                  <option value="">-- Pilih Guru / Pengajar --</option>
+                  {guruList.map((g) => (
+                    <option key={g.id} value={g.id}>{g.namaLengkap}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">No. WA Guru</label>

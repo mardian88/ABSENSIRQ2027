@@ -3,30 +3,87 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText } from "lucide-react";
+import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
 
-  const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: Home },
-    { name: "Pindai Wajah", href: "/pindai-wajah", icon: UserCheck },
-    { name: "Pindai QR", href: "/pindai-qr", icon: UserCheck },
-    { name: "Absensi Manual", href: "/absensi/manual", icon: UserCheck },
-    { name: "Database Santri", href: "/santri", icon: Users },
-    { name: "Database Alumni", href: "/alumni", icon: GraduationCap },
-    { name: "Board Halaqah", href: "/halaqoh", icon: BookOpen },
-    { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
-    { name: "Laporan Hadir", href: "/laporan-absensi", icon: ClipboardList },
-    { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText },
-    // { name: "Keuangan (SIMKEU)", href: "https://muharrik-finance.vercel.app/", icon: Wallet },
-    { name: "Hasil PSB", href: "/admin-psb", icon: Users },
-    { name: "Pengaturan", href: "/pengaturan", icon: Settings },
+  const navGroups = [
+    {
+      title: "Main",
+      items: [
+        { name: "Dashboard", href: "/dashboard", icon: Home },
+      ]
+    },
+    {
+      title: "KIOSK",
+      icon: UserCheck,
+      items: [
+        { name: "Pindai Wajah", href: "/pindai-wajah", icon: UserCheck },
+        { name: "Pindai QR", href: "/pindai-qr", icon: UserCheck },
+        { name: "Absensi Manual", href: "/absensi/manual", icon: UserCheck },
+      ]
+    },
+    {
+      title: "Database",
+      icon: Users,
+      items: [
+        { name: "Hasil PSB", href: "/admin-psb", icon: Users },
+        { name: "Database Santri", href: "/santri", icon: Users },
+        { name: "Database Alumni", href: "/alumni", icon: GraduationCap },
+        { name: "Data Pengurus/Guru", href: "/admin-guru", icon: Briefcase },
+      ]
+    },
+    {
+      title: "Halaqah",
+      items: [
+        { name: "Board Halaqah", href: "/halaqoh", icon: BookOpen },
+      ]
+    },
+    {
+      title: "Laporan",
+      icon: ClipboardList,
+      items: [
+        { name: "Laporan Hadir", href: "/laporan-absensi", icon: ClipboardList },
+        { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText },
+        { name: "Laporan Kafalah", href: "/admin-penggajian", icon: Coins },
+        { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
+      ]
+    },
+    {
+      title: "System",
+      items: [
+        { name: "Pengaturan", href: "/pengaturan", icon: Settings },
+      ]
+    }
   ];
 
   const [profil, setProfil] = useState({ namaRumahQuran: "Rumah Qur'an", urlLogo: "" });
   const [psbCounts, setPsbCounts] = useState({ unread: 0, read: 0 });
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    "KIOSK": false,
+    "Database": false,
+    "Laporan": false,
+  });
+
+  // Auto-expand group if current route is inside it
+  useEffect(() => {
+    const newExpanded = { ...expandedGroups };
+    navGroups.forEach(group => {
+      if (group.title && group.items.length > 1) {
+        const isChildActive = group.items.some(item => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
+        if (isChildActive) {
+          newExpanded[group.title] = true;
+        }
+      }
+    });
+    setExpandedGroups(newExpanded);
+  }, [pathname]);
+
+  const toggleGroup = (title: string) => {
+    setExpandedGroups(prev => ({...prev, [title]: !prev[title]}));
+  };
 
   useEffect(() => {
     // Import dinamis untuk menghindari dependency cycle atau error client
@@ -55,35 +112,89 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
           </button>
         )}
       </div>
-      <nav className="flex-1 space-y-1.5 p-4 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={onClose}
-              className={`flex items-center justify-between rounded-lg px-3 py-3 md:py-2 transition-colors ${
-                isActive ? "bg-slate-800 text-white" : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Icon className="h-5 w-5" />
-                <span className="font-medium md:font-normal">{item.name}</span>
+      <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
+        {navGroups.map((group, idx) => {
+          const isExpandable = group.items.length > 1 && group.title !== "Main" && group.title !== "Halaqah" && group.title !== "System";
+          
+          if (!isExpandable) {
+            // Render single items directly without group header
+            return (
+              <div key={idx} className="space-y-1.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={onClose}
+                      className={`flex items-center justify-between rounded-lg px-3 py-3 md:py-2 transition-colors ${
+                        isActive ? "bg-orange-500 text-white font-semibold shadow-md shadow-orange-500/20" : "text-slate-400 hover:bg-slate-900 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-5 w-5" />
+                        <span className="font-medium md:font-normal">{item.name}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
+            );
+          }
+
+          const isExpanded = expandedGroups[group.title];
+          const GroupIcon = group.icon || Home;
+          
+          return (
+            <div key={group.title} className="space-y-1">
+              <button
+                onClick={() => toggleGroup(group.title)}
+                className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-slate-300 hover:bg-slate-900 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <GroupIcon className="h-5 w-5 text-slate-400" />
+                  <span className="font-medium text-sm">{group.title}</span>
+                </div>
+                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
+              </button>
               
-              {item.name === "Hasil PSB" && (psbCounts.unread > 0 || psbCounts.read > 0) && (
-                <div className="flex items-center gap-1 text-xs font-bold">
-                  {psbCounts.unread > 0 && (
-                    <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded-full">{psbCounts.unread}</span>
-                  )}
-                  {psbCounts.read > 0 && (
-                    <span className="bg-slate-500 text-white px-1.5 py-0.5 rounded-full">{psbCounts.read}</span>
-                  )}
+              {isExpanded && (
+                <div className="pl-9 space-y-1 relative">
+                  <div className="absolute left-5 top-0 bottom-2 w-px bg-slate-800" />
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={onClose}
+                        className={`flex items-center justify-between rounded-lg px-3 py-2 transition-colors text-sm ${
+                          isActive ? "bg-orange-500/10 text-orange-400 font-semibold relative after:absolute after:left-[-16px] after:top-1/2 after:-translate-y-1/2 after:w-1 after:h-1 after:rounded-full after:bg-orange-500" : "text-slate-400 hover:text-white hover:bg-slate-900 relative after:absolute after:left-[-16px] after:top-1/2 after:-translate-y-1/2 after:w-1 after:h-1 after:rounded-full after:bg-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 opacity-70" />
+                          <span>{item.name}</span>
+                        </div>
+                        
+                        {item.name === "Hasil PSB" && (psbCounts.unread > 0 || psbCounts.read > 0) && (
+                          <div className="flex items-center gap-1 text-[10px] font-bold">
+                            {psbCounts.unread > 0 && (
+                              <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded-full">{psbCounts.unread}</span>
+                            )}
+                            {psbCounts.read > 0 && (
+                              <span className="bg-slate-500 text-white px-1.5 py-0.5 rounded-full">{psbCounts.read}</span>
+                            )}
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
-            </Link>
+            </div>
           );
         })}
       </nav>

@@ -1,20 +1,21 @@
 "use server";
 
 import { db } from "@/db";
-import { absensi, santri, halaqoh } from "@/db/schema";
-import { eq, desc, and, gte, notInArray } from "drizzle-orm";
+import { absensi, santri, halaqoh, guru, absensiGuru } from "@/db/schema";
+import { eq, desc, and, gte, notInArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 export type LaporanData = {
-  id: string; // santriId_tanggal
+  id: string; // id_tanggal
   tanggalWIB: string; // YYYY-MM-DD
   waktuMasuk: number | null; // timestamp ms
   waktuPulang: number | null; // timestamp ms
   metodeMasuk: string | null;
   metodePulang: string | null;
   statusKehadiran: string; // status masuk (atau pulang jika masuk tidak ada/tergantung)
-  santri: {
+  kategori: 'Santri' | 'Guru';
+  person: {
     id: string;
     namaLengkap: string;
     nomorInduk: string;
@@ -51,19 +52,20 @@ export async function getLaporanAbsensi(filterPeriod: string) {
     startWaktu = new Date(startOfTodayWIB.getFullYear(), 0, 1);
   }
 
-  let query = db
+  let querySantri = db
     .select({
       id: absensi.id,
       waktuScan: absensi.waktuScan,
       jenisAbsen: absensi.jenisAbsen,
       metodeScan: absensi.metodeScan,
       statusKehadiran: absensi.statusKehadiran,
-      santri: {
+      person: {
         namaLengkap: santri.namaLengkap,
         nomorInduk: santri.nomorInduk,
         idCabang: santri.idCabang,
       },
-      halaqoh: halaqoh.namaHalaqoh
+      halaqoh: halaqoh.namaHalaqoh,
+      kategori: sql`'Santri'` as any
     })
     .from(absensi)
     .innerJoin(santri, eq(absensi.idSantri, santri.id))
@@ -71,41 +73,60 @@ export async function getLaporanAbsensi(filterPeriod: string) {
 
   const excludedStatuses = ['Izin', 'Sakit', 'Alpa', 'izin', 'sakit', 'alpa', 'IZIN', 'SAKIT', 'ALPA'];
 
-  // Time filtering & Role filtering combined
+  // Time filtering & Role filtering combined for Santri
   if (startWaktu) {
     if (role !== "superadmin" && userCabang) {
-       query = db
-        .select({
-          id: absensi.id,
-          waktuScan: absensi.waktuScan,
-          jenisAbsen: absensi.jenisAbsen,
-          metodeScan: absensi.metodeScan,
-          statusKehadiran: absensi.statusKehadiran,
-          santri: {
-            namaLengkap: santri.namaLengkap,
-            nomorInduk: santri.nomorInduk,
-            idCabang: santri.idCabang,
-          },
-          halaqoh: halaqoh.namaHalaqoh
-        })
-        .from(absensi)
-        .innerJoin(santri, eq(absensi.idSantri, santri.id))
-        .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
-        .where(and(eq(santri.idCabang, userCabang), gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
+       querySantri = querySantri.where(and(eq(santri.idCabang, userCabang), gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     } else {
-       query = query.where(and(gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
+       querySantri = querySantri.where(and(gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     }
   } else {
     if (role !== "superadmin" && userCabang) {
-      query = query.where(and(eq(santri.idCabang, userCabang), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
+      querySantri = querySantri.where(and(eq(santri.idCabang, userCabang), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     } else {
-      query = query.where(and(eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
+      querySantri = querySantri.where(and(eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
     }
   }
 
-  const results = await query.orderBy(desc(absensi.waktuScan));
+  const resultsSantri = await querySantri.orderBy(desc(absensi.waktuScan));
   
-  // Group by santri.id + date(waktuScan)
+  // Now for Guru
+  // Import guru & absensiGuru models dynamically or just use them if imported
+  // I need to import guru and absensiGuru at the top of the file. I will do that in the next chunk or assume they are exported.
+  // Wait, I will just use raw sql if not imported, or import them. Let me check if they are imported. 
+  // No, `import { absensi, santri, halaqoh } from "@/db/schema";` is at the top. I need to add `guru` and `absensiGuru` to imports!
+  
+  // Actually, I'll update the import at line 4 in a separate chunk.
+  
+  let queryGuru = db
+    .select({
+      id: absensiGuru.id,
+      waktuScan: absensiGuru.waktuScan,
+      jenisAbsen: absensiGuru.jenisAbsen,
+      metodeScan: absensiGuru.metodeScan,
+      statusKehadiran: absensiGuru.statusKehadiran,
+      person: {
+        namaLengkap: guru.namaLengkap,
+        nomorInduk: guru.nip,
+        idCabang: sql`null` as any, // guru doesn't have idCabang in schema
+      },
+      halaqoh: sql`null` as any,
+      kategori: sql`'Guru'` as any
+    })
+    .from(absensiGuru)
+    .innerJoin(guru, eq(absensiGuru.idGuru, guru.id));
+    
+  if (startWaktu) {
+    queryGuru = queryGuru.where(and(gte(absensiGuru.waktuScan, startWaktu), eq(absensiGuru.isArchived, 0), notInArray(absensiGuru.statusKehadiran, excludedStatuses))) as any;
+  } else {
+    queryGuru = queryGuru.where(and(eq(absensiGuru.isArchived, 0), notInArray(absensiGuru.statusKehadiran, excludedStatuses))) as any;
+  }
+  
+  const resultsGuru = await queryGuru.orderBy(desc(absensiGuru.waktuScan));
+  
+  const results = [...resultsSantri, ...resultsGuru];
+  
+  // Group by person.nomorInduk + date(waktuScan)
   const grouped = new Map<string, LaporanData>();
 
   const dateFormatterGroup = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -113,7 +134,7 @@ export async function getLaporanAbsensi(filterPeriod: string) {
   for (const r of results) {
     const d = r.waktuScan as Date;
     const dateWIB = dateFormatterGroup.format(d);
-    const key = `${r.santri.nomorInduk}_${dateWIB}`;
+    const key = `${r.person.nomorInduk}_${dateWIB}`;
 
     if (!grouped.has(key)) {
       grouped.set(key, {
@@ -124,10 +145,11 @@ export async function getLaporanAbsensi(filterPeriod: string) {
         metodeMasuk: null,
         metodePulang: null,
         statusKehadiran: r.statusKehadiran, // default status
-        santri: {
-          id: r.santri.nomorInduk, // uniquely identify
-          namaLengkap: r.santri.namaLengkap,
-          nomorInduk: r.santri.nomorInduk,
+        kategori: r.kategori === 'Guru' ? 'Guru' : 'Santri',
+        person: {
+          id: r.person.nomorInduk, // uniquely identify
+          namaLengkap: r.person.namaLengkap,
+          nomorInduk: r.person.nomorInduk,
           halaqoh: r.halaqoh
         }
       });
@@ -163,6 +185,7 @@ export async function archiveSemuaAbsensi() {
 
   try {
     await db.update(absensi).set({ isArchived: 1 });
+    await db.update(absensiGuru).set({ isArchived: 1 });
     return { success: true };
   } catch (e: any) {
     return { success: false, message: e.message };
@@ -181,6 +204,7 @@ export async function deleteSemuaAbsensi(password: string) {
 
   try {
     await db.delete(absensi);
+    await db.delete(absensiGuru);
     return { success: true };
   } catch (e: any) {
     return { success: false, message: e.message };

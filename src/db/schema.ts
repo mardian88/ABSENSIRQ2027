@@ -23,9 +23,64 @@ export const halaqoh = sqliteTable('halaqoh', {
   id: text('id').primaryKey(),
   namaHalaqoh: text('nama_halaqoh').notNull(),
   namaPengajar: text('nama_pengajar').notNull(),
-  kontakPengajar: text('kontak_pengajar'), // Nomor WA Guru
-  idSesiAbsensi: text('id_sesi_absensi').references(() => sesiAbsensi.id)
+  kontakPengajar: text('kontak_pengajar'), // Nomor WA Guru (legacy)
+  idGuru: text('id_guru'), // Foreign key to guru.id (new, optional for backward compatibility)
+  idSesiAbsensi: text('id_sesi_absensi').references(() => sesiAbsensi.id),
 });
+
+// ==========================================
+// MODUL GURU & PENGURUS (HRIS)
+// ==========================================
+
+export const guru = sqliteTable('guru', {
+  id: text('id').primaryKey(),
+  nip: text('nip').notNull().unique(), // Nomor Induk Pengurus
+  namaLengkap: text('nama_lengkap').notNull(),
+  jenisKelamin: text('jenis_kelamin'),
+  tempatLahir: text('tempat_lahir'),
+  tanggalLahir: text('tanggal_lahir'),
+  alamat: text('alamat'),
+  kontakWa: text('kontak_wa').notNull(),
+  urlFotoWajah: text('url_foto_wajah'),
+  dataVektorWajah: text('data_vektor_wajah'),
+  kodeQr: text('kode_qr').unique(),
+  statusAktif: integer('status_aktif', { mode: 'boolean' }).default(true),
+  tanggalMasuk: integer('tanggal_masuk', { mode: 'timestamp' }),
+});
+
+export const kontrakGuru = sqliteTable('kontrak_guru', {
+  id: text('id').primaryKey(),
+  idGuru: text('id_guru').references(() => guru.id).notNull(),
+  jabatan: text('jabatan').notNull(),
+  jenisKontrak: text('jenis_kontrak').notNull().default('temporer'), // permanen, temporer
+  tanggalMulai: integer('tanggal_mulai', { mode: 'timestamp' }),
+  tanggalSelesai: integer('tanggal_selesai', { mode: 'timestamp' }),
+  satuanKafalah: real('satuan_kafalah').notNull().default(0), // Gaji/Fee per kehadiran
+  statusKontrak: text('status_kontrak').notNull().default('menunggu_ttd'), // menunggu_ttd, aktif, selesai
+  eSignUrl: text('e_sign_url'), // TTD Digital dari Cloudinary
+  dokumenUrl: text('dokumen_url'), // PDF Kontrak
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+});
+
+export const absensiGuru = sqliteTable('absensi_guru', {
+  id: text('id').primaryKey(),
+  idGuru: text('id_guru').references(() => guru.id).notNull(),
+  waktuScan: integer('waktu_scan', { mode: 'timestamp' }).notNull(),
+  metodeScan: text('metode_scan').notNull(), // wajah, qr, manual
+  statusKehadiran: text('status_kehadiran').notNull(), // hadir, terlambat, dll
+  jenisAbsen: text('jenis_absen').notNull(), // masuk / pulang
+  isArchived: integer('is_archived').notNull().default(0),
+});
+
+export const kafalahBonus = sqliteTable('kafalah_bonus', {
+  id: text('id').primaryKey(),
+  idGuru: text('id_guru').references(() => guru.id).notNull(),
+  jenis: text('jenis').notNull(), // bonus / potongan
+  nominal: real('nominal').notNull(),
+  keterangan: text('keterangan').notNull(),
+  tanggalDiberikan: integer('tanggal_diberikan', { mode: 'timestamp' }).notNull()
+});
+
 
 export const sesiAbsensi = sqliteTable('sesi_absensi', {
   id: text('id').primaryKey(),

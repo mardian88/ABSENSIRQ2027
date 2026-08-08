@@ -11,7 +11,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Jangan tampilkan sidebar di rute publik seperti PSB, Login, atau Mode Kiosk
   const isKioskRoute = pathname === "/pindai-wajah" || pathname === "/pindai-qr" || pathname === "/absensi/manual" || pathname === "/akses-absen";
-  const isPublicRoute = pathname === "/" || pathname.startsWith("/psb") || pathname.startsWith("/login") || pathname.startsWith("/izin") || isKioskRoute;
+  const isPublicRoute = pathname === "/" || pathname.startsWith("/psb") || pathname.startsWith("/login") || pathname.startsWith("/izin") || pathname.startsWith("/portal-guru") || isKioskRoute;
 
   if (isPublicRoute) {
     return <div className="min-h-screen bg-slate-50">{children}</div>;

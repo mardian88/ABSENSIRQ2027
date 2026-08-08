@@ -1,12 +1,25 @@
 "use server";
 
 import { db } from "@/db";
-import { santri, halaqoh } from "@/db/schema";
+import { santri, halaqoh, guru } from "@/db/schema";
 import { eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 // Generate nano-like ID manually for simplicity if no specific generator exists
 const generateId = () => Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+
+export async function getGuruList() {
+  try {
+    const gurus = await db.select({
+      id: guru.id,
+      namaLengkap: guru.namaLengkap,
+      kontakWa: guru.kontakWa
+    }).from(guru).where(eq(guru.statusAktif, true));
+    return { success: true, data: gurus };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
+}
 
 export async function getHalaqahBoardData() {
   try {
@@ -26,6 +39,7 @@ export async function getHalaqahBoardData() {
       title: string;
       namaPengajar?: string | null;
       kontakPengajar?: string | null;
+      idGuru?: string | null;
       isProtected: boolean;
       items: typeof unassignedItems;
     };
@@ -49,6 +63,7 @@ export async function getHalaqahBoardData() {
         title: h.namaHalaqoh,
         namaPengajar: h.namaPengajar,
         kontakPengajar: h.kontakPengajar,
+        idGuru: h.idGuru,
         isProtected: false,
         items
       });
@@ -110,7 +125,7 @@ export async function renameHalaqoh(id: string, newTitle: string) {
   }
 }
 
-export async function updateHalaqohDetails(id: string, namaHalaqoh: string, namaPengajar: string, kontakPengajar: string) {
+export async function updateHalaqohDetails(id: string, namaHalaqoh: string, namaPengajar: string, kontakPengajar: string, idGuru?: string) {
   if (id === 'unassigned') return { success: false, message: "Kolom ini dilindungi" };
   
   try {
@@ -118,7 +133,8 @@ export async function updateHalaqohDetails(id: string, namaHalaqoh: string, nama
       .set({ 
         namaHalaqoh,
         namaPengajar,
-        kontakPengajar 
+        kontakPengajar,
+        idGuru: idGuru || null
       })
       .where(eq(halaqoh.id, id));
       

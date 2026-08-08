@@ -95,8 +95,8 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(item => 
-        item.santri.namaLengkap.toLowerCase().includes(q) || 
-        item.santri.nomorInduk.toLowerCase().includes(q)
+        item.person.namaLengkap.toLowerCase().includes(q) || 
+        item.person.nomorInduk.toLowerCase().includes(q)
       );
     }
 
@@ -108,8 +108,8 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
         return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
       } else {
         return sortOrder === "asc" 
-          ? a.santri.namaLengkap.localeCompare(b.santri.namaLengkap)
-          : b.santri.namaLengkap.localeCompare(a.santri.namaLengkap);
+          ? a.person.namaLengkap.localeCompare(b.person.namaLengkap)
+          : b.person.namaLengkap.localeCompare(a.person.namaLengkap);
       }
     });
 
@@ -132,9 +132,10 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
       "Tanggal": item.tanggalWIB,
       "Waktu Masuk": item.waktuMasuk ? formatTimeID(new Date(item.waktuMasuk)) : "-",
       "Waktu Pulang": item.waktuPulang ? formatTimeID(new Date(item.waktuPulang)) : "-",
-      "NIS": item.santri.nomorInduk,
-      "Nama Santri": item.santri.namaLengkap,
-      "Halaqoh": item.santri.halaqoh || "-",
+      "NIS/NIP": item.person.nomorInduk,
+      "Nama": item.person.namaLengkap,
+      "Kategori": item.kategori,
+      "Halaqoh": item.person.halaqoh || "-",
       "Metode Masuk": (item.metodeMasuk || "-").toUpperCase(),
       "Metode Pulang": (item.metodePulang || "-").toUpperCase(),
       "Status": item.statusKehadiran.toUpperCase()
@@ -155,7 +156,7 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Laporan Hadir</h1>
-            <p className="text-sm text-slate-500">Lihat dan ekspor rekapitulasi data kehadiran santri.</p>
+            <p className="text-sm text-slate-500">Lihat dan ekspor rekapitulasi data kehadiran.</p>
           </div>
           
           <div className="flex items-center gap-3">
@@ -236,11 +237,12 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
                     </th>
                     <th className="p-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort("namaLengkap")}>
                       <div className="flex items-center gap-1">
-                        Santri <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                        Nama Lengkap <ArrowUpDown className="w-3 h-3 text-slate-400" />
                       </div>
                     </th>
-                    <th className="p-4">Masuk / Pulang</th>
-                    <th className="p-4">Status</th>
+                    <th className="p-4 text-center">Kategori</th>
+                    <th className="p-4 text-center">Masuk / Pulang</th>
+                    <th className="p-4 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -259,17 +261,22 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
                           <div className="font-medium text-slate-900">{dt ? formatDateID(new Date(dt)) : row.tanggalWIB}</div>
                         </td>
                         <td className="p-4">
-                          <div className="font-bold text-slate-900">{row.santri.namaLengkap}</div>
-                          <div className="text-xs text-slate-500">NIS: {row.santri.nomorInduk} • Halaqoh: {row.santri.halaqoh || '-'}</div>
+                          <div className="font-bold text-slate-900">{row.person.namaLengkap}</div>
+                          <div className="text-xs text-slate-500">{row.kategori === 'Guru' ? 'NIP' : 'NIS'}: {row.person.nomorInduk} {row.kategori === 'Santri' && `• Halaqoh: ${row.person.halaqoh || '-'}`}</div>
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 text-center">
+                          <span className={`px-2 py-1 text-xs font-bold rounded-full ${row.kategori === 'Guru' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {row.kategori}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
                            <div className="font-mono text-sm text-slate-700 font-medium">
                              {row.waktuMasuk ? formatTimeID(new Date(row.waktuMasuk)) : "-"} 
                              <span className="text-slate-300 mx-2">/</span> 
                              {row.waktuPulang ? formatTimeID(new Date(row.waktuPulang)) : "-"}
                            </div>
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 text-center">
                           <span className={`px-2 py-1 rounded text-xs font-bold uppercase
                             ${row.statusKehadiran === 'hadir' ? 'bg-emerald-100 text-emerald-700' : 
                               row.statusKehadiran === 'pulang' ? 'bg-amber-100 text-amber-700' :
