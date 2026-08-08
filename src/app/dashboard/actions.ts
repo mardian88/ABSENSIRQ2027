@@ -123,17 +123,18 @@ export async function getRecentScans() {
       b.waktuPulang ? new Date(b.waktuPulang).getTime() : 0
     );
     
-    if (timeA === 0 && timeB === 0) return a.santri.namaLengkap.localeCompare(b.santri.namaLengkap);
+    if (timeA === 0 && timeB === 0) return a.person.namaLengkap.localeCompare(b.person.namaLengkap);
     return timeB - timeA;
   });
 
   // Ambil 10 teratas dan sesuaikan field-nya agar mirip dengan format sebelumnya
   return sorted.slice(0, 10).map((item: any) => ({
-    id: item.santri.id + item.statusKehadiran,
+    id: item.person.id + item.statusKehadiran,
     waktuScan: item.waktuPulang || item.waktuMasuk || new Date().getTime(), // fallback ke date sekarang untuk izin/alpa jika tidak ada jam
     metodeScan: item.metodePulang || item.metodeMasuk || '-',
     jenisAbsen: item.waktuPulang ? 'pulang' : 'masuk',
     statusKehadiran: item.statusKehadiran,
-    namaSantri: item.santri.namaLengkap
+    namaSantri: item.person.namaLengkap,
+    kategori: item.kategori // optional if we want to show it in dashboard
   }));
 }
