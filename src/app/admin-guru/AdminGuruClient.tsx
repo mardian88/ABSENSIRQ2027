@@ -7,37 +7,23 @@ import { showError, showSuccess, showConfirm } from "@/lib/sweetalert";
 import { RegisterWajahGuruModal } from "./RegisterWajahGuruModal";
 import { KontrakGuruModal } from "./KontrakGuruModal";
 import QRCode from "qrcode";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getGuruColumns } from "./columns";
 
 export function AdminGuruClient({ initialData }: { initialData: any[] }) {
   const [data, setData] = useState(initialData);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<any>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [faceRegistrationGuru, setFaceRegistrationGuru] = useState<{id: string, namaLengkap: string} | null>(null);
   const [kontrakGuru, setKontrakGuru] = useState<any>(null);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const filteredData = data.filter(g => 
-    g.namaLengkap.toLowerCase().includes(search.toLowerCase()) || 
-    g.nip.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) setSelectedIds(paginatedData.map(d => d.id));
-    else setSelectedIds([]);
-  };
-
-  const handleSelect = (id: string) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
+  const selectedIds = Object.keys(rowSelection)
+    .filter(k => (rowSelection as any)[k])
+    .map(k => data[parseInt(k)]?.id)
+    .filter(Boolean);
 
   const handleDownloadQR = async (guru: any) => {
     try {
@@ -66,7 +52,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
       if (res.success) {
         showSuccess("Terhapus", "Data berhasil dihapus.");
         setData(prev => prev.filter(x => !selectedIds.includes(x.id)));
-        setSelectedIds([]);
+        setRowSelection({});
       } else {
         showError("Gagal", res.message || "Gagal menghapus data.");
       }
@@ -130,103 +116,19 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-          <div className="relative w-full max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Cari NIP atau Nama..." 
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-700 uppercase font-semibold text-xs border-b border-slate-200">
-              <tr>
-                <th className="px-4 py-3 w-10">
-                  <input type="checkbox" className="rounded text-emerald-600 focus:ring-emerald-500" onChange={handleSelectAll} checked={selectedIds.length > 0 && selectedIds.length === paginatedData.length} />
-                </th>
-                <th className="px-4 py-3">NIP</th>
-                <th className="px-4 py-3">Nama Lengkap</th>
-                <th className="px-4 py-3">No. WA</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {paginatedData.length > 0 ? paginatedData.map(item => (
-                <tr key={item.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <input type="checkbox" className="rounded text-emerald-600 focus:ring-emerald-500" checked={selectedIds.includes(item.id)} onChange={() => handleSelect(item.id)} />
-                  </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{item.nip}</td>
-                  <td className="px-4 py-3">{item.namaLengkap}</td>
-                  <td className="px-4 py-3">{item.kontakWa}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${item.statusAktif ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                      {item.statusAktif ? 'AKTIF' : 'NON-AKTIF'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right space-x-2">
-                    <button 
-                      onClick={() => setFaceRegistrationGuru({ id: item.id, namaLengkap: item.namaLengkap })}
-                      className={`text-slate-400 hover:text-blue-600 mr-2`}
-                      title={item.hasFaceData ? "Wajah Sudah Terdaftar" : "Daftarkan Wajah"}
-                    >
-                      <Camera className={`w-4 h-4 inline ${item.hasFaceData ? 'text-blue-500' : ''}`} />
-                    </button>
-                    <button onClick={() => handleDownloadQR(item)} className="text-slate-400 hover:text-slate-700 mr-2" title="Unduh QR Code">
-                      <QrCode className="w-4 h-4 inline" />
-                    </button>
-                    <button onClick={() => { setEditingData(item); setIsModalOpen(true); }} className="text-emerald-600 hover:text-emerald-800" title="Edit">
-                      <Edit className="w-4 h-4 inline" />
-                    </button>
-                    <button onClick={() => setKontrakGuru(item)} className="text-amber-600 hover:text-amber-800 ml-2" title="Kelola Kontrak & Kafalah">
-                      <Briefcase className="w-4 h-4 inline" />
-                    </button>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                    Data tidak ditemukan.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-200 flex items-center justify-between text-sm">
-            <span className="text-slate-500">
-              Halaman {currentPage} dari {totalPages}
-            </span>
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="p-1 rounded-md border border-slate-300 disabled:opacity-50 hover:bg-slate-50"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded-md border border-slate-300 disabled:opacity-50 hover:bg-slate-50"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <DataTable
+        columns={getGuruColumns({
+          handleDownloadQR,
+          setFaceRegistrationGuru,
+          setEditingData,
+          setIsModalOpen,
+          setKontrakGuru,
+        })}
+        data={data}
+        searchKey="namaLengkap"
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+      />
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

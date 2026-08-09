@@ -53,7 +53,9 @@ export async function getRiwayatMutabaahGuru() {
       tanggal: mutabaahSetoran.tanggal,
       isSeenByOrtu: mutabaahSetoran.isSeenByOrtu,
       catatanOrtu: mutabaahSetoran.catatanOrtu,
+      catatanGuru: mutabaahSetoran.catatanGuru,
       waktuDibuat: mutabaahSetoran.waktuDibuat,
+      idSantri: mutabaahSetoran.idSantri,
       namaSantri: santri.namaLengkap
     })
     .from(mutabaahSetoran)
@@ -68,7 +70,7 @@ export async function getRiwayatMutabaahGuru() {
   }
 }
 
-export async function tambahSetoranMutabaah(idSantri: string, jenis: 'mengaji' | 'hafalan', capaian: string, tanggal: string) {
+export async function tambahSetoranMutabaah(idSantri: string, jenis: 'mengaji' | 'hafalan', capaian: string, tanggal: string, catatanGuru: string = "") {
   const guruId = await getSessionGuruId();
   if (!guruId) return { success: false, message: "Akses ditolak" };
 
@@ -81,11 +83,46 @@ export async function tambahSetoranMutabaah(idSantri: string, jenis: 'mengaji' |
       jenis,
       capaian,
       tanggal,
+      catatanGuru,
       waktuDibuat: new Date()
     });
 
     revalidatePath("/portal-guru/mutabaah");
     return { success: true, message: "Setoran berhasil disimpan" };
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function editMutabaahGuru(idMutabaah: string, jenis: 'mengaji' | 'hafalan', capaian: string, tanggal: string, catatanGuru: string = "") {
+  const guruId = await getSessionGuruId();
+  if (!guruId) return { success: false, message: "Akses ditolak" };
+
+  try {
+    await db.update(mutabaahSetoran)
+      .set({
+        jenis,
+        capaian,
+        tanggal,
+        catatanGuru
+      })
+      .where(eq(mutabaahSetoran.id, idMutabaah));
+
+    revalidatePath("/portal-guru/mutabaah");
+    return { success: true, message: "Setoran berhasil diubah" };
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function hapusMutabaahGuru(idMutabaah: string) {
+  const guruId = await getSessionGuruId();
+  if (!guruId) return { success: false, message: "Akses ditolak" };
+
+  try {
+    await db.delete(mutabaahSetoran).where(eq(mutabaahSetoran.id, idMutabaah));
+    revalidatePath("/portal-guru/mutabaah");
+    return { success: true, message: "Setoran berhasil dihapus" };
   } catch (err: any) {
     return { success: false, message: err.message };
   }

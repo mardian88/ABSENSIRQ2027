@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, ArrowLeft, Plus, CheckCircle2, Search, BookOpen, Clock } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Plus, Search, Pencil, Trash2, MessageSquare, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { tambahSetoranMutabaah } from "./actions";
-import { showSuccess, showError } from "@/lib/sweetalert";
+import { tambahSetoranMutabaah, editMutabaahGuru, hapusMutabaahGuru } from "./actions";
+import { showSuccess, showError, showConfirm } from "@/lib/sweetalert";
 import { logoutGuru } from "../actions";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getMutabaahRiwayatColumns } from "./columns";
 
 export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: any, listSantri: any[], riwayat: any[] }) {
   const router = useRouter();
@@ -16,7 +18,9 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
   const [idSantri, setIdSantri] = useState("");
   const [jenis, setJenis] = useState<'mengaji'|'hafalan'>('mengaji');
   const [capaian, setCapaian] = useState("");
+  const [catatanGuru, setCatatanGuru] = useState("");
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const handleLogout = async () => {
     await logoutGuru();
@@ -30,16 +34,56 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
     if (!idSantri || !capaian) return showError("Gagal", "Pilih santri dan isi capaian!");
 
     setLoading(true);
-    const res = await tambahSetoranMutabaah(idSantri, jenis, capaian, tanggal);
+    let res;
+    if (editId) {
+      res = await editMutabaahGuru(editId, jenis, capaian, tanggal, catatanGuru);
+    } else {
+      res = await tambahSetoranMutabaah(idSantri, jenis, capaian, tanggal, catatanGuru);
+    }
     setLoading(false);
 
     if (res.success) {
       showSuccess("Tersimpan!", res.message);
       setCapaian("");
+      setCatatanGuru("");
+      setEditId(null);
       setActiveTab('riwayat');
     } else {
       showError("Gagal", res.message);
     }
+  };
+
+  const handleEdit = (item: any) => {
+    setEditId(item.id);
+    setIdSantri(item.idSantri);
+    setJenis(item.jenis);
+    setCapaian(item.capaian);
+    setTanggal(item.tanggal);
+    setCatatanGuru(item.catatanGuru || "");
+    setActiveTab('input');
+  };
+
+  const handleDelete = async (id: string) => {
+    const confirm = await showConfirm("Hapus Setoran?", "Data yang dihapus tidak bisa dikembalikan.");
+    if (confirm) {
+      setLoading(true);
+      const res = await hapusMutabaahGuru(id);
+      setLoading(false);
+      if (res.success) {
+        showSuccess("Terhapus!", res.message);
+      } else {
+        showError("Gagal", res.message);
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setEditId(null);
+    setIdSantri("");
+    setJenis('mengaji');
+    setCapaian("");
+    setCatatanGuru("");
+    setTanggal(new Date().toISOString().split('T')[0]);
   };
 
   return (
@@ -65,20 +109,27 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
       <main className="max-w-4xl mx-auto p-4 py-6 space-y-6">
         {/* Navigation Tabs */}
         <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm overflow-x-auto">
-          <button onClick={()=>setActiveTab('input')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'input' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <Plus className="w-4 h-4 inline mr-2" /> Input Setoran
+          <button onClick={()=>{setActiveTab('input'); if(!editId) resetForm();}} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'input' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+            <Plus className="w-4 h-4 inline mr-2" /> {editId ? 'Edit Setoran' : 'Input Setoran'}
           </button>
-          <button onClick={()=>setActiveTab('riwayat')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'riwayat' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+          <button onClick={()=>{setActiveTab('riwayat'); resetForm();}} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'riwayat' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
             <Clock className="w-4 h-4 inline mr-2" /> Riwayat Input
           </button>
         </div>
 
         {activeTab === 'input' && (
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
-            <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-emerald-600" />
-              Catat Setoran Baru
-            </h2>
+            <div className="flex justify-between items-center">
+              <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-emerald-600" />
+                {editId ? 'Edit Setoran Santri' : 'Catat Setoran Baru'}
+              </h2>
+              {editId && (
+                <button type="button" onClick={resetForm} className="text-xs text-rose-500 hover:text-rose-700 font-medium bg-rose-50 px-3 py-1.5 rounded-lg">
+                  Batal Edit
+                </button>
+              )}
+            </div>
             
             <div className="space-y-4">
               <div>
@@ -99,6 +150,7 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
                   onChange={e => setIdSantri(e.target.value)}
                   className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   required
+                  disabled={!!editId}
                 >
                   <option value="" disabled>-- Pilih Nama Santri --</option>
                   {listSantri.map(s => (
@@ -132,70 +184,34 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Catatan Guru (Opsional)</label>
+                <textarea 
+                  value={catatanGuru}
+                  onChange={e => setCatatanGuru(e.target.value)}
+                  placeholder="Cth: Tajwid perlu diperbaiki, hafalan lancar."
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none min-h-[80px]"
+                />
+              </div>
+
               <button 
                 type="submit" 
                 disabled={loading}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
-                {loading ? 'Menyimpan...' : 'Simpan Setoran'}
+                {loading ? 'Menyimpan...' : (editId ? 'Simpan Perubahan' : 'Simpan Setoran')}
               </button>
             </div>
           </form>
         )}
 
         {activeTab === 'riwayat' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-4 border-b border-slate-200 bg-slate-50">
-              <div className="relative">
-                <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Cari nama santri..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
-                />
-              </div>
-            </div>
-            
-            <div className="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
-              {riwayat.filter(r => r.namaSantri.toLowerCase().includes(search.toLowerCase())).length > 0 ? (
-                riwayat.filter(r => r.namaSantri.toLowerCase().includes(search.toLowerCase())).map((item) => (
-                  <div key={item.id} className="p-4 hover:bg-slate-50 transition-colors flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-bold text-slate-800">{item.namaSantri}</p>
-                        <p className="text-xs text-slate-500">{new Date(item.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold capitalize ${item.jenis === 'mengaji' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
-                        {item.jenis}
-                      </span>
-                    </div>
-                    
-                    <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">
-                      {item.capaian}
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-1">
-                      {item.isSeenByOrtu ? (
-                        <span className="text-emerald-600 text-xs flex items-center gap-1 font-medium"><CheckCircle2 className="w-3.5 h-3.5" /> Telah dicek Wali</span>
-                      ) : (
-                        <span className="text-slate-400 text-xs flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Belum dicek Wali</span>
-                      )}
-                    </div>
-                    {item.catatanOrtu && (
-                      <div className="text-xs text-slate-600 mt-1 italic border-l-2 border-emerald-300 pl-2">
-                        Ortu: "{item.catatanOrtu}"
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center text-slate-500">
-                  Belum ada riwayat setoran.
-                </div>
-              )}
-            </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+            <DataTable
+              columns={getMutabaahRiwayatColumns(handleEdit, handleDelete)}
+              data={riwayat}
+              searchKey="namaSantri"
+            />
           </div>
         )}
 

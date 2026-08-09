@@ -5,12 +5,19 @@ import { UserPlus, CheckCircle, XCircle, Search, Clock, Eye, X } from "lucide-re
 import { showConfirm } from "@/lib/sweetalert";
 import { terimaPendaftar, tolakPendaftar, markAsRead, deletePendaftar, resetPendaftar } from "./actions";
 import { formatDateID } from "@/lib/date";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getPsbColumns } from "./columns";
 
 export function PsbAdminClient({ initialData }: { initialData: any[] }) {
   const [search, setSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedPendaftar, setSelectedPendaftar] = useState<any>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
+
+  const selectedIds = Object.keys(rowSelection)
+    .filter(k => (rowSelection as any)[k])
+    .map(k => initialData[parseInt(k)]?.id)
+    .filter(Boolean);
 
   const handleTerima = async (id: string) => {
     const confirmed = await showConfirm("Terima pendaftar ini sebagai santri aktif?", "", "Ya, Terima", false);
@@ -34,18 +41,6 @@ export function PsbAdminClient({ initialData }: { initialData: any[] }) {
     d.namaLengkap.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(filtered.map(p => p.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelect = (id: string) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
   const handleDetail = async (p: any) => {
     setSelectedPendaftar(p);
     if (!p.isRead) {
@@ -59,7 +54,7 @@ export function PsbAdminClient({ initialData }: { initialData: any[] }) {
     if (!confirmed) return;
     setIsProcessing(true);
     await deletePendaftar(selectedIds);
-    setSelectedIds([]);
+    setRowSelection({});
     setIsProcessing(false);
   };
 
@@ -68,7 +63,7 @@ export function PsbAdminClient({ initialData }: { initialData: any[] }) {
     if (!confirmed) return;
     setIsProcessing(true);
     await resetPendaftar();
-    setSelectedIds([]);
+    setRowSelection({});
     setIsProcessing(false);
   };
 
@@ -107,86 +102,13 @@ export function PsbAdminClient({ initialData }: { initialData: any[] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-y border-slate-200">
-              <th className="p-4 w-10">
-                <input 
-                  type="checkbox" 
-                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                  checked={filtered.length > 0 && selectedIds.length === filtered.length}
-                  onChange={handleSelectAll}
-                />
-              </th>
-              <th className="p-4 font-semibold text-slate-700">Tanggal Daftar</th>
-              <th className="p-4 font-semibold text-slate-700">Nama Lengkap</th>
-              <th className="p-4 font-semibold text-slate-700">Usia/Gender</th>
-              <th className="p-4 font-semibold text-slate-700">Kontak Ortu</th>
-              <th className="p-4 font-semibold text-slate-700">Status</th>
-              <th className="p-4 font-semibold text-slate-700 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-400">
-                  Belum ada pendaftar baru.
-                </td>
-              </tr>
-            ) : (
-              filtered.map(p => (
-                <tr key={p.id} className={`hover:bg-slate-50 transition-colors ${!p.isRead ? 'bg-orange-50/30' : ''}`}>
-                  <td className="p-4">
-                    <input 
-                      type="checkbox"
-                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                      checked={selectedIds.includes(p.id)}
-                      onChange={() => handleSelect(p.id)}
-                    />
-                  </td>
-                  <td className="p-4 text-sm text-slate-600">
-                    {formatDateID(p.tanggalDaftar)}
-                  </td>
-                  <td className="p-4 font-medium text-slate-800">
-                    {p.namaLengkap}
-                    {!p.isRead && <span className="ml-2 inline-block w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>}
-                  </td>
-                  <td className="p-4 text-sm text-slate-600">
-                    {p.jenisKelamin?.substring(0,1)} - {p.tanggalLahir ? (new Date().getFullYear() - new Date(p.tanggalLahir).getFullYear()) : '?'} th
-                  </td>
-                  <td className="p-4 text-slate-600">{p.kontakOrtu}</td>
-                  <td className="p-4">
-                    {p.status === 'menunggu' && (
-                      <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-full">
-                         <Clock className="w-3 h-3"/> Menunggu
-                      </span>
-                    )}
-                    {p.status === 'diterima' && (
-                      <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-1 rounded-full">
-                         <CheckCircle className="w-3 h-3"/> Diterima
-                      </span>
-                    )}
-                    {p.status === 'ditolak' && (
-                      <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full">
-                         <XCircle className="w-3 h-3"/> Ditolak
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-4 text-right">
-                    <button 
-                      onClick={() => handleDetail(p)}
-                      className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-medium text-sm inline-flex items-center gap-2"
-                    >
-                      <Eye className="w-4 h-4"/> Detail
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={getPsbColumns({ handleDetail })}
+        data={initialData}
+        searchKey="namaLengkap"
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+      />
 
       {/* Modal Detail */}
       {selectedPendaftar && (

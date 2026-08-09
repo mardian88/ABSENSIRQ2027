@@ -353,5 +353,6 @@ export const mutabaahSetoran = sqliteTable('mutabaah_setoran', {
   tanggal: text('tanggal').notNull(), // Format YYYY-MM-DD
   isSeenByOrtu: integer('is_seen_by_ortu', { mode: 'boolean' }).default(false), // true jika ortu sudah mengecek
   catatanOrtu: text('catatan_ortu'), // Komentar dari orang tua saat mengecek
+  catatanGuru: text('catatan_guru'), // Komentar/pesan dari guru
   waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
 });

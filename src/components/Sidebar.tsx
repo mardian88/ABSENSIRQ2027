@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight, UserMinus } from "lucide-react";
+import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight, UserMinus, CheckCircle2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
@@ -49,8 +49,15 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         { name: "History Belum Hadir", href: "/laporan-absensi/belum-hadir", icon: UserMinus },
         { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText, exact: true },
         { name: "Laporan Kafalah", href: "/admin-penggajian", icon: Coins },
-        { name: "Laporan Mutabaah", href: "/dashboard/mutabaah", icon: BookOpen },
         { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
+      ]
+    },
+    {
+      title: "Mutabaah",
+      icon: BookOpen,
+      items: [
+        { name: "Riwayat Mutabaah", href: "/dashboard/mutabaah", icon: BookOpen },
+        { name: "Progress Mutabaah", href: "/dashboard/mutabaah-progress", icon: CheckCircle2 },
       ]
     },
     {
@@ -67,6 +74,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     "KIOSK": false,
     "Database": false,
     "Laporan": false,
+    "Mutabaah": false,
   });
 
   // Auto-expand group if current route is inside it

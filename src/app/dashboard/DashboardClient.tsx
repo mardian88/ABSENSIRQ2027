@@ -10,6 +10,8 @@ import { getDashboardStats, getWeeklyTrend, getMethodDistribution, getRecentScan
 import { getDashboardPoin } from "./poin-actions";
 import { formatTimeID } from "@/lib/date";
 import Link from "next/link";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getLiveFeedColumns } from "./columns";
 
 export function DashboardClient({ 
   initialStats, 
@@ -219,52 +221,11 @@ export function DashboardClient({
             <span className="text-xs font-bold text-emerald-600 tracking-wider uppercase">Live</span>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="p-4 font-semibold">Nama Santri</th>
-                <th className="p-4 font-semibold">Waktu Update</th>
-                <th className="p-4 font-semibold">Status</th>
-                <th className="p-4 font-semibold">Metode</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {recentScans.length > 0 ? (
-                recentScans.map((scan: any) => (
-                  <tr key={scan.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4 text-sm font-bold text-slate-800">
-                      {scan.namaSantri || 'Unknown'}
-                    </td>
-                    <td className="p-4 text-sm text-slate-600 font-medium">
-                      {['hadir', 'terlambat', 'pulang_cepat'].includes(scan.statusKehadiran) ? formatTimeID(scan.waktuScan) : '-'}
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        scan.statusKehadiran === 'hadir' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-                        scan.statusKehadiran === 'terlambat' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                        scan.statusKehadiran === 'pulang_cepat' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                        scan.statusKehadiran === 'izin' || scan.statusKehadiran === 'sakit' ? 'bg-cyan-100 text-cyan-700 border border-cyan-200' :
-                        'bg-rose-100 text-rose-700 border border-rose-200'
-                      }`}>
-                        {scan.statusKehadiran.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-slate-500 capitalize">
-                      {scan.metodeScan}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500 text-sm">
-                    Belum ada pindaian
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={getLiveFeedColumns()}
+          data={recentScans}
+          searchKey="namaSantri"
+        />
       </div>
 
       {/* Widget Poin Santri */}

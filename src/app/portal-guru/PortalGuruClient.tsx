@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { LogOut, CalendarCheck, FileSignature, Coins, ChevronRight, X, RefreshCw, ExternalLink, UserMinus, BookOpen } from "lucide-react";
+import { LogOut, CalendarCheck, FileSignature, Coins, ChevronRight, X, RefreshCw, ExternalLink, UserMinus, BookOpen, Search } from "lucide-react";
 import { logoutGuru, updateKontrakSignature, getSantriIzinHariIni, getSantriBelumHadirGuru } from "./actions";
 import { showSuccess, showError, showConfirm } from "@/lib/sweetalert";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getIzinHariIniColumns, getBelumHadirHariIniColumns } from "./columns";
 
 export function PortalGuruClient({ initialData }: { initialData: any }) {
   const { profil, absensi, kontrak } = initialData;
@@ -217,56 +220,12 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                 <RefreshCw className="w-6 h-6 animate-spin text-orange-500" />
               </div>
             ) : izinHariIni.length > 0 ? (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
-                      <tr>
-                        <th className="px-4 py-3">SANTRI</th>
-                        <th className="px-4 py-3">HALAQAH</th>
-                        <th className="px-4 py-3">KATEGORI</th>
-                        <th className="px-4 py-3">KETERANGAN</th>
-                        <th className="px-4 py-3 text-center">BUKTI</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {izinHariIni.map((izin) => (
-                        <tr key={izin.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3">
-                            <p className="font-bold text-slate-800">{izin.santri.namaLengkap}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">NIS: {izin.santri.nomorInduk}</p>
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {izin.halaqoh.namaHalaqoh}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${
-                              izin.kategori === 'Sakit' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
-                            }`}>
-                              {izin.kategori.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 max-w-[200px] truncate" title={izin.keterangan}>
-                            <p className="text-slate-600 italic truncate text-xs">"{izin.keterangan}"</p>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {izin.buktiUrl ? (
-                              <button 
-                                onClick={() => setBuktiModal(izin.buktiUrl)}
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
-                                title="Lihat Bukti"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </button>
-                            ) : (
-                              <span className="text-slate-400 text-xs">-</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                <DataTable
+                  columns={getIzinHariIniColumns((url) => { setBuktiModal(url); })}
+                  data={izinHariIni}
+                  searchKey="namaLengkap"
+                />
               </div>
             ) : (
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center">
@@ -299,34 +258,12 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                 <RefreshCw className="w-6 h-6 animate-spin text-orange-500" />
               </div>
             ) : belumHadirHariIni.length > 0 ? (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
-                      <tr>
-                        <th className="px-4 py-3 w-12 text-center">NO</th>
-                        <th className="px-4 py-3">SANTRI</th>
-                        <th className="px-4 py-3">HALAQAH</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {belumHadirHariIni.map((santri, idx) => (
-                        <tr key={santri.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-3 text-center font-medium text-slate-500">
-                            {idx + 1}
-                          </td>
-                          <td className="px-4 py-3">
-                            <p className="font-bold text-slate-800">{santri.namaLengkap}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">NIS: {santri.nomorInduk}</p>
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {santri.halaqoh || "-"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                <DataTable
+                  columns={getBelumHadirHariIniColumns()}
+                  data={belumHadirHariIni}
+                  searchKey="namaLengkap"
+                />
               </div>
             ) : (
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center">

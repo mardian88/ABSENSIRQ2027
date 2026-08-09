@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, ArrowLeft, CheckCircle2, Clock, CalendarCheck, BookOpen, User, PenTool } from "lucide-react";
+import { LogOut, ArrowLeft, CheckCircle2, Clock, CalendarCheck, BookOpen, User, PenTool, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { tandaiTelahDilihat, tambahSetoranLiburOrtu } from "../../actions";
 import { showSuccess, showError } from "@/lib/sweetalert";
@@ -96,6 +96,15 @@ export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: 
                         <p className="text-sm font-medium text-slate-800">
                           {item.capaian}
                         </p>
+                        {item.catatanGuru && (
+                          <div className="flex items-start gap-1 text-xs text-blue-600 mt-2 italic bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
+                            <MessageSquare className="w-4 h-4 mt-0.5 shrink-0" />
+                            <div>
+                              <span className="font-semibold block mb-0.5">Catatan Pembimbing:</span>
+                              "{item.catatanGuru}"
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex-shrink-0">

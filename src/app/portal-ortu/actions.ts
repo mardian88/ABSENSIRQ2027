@@ -47,6 +47,37 @@ export async function logoutOrtu() {
   return { success: true };
 }
 
+export async function cekStatusLiburIzin() {
+  const options = { timeZone: "Asia/Jakarta" };
+  const rawNow = new Date();
+  
+  const hariIniStr = rawNow.toLocaleDateString("id-ID", { weekday: "long", ...options });
+  const hariIni = hariIniStr.charAt(0).toUpperCase() + hariIniStr.slice(1).toLowerCase();
+
+  const dateFormatter = new Intl.DateTimeFormat('en-CA', { ...options, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const todayStr = dateFormatter.format(rawNow);
+
+  // A. Cek apakah hari ini adalah hari aktif
+  const aktifHariIni = await db.select().from(pengaturanHariAktif)
+    .where(eq(pengaturanHariAktif.hari, hariIni))
+    .limit(1);
+    
+  if (aktifHariIni.length > 0 && !aktifHariIni[0].isAktif) {
+    return { isLibur: true, message: `Afwan, Hari ini (${hariIni}) Libur KBM, dan tidak perlu izin.` };
+  }
+
+  // B. Cek apakah hari ini adalah libur khusus (libur tanggal)
+  const liburTanggal = await db.select().from(hariLibur)
+    .where(and(eq(hariLibur.tanggal, todayStr), eq(hariLibur.isAktif, true)))
+    .limit(1);
+
+  if (liburTanggal.length > 0) {
+    return { isLibur: true, message: `Afwan, Hari ini Libur KBM (${liburTanggal[0].keterangan}), dan tidak perlu izin.` };
+  }
+
+  return { isLibur: false };
+}
+
 export async function submitIzin(formData: FormData) {
   const idSantri = formData.get("idSantri") as string;
   const kategori = formData.get("kategori") as string;

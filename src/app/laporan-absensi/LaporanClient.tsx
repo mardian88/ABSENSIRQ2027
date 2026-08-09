@@ -1,27 +1,20 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { getLaporanAbsensi, LaporanData, archiveSemuaAbsensi, deleteSemuaAbsensi } from "./actions";
-import { formatTimeID, formatDateID } from "@/lib/date";
-import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Trash2, AlertTriangle, Key } from "lucide-react";
+import { formatTimeID } from "@/lib/date";
+import { Download, Loader2, Filter, Trash2, AlertTriangle, Key } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getLaporanColumns } from "./columns";
 
 export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
   const [data, setData] = useState<LaporanData[]>(initialData);
   const [filterPeriod, setFilterPeriod] = useState("hari_ini");
-  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [resetPassword, setResetPassword] = useState("");
-  
-  // Sorting
-  const [sortField, setSortField] = useState<"waktuMasuk" | "namaLengkap">("waktuMasuk");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
 
   const handleFilterChange = async (period: string) => {
     setFilterPeriod(period);
@@ -29,21 +22,11 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
     try {
       const result = await getLaporanAbsensi(period);
       setData(result);
-      setCurrentPage(1); // Reset page on filter change
     } catch (e) {
       console.error(e);
       toast.error("Gagal memuat data laporan");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleSort = (field: "waktuMasuk" | "namaLengkap") => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
     }
   };
 
@@ -88,47 +71,13 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
     }
   };
 
-  const filteredAndSortedData = useMemo(() => {
-    let result = [...data];
-
-    // Search filter
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(item => 
-        item.person.namaLengkap.toLowerCase().includes(q) || 
-        item.person.nomorInduk.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      if (sortField === "waktuMasuk") {
-        const aTime = Math.max(a.waktuMasuk || 0, a.waktuPulang || 0);
-        const bTime = Math.max(b.waktuMasuk || 0, b.waktuPulang || 0);
-        return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
-      } else {
-        return sortOrder === "asc" 
-          ? a.person.namaLengkap.localeCompare(b.person.namaLengkap)
-          : b.person.namaLengkap.localeCompare(a.person.namaLengkap);
-      }
-    });
-
-    return result;
-  }, [data, searchQuery, sortField, sortOrder]);
-
-  const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
-  const paginatedData = filteredAndSortedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   const exportToExcel = () => {
-    if (filteredAndSortedData.length === 0) {
+    if (data.length === 0) {
       toast.error("Tidak ada data untuk diekspor");
       return;
     }
 
-    const exportData = filteredAndSortedData.map(item => ({
+    const exportData = data.map(item => ({
       "Tanggal": item.tanggalWIB,
       "Waktu Masuk": item.waktuMasuk ? formatTimeID(new Date(item.waktuMasuk)) : "-",
       "Waktu Pulang": item.waktuPulang ? formatTimeID(new Date(item.waktuPulang)) : "-",
@@ -203,20 +152,6 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
               </button>
             ))}
           </div>
-
-          <div className="relative w-full md:w-64 shrink-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari Nama/NIS..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
         </div>
 
         {/* Data Table */}
@@ -226,100 +161,12 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
               <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
             </div>
           )}
-          <div className="overflow-auto max-h-[65vh]">
-              <table className="w-full text-left text-sm text-slate-600 relative">
-                <thead className="sticky top-0 z-10 bg-slate-50 text-slate-900 shadow-sm uppercase text-xs">
-                  <tr>
-                    <th className="p-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort("waktuMasuk")}>
-                      <div className="flex items-center gap-1">
-                        Tanggal <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                      </div>
-                    </th>
-                    <th className="p-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => handleSort("namaLengkap")}>
-                      <div className="flex items-center gap-1">
-                        Nama Lengkap <ArrowUpDown className="w-3 h-3 text-slate-400" />
-                      </div>
-                    </th>
-                    <th className="p-4 text-center">Kategori</th>
-                    <th className="p-4 text-center">Masuk / Pulang</th>
-                    <th className="p-4 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {paginatedData.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-slate-500">
-                        Tidak ada data absen pada periode ini.
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedData.map((row) => {
-                      const dt = row.waktuMasuk || row.waktuPulang;
-                      return (
-                      <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-4">
-                          <div className="font-medium text-slate-900">{dt ? formatDateID(new Date(dt)) : row.tanggalWIB}</div>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-bold text-slate-900">{row.person.namaLengkap}</div>
-                          <div className="text-xs text-slate-500">{row.kategori === 'Guru' ? 'NIP' : 'NIS'}: {row.person.nomorInduk} {row.kategori === 'Santri' && `• Halaqoh: ${row.person.halaqoh || '-'}`}</div>
-                        </td>
-                        <td className="p-4 text-center">
-                          <span className={`px-2 py-1 text-xs font-bold rounded-full ${row.kategori === 'Guru' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                            {row.kategori}
-                          </span>
-                        </td>
-                        <td className="p-4 text-center">
-                           <div className="font-mono text-sm text-slate-700 font-medium">
-                             {row.waktuMasuk ? formatTimeID(new Date(row.waktuMasuk)) : "-"} 
-                             <span className="text-slate-300 mx-2">/</span> 
-                             {row.waktuPulang ? formatTimeID(new Date(row.waktuPulang)) : "-"}
-                           </div>
-                        </td>
-                        <td className="p-4 text-center">
-                          <span className={`px-2 py-1 rounded text-xs font-bold uppercase
-                            ${row.statusKehadiran === 'hadir' ? 'bg-emerald-100 text-emerald-700' : 
-                              row.statusKehadiran === 'pulang' ? 'bg-amber-100 text-amber-700' :
-                              row.statusKehadiran === 'terlambat' ? 'bg-amber-100 text-amber-700' :
-                              row.statusKehadiran === 'pulang cepat' ? 'bg-orange-100 text-orange-700' :
-                              'bg-slate-100 text-slate-700'}`}>
-                            {row.statusKehadiran === 'terlambat' ? 'Telat' : row.statusKehadiran}
-                          </span>
-                        </td>
-                      </tr>
-                    )})
-                  )}
-                </tbody>
-              </table>
-            </div>
           
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="text-sm text-slate-500">
-                Menampilkan <span className="font-medium text-slate-900">{(currentPage - 1) * itemsPerPage + 1}</span> hingga <span className="font-medium text-slate-900">{Math.min(currentPage * itemsPerPage, filteredAndSortedData.length)}</span> dari <span className="font-medium text-slate-900">{filteredAndSortedData.length}</span> data
-              </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="px-3 py-1 text-sm font-medium text-slate-700">
-                  {currentPage} / {totalPages}
-                </div>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-1 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          )}
+          <DataTable
+            columns={getLaporanColumns()}
+            data={data}
+            searchKey="namaLengkap"
+          />
         </div>
       {/* Reset Dialog Modal */}
       {isResetDialogOpen && (

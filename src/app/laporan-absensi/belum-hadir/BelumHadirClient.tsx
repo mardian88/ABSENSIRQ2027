@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { getSantriBelumHadir } from "./actions";
-import { Search, Loader2, Filter, RefreshCw, UserMinus, UserCheck } from "lucide-react";
+import { Loader2, Filter, RefreshCw, UserMinus, UserCheck } from "lucide-react";
 import toast from "react-hot-toast";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getBelumHadirColumns } from "./columns";
 
 type SantriData = {
   id: string;
@@ -30,7 +32,6 @@ export function BelumHadirClient({
 }) {
   const [data, setData] = useState<SantriData[]>(initialData);
   const [selectedSesi, setSelectedSesi] = useState<string>(initialSesiId || "semua");
-  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchBelumHadir = async (sesiId: string) => {
@@ -52,15 +53,6 @@ export function BelumHadirClient({
     setSelectedSesi(val);
     fetchBelumHadir(val);
   };
-
-  // Filter local untuk search
-  const filteredData = data.filter(s => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return s.namaLengkap.toLowerCase().includes(q) || s.nomorInduk.toLowerCase().includes(q);
-    }
-    return true;
-  });
 
   return (
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
@@ -99,69 +91,30 @@ export function BelumHadirClient({
             ))}
           </select>
         </div>
-        
-        <div className="relative w-full md:w-64">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="w-4 h-4 text-slate-400" />
-          </div>
-          <input 
-            type="text" 
-            className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 px-3 py-2 outline-none" 
-            placeholder="Cari nama atau NIS..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4 font-semibold border-b border-slate-200 w-16">No</th>
-                <th className="px-6 py-4 font-semibold border-b border-slate-200">Nama Santri</th>
-                <th className="px-6 py-4 font-semibold border-b border-slate-200">NIS</th>
-                <th className="px-6 py-4 font-semibold border-b border-slate-200">Halaqoh</th>
-                <th className="px-6 py-4 font-semibold border-b border-slate-200">Sesi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {isLoading && data.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
-                    <p>Memuat data...</p>
-                  </td>
-                </tr>
-              ) : filteredData.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                    <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <UserCheck className="w-8 h-8 text-emerald-500" />
-                    </div>
-                    <p className="font-medium text-slate-600">Alhamdulillah!</p>
-                    <p className="text-sm">Semua santri pada sesi ini sudah melakukan absen masuk.</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredData.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-slate-500 font-medium">{index + 1}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-800">{item.namaLengkap}</td>
-                    <td className="px-6 py-4 text-sm text-slate-500 font-medium">{item.nomorInduk}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{item.halaqoh || "-"}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
-                        {item.sesi || "-"}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-20 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          </div>
+        )}
+        
+        {data.length === 0 && !isLoading ? (
+          <div className="px-6 py-12 text-center text-slate-500">
+            <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+              <UserCheck className="w-8 h-8 text-emerald-500" />
+            </div>
+            <p className="font-medium text-slate-600">Alhamdulillah!</p>
+            <p className="text-sm">Semua santri pada sesi ini sudah melakukan absen masuk.</p>
+          </div>
+        ) : (
+          <DataTable
+            columns={getBelumHadirColumns()}
+            data={data}
+            searchKey="namaLengkap"
+          />
+        )}
       </div>
     </div>
   );

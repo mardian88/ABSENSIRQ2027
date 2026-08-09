@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { getLaporanPenggajian } from "./actions";
 import { Download, Search, Loader2, Coins, Calendar } from "lucide-react";
 import * as XLSX from "xlsx";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { penggajianColumns } from "./columns";
 
 export function AdminPenggajianClient() {
   const [bulan, setBulan] = useState(new Date().getMonth() + 1);
@@ -78,47 +80,11 @@ export function AdminPenggajianClient() {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-sm text-slate-600">
-              <th className="p-4 font-semibold">NIP / Nama Guru</th>
-              <th className="p-4 font-semibold">Jabatan & Kontrak</th>
-              <th className="p-4 font-semibold text-center">Total Hadir</th>
-              <th className="p-4 font-semibold text-right">Satuan Kafalah</th>
-              <th className="p-4 font-semibold text-right">Total Gaji</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {isLoading ? (
-              <tr><td colSpan={5} className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-emerald-500" /></td></tr>
-            ) : data.length > 0 ? data.map(item => (
-              <tr key={item.idGuru} className="hover:bg-slate-50 transition-colors">
-                <td className="p-4">
-                  <p className="font-bold text-slate-800">{item.namaLengkap}</p>
-                  <p className="text-xs text-slate-500">{item.nip}</p>
-                </td>
-                <td className="p-4">
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${item.jabatan === '-' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {item.jabatan === '-' ? 'Tidak Ada Kontrak Aktif' : item.jabatan}
-                  </span>
-                </td>
-                <td className="p-4 text-center">
-                  <span className="inline-block min-w-8 py-1 rounded bg-slate-100 font-bold text-slate-700">{item.totalHadir}</span>
-                </td>
-                <td className="p-4 text-right text-slate-600">
-                  Rp {item.satuanKafalah.toLocaleString('id-ID')}
-                </td>
-                <td className="p-4 text-right">
-                  <span className="font-bold text-emerald-600">Rp {item.totalGaji.toLocaleString('id-ID')}</span>
-                </td>
-              </tr>
-            )) : (
-              <tr><td colSpan={5} className="p-8 text-center text-slate-500">Tidak ada data untuk bulan ini.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={penggajianColumns}
+        data={data}
+        searchKey="namaLengkap"
+      />
     </div>
   );
 }

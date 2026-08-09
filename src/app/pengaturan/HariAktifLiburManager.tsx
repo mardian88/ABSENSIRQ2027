@@ -63,10 +63,28 @@ export function HariAktifLiburManager() {
     loadData();
   };
 
+  const handleTanggalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/[^0-9]/g, '');
+    if (val.length > 2 && val.length <= 4) {
+      val = val.slice(0, 2) + ':' + val.slice(2);
+    } else if (val.length > 4) {
+      val = val.slice(0, 2) + ':' + val.slice(2, 4) + ':' + val.slice(4, 8);
+    }
+    setFormLibur({ ...formLibur, tanggal: val });
+  };
+
   const handleAddLibur = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formLibur.tanggal.length !== 10) {
+      return toast.error("Format tanggal harus DD:MM:YYYY");
+    }
+    
+    // Convert DD:MM:YYYY to YYYY-MM-DD for DB storage
+    const [dd, mm, yyyy] = formLibur.tanggal.split(':');
+    const dbDate = `${yyyy}-${mm}-${dd}`;
+    
     setSavingLibur(true);
-    await addHariLibur(formLibur);
+    await addHariLibur({ ...formLibur, tanggal: dbDate });
     setFormLibur({ tanggal: "", keterangan: "" });
     setSavingLibur(false);
     toast.success("Berhasil ditambahkan");
@@ -111,10 +129,12 @@ export function HariAktifLiburManager() {
             <div className="flex-1">
               <label className="text-xs font-semibold text-slate-500 uppercase">Tanggal Libur</label>
               <Input 
-                type="date" 
+                type="text" 
+                placeholder="DD:MM:YYYY"
                 required 
                 value={formLibur.tanggal}
-                onChange={e => setFormLibur({...formLibur, tanggal: e.target.value})}
+                onChange={handleTanggalChange}
+                maxLength={10}
               />
             </div>
             <div className="flex-[2]">
@@ -152,7 +172,9 @@ export function HariAktifLiburManager() {
                         className="h-5 w-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
                       />
                       <div className={!libur.isAktif ? 'opacity-50 line-through' : ''}>
-                        <div className="font-semibold">{libur.tanggal}</div>
+                        <div className="font-semibold">
+                          {libur.tanggal.includes('-') ? libur.tanggal.split('-').reverse().join(':') : libur.tanggal}
+                        </div>
                         <div className="text-sm text-slate-500">{libur.keterangan}</div>
                       </div>
                   </div>

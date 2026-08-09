@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { getOrtuSession } from "../actions";
 import { LoginOrtuClient } from "./LoginOrtuClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrtuLoginPage() {
-  const c = await cookies();
-  const session = c.get("ortu_session")?.value;
+  const profil = await getOrtuSession();
 
-  if (session) {
+  if (profil) {
     redirect("/portal-ortu");
   }
 

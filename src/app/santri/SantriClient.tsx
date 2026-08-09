@@ -10,6 +10,9 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as XLSX from "xlsx";
 import QRCode from "qrcode";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { getSantriColumns } from "./columns";
+
 const santriSchema = z.object({
   nomorInduk: z.string().optional(),
   namaLengkap: z.string().min(1, "Nama Lengkap wajib diisi"),
@@ -57,7 +60,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
   const [editingId, setEditingId] = useState<string | null>(null);
   const [faceRegistrationSantri, setFaceRegistrationSantri] = useState<{id: string, namaLengkap: string} | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
   const [batchHalaqoh, setBatchHalaqoh] = useState("");
   const [batchSesi, setBatchSesi] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,45 +107,13 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
   // Hanya tampilkan yang bukan alumni
   const nonAlumniList = santriList.filter(s => s.statusSantri !== "alumni");
 
-  let filteredSantri = nonAlumniList.filter((s) => 
-    s.namaLengkap.toLowerCase().includes(search.toLowerCase()) ||
-    s.nomorInduk.toLowerCase().includes(search.toLowerCase())
-  );
+  // selectedIds derived from rowSelection map where keys are row indices
+  const selectedIds = Object.keys(rowSelection)
+    .filter(k => (rowSelection as any)[k])
+    .map(k => nonAlumniList[parseInt(k)]?.id)
+    .filter(Boolean);
 
-  // Sorting
-  filteredSantri.sort((a, b) => {
-    let aVal = a[sortField] || "";
-    let bVal = b[sortField] || "";
-    
-    if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-    if (typeof bVal === 'string') bVal = bVal.toLowerCase();
 
-    if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
-    return 0;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredSantri.length / itemsPerPage) || 1;
-  const paginatedSantri = filteredSantri.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const handleSort = (field: "nomorInduk" | "namaLengkap" | "halaqoh") => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
-  };
-
-  const handleJumpPage = (e: React.FormEvent) => {
-    e.preventDefault();
-    const pageNum = parseInt(jumpPage);
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
-      setCurrentPage(pageNum);
-      setJumpPage("");
-    }
-  };
 
   const onSubmit = async (data: SantriFormValues) => {
     setIsLoading(true);
@@ -205,7 +176,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       setIsLoading(true);
       try {
         await deleteSantri(id);
-        setSelectedIds(prev => prev.filter(sid => sid !== id));
+        setRowSelection({});
         showSuccess("Terhapus", "Data santri berhasil dihapus");
       } catch (error) {
         showError("Gagal", "Terjadi kesalahan saat menghapus data santri.");
@@ -221,7 +192,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       setIsLoading(true);
       try {
         await jadikanAlumni(id);
-        setSelectedIds(prev => prev.filter(sid => sid !== id));
+        setRowSelection({});
         showSuccess("Berhasil", "Santri telah menjadi alumni.");
       } catch (error) {
         showError("Gagal", "Terjadi kesalahan sistem.");
@@ -238,7 +209,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       setIsLoading(true);
       try {
         await jadikanAlumniBatch(selectedIds);
-        setSelectedIds([]);
+        setRowSelection({});
         showSuccess("Berhasil", `${selectedIds.length} santri telah menjadi alumni.`);
       } catch (error) {
         showError("Gagal", "Terjadi kesalahan sistem.");
@@ -248,19 +219,6 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
     }
   };
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(filteredSantri.map(s => s.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelect = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
-    );
-  };
 
   const handleHalaqohChange = async (id: string, newIdHalaqoh: string) => {
     try {
@@ -282,7 +240,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       try {
         await updateHalaqohBatch(selectedIds, batchHalaqoh === "" ? null : batchHalaqoh);
         showSuccess("Berhasil", `${selectedIds.length} santri berhasil dipindah halaqohnya.`);
-        setSelectedIds([]);
+        setRowSelection({});
       } catch (err) {
         showError("Gagal", "Gagal memperbarui halaqoh secara massal.");
       } finally {
@@ -302,7 +260,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       try {
         await updateSesiBatch(selectedIds, batchSesi === "" ? null : batchSesi);
         showSuccess("Berhasil", `${selectedIds.length} santri berhasil diubah sesinya.`);
-        setSelectedIds([]);
+        setRowSelection({});
       } catch (err) {
         showError("Gagal", "Gagal memperbarui sesi secara massal.");
       } finally {
@@ -336,7 +294,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
 
   const handleDownloadQRSelected = async () => {
     if (selectedIds.length === 0) return;
-    const selectedSantri = filteredSantri.filter(s => selectedIds.includes(s.id));
+    const selectedSantri = nonAlumniList.filter(s => selectedIds.includes(s.id));
     for (const s of selectedSantri) {
       await downloadQR(s.kodeQr || s.nomorInduk, `QR_${s.nomorInduk}_${s.namaLengkap.replace(/\s+/g, '_')}`);
       // small delay to prevent browser from blocking multiple downloads
@@ -345,10 +303,10 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
   };
 
   const handleDownloadQRAll = async () => {
-    if (filteredSantri.length === 0) return;
-    const confirmed = await showConfirm("Download Semua QR?", `Anda akan mengunduh ${filteredSantri.length} gambar QR Code. Lanjutkan?`);
+    if (nonAlumniList.length === 0) return;
+    const confirmed = await showConfirm("Download Semua QR?", `Anda akan mengunduh ${nonAlumniList.length} gambar QR Code. Lanjutkan?`);
     if (confirmed) {
-      for (const s of filteredSantri) {
+      for (const s of nonAlumniList) {
         await downloadQR(s.kodeQr || s.nomorInduk, `QR_${s.nomorInduk}_${s.namaLengkap.replace(/\s+/g, '_')}`);
         await new Promise(res => setTimeout(res, 300));
       }
@@ -373,13 +331,13 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
   const handleExport = (all: boolean) => {
     let dataToExport = [];
     if (all) {
-      dataToExport = filteredSantri;
+      dataToExport = nonAlumniList;
     } else {
       if (selectedIds.length === 0) {
         showError("Pilih Data", "Pilih minimal 1 santri untuk diexport");
         return;
       }
-      dataToExport = filteredSantri.filter(s => selectedIds.includes(s.id));
+      dataToExport = nonAlumniList.filter(s => selectedIds.includes(s.id));
     }
 
     if (dataToExport.length === 0) {
@@ -585,21 +543,22 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
           </button>
         </div>
       </div>
-
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 md:p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Cari berdasarkan nama atau NIS..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          
-          {selectedIds.length > 0 && (
+      <DataTable
+        columns={getSantriColumns({
+          halaqohList,
+          handleHalaqohChange,
+          handleJadikanAlumni,
+          downloadQR,
+          setFaceRegistrationSantri,
+          handleEdit,
+          handleDelete
+        })}
+        data={nonAlumniList}
+        searchKey="namaLengkap"
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        toolbarActions={() => (
+          selectedIds.length > 0 ? (
             <div className="flex items-center gap-3 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 w-full sm:w-auto">
               <span className="text-sm font-medium text-amber-800">{selectedIds.length} Terpilih</span>
               <button 
@@ -610,180 +569,9 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
                 Jadikan Alumni
               </button>
             </div>
-          )}
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[900px]">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="p-4 w-12">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedIds.length === filteredSantri.length && filteredSantri.length > 0}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                  />
-                </th>
-                <th className="p-4 font-semibold text-slate-600 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none" onClick={() => handleSort("nomorInduk")}>
-                  <div className="flex items-center gap-1">
-                    NIS
-                    {sortField === "nomorInduk" && (sortOrder === "asc" ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
-                  </div>
-                </th>
-                <th className="p-4 font-semibold text-slate-600 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none" onClick={() => handleSort("namaLengkap")}>
-                  <div className="flex items-center gap-1">
-                    Nama Lengkap
-                    {sortField === "namaLengkap" && (sortOrder === "asc" ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
-                  </div>
-                </th>
-                <th className="p-4 font-semibold text-slate-600 text-sm cursor-pointer hover:bg-slate-100 transition-colors select-none" onClick={() => handleSort("halaqoh")}>
-                  <div className="flex items-center gap-1">
-                    Halaqoh
-                    {sortField === "halaqoh" && (sortOrder === "asc" ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />)}
-                  </div>
-                </th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Kontak Wali</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm">Status</th>
-                <th className="p-4 font-semibold text-slate-600 text-sm text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {paginatedSantri.length > 0 ? (
-                paginatedSantri.map((s) => (
-                  <tr key={s.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(s.id) ? 'bg-emerald-50/50' : ''}`}>
-                    <td className="p-4">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedIds.includes(s.id)}
-                        onChange={() => handleSelect(s.id)}
-                        className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                      />
-                    </td>
-                    <td className="p-4 font-medium text-slate-900">{s.nomorInduk}</td>
-                    <td className="p-4 font-semibold text-slate-900">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs">
-                          {s.namaLengkap.charAt(0)}
-                        </div>
-                        {s.namaLengkap}
-                      </div>
-                    </td>
-                    <td className="p-4 text-slate-600 text-sm">
-                      <select
-                        value={s.idHalaqoh || ""}
-                        onChange={(e) => handleHalaqohChange(s.id, e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500"
-                      >
-                        <option value="">- Tidak Ada -</option>
-                        {halaqohList.map((h) => (
-                          <option key={h.id} value={h.id}>{h.namaHalaqoh}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="p-4 text-slate-600 text-sm">
-                      <div className="flex flex-col">
-                        <span>{s.kontakOrtu}</span>
-                        <span className="text-xs text-slate-400 font-mono mt-1">QR: {s.kodeQr || "Belum Ada"}</span>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${s.statusSantri === 'aktif' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {s.statusSantri === 'aktif' ? 'Aktif' : 'Non-Aktif'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-1 justify-end">
-                        <button 
-                          onClick={() => handleJadikanAlumni(s.id)} 
-                          className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                          title="Jadikan Alumni"
-                        >
-                          <GraduationCap className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => downloadQR(s.kodeQr || s.nomorInduk, `QR_${s.nomorInduk}_${s.namaLengkap.replace(/\s+/g, '_')}`)}
-                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          title="Download QR"
-                        >
-                          <QrCode className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => setFaceRegistrationSantri({ id: s.id, namaLengkap: s.namaLengkap })}
-                          className={`p-2 rounded-lg transition-colors ${s.hasFaceData ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
-                          title={s.hasFaceData ? "Wajah Sudah Terdaftar" : "Daftarkan Wajah"}
-                        >
-                          <Camera className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleEdit(s)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(s.id)} 
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500">
-                    Belum ada data santri.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Pagination UI */}
-        {filteredSantri.length > 0 && (
-          <div className="p-4 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50">
-            <div className="text-sm text-slate-500 font-medium">
-              Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredSantri.length)} dari {filteredSantri.length} data
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="p-1 rounded hover:bg-slate-200 disabled:opacity-50 transition-colors"
-                title="Halaman Sebelumnya"
-              >
-                <ChevronLeft className="w-5 h-5 text-slate-600" />
-              </button>
-              <span className="text-sm font-medium text-slate-700 min-w-[100px] text-center">
-                Hal {currentPage} dari {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1 rounded hover:bg-slate-200 disabled:opacity-50 transition-colors"
-                title="Halaman Selanjutnya"
-              >
-                <ChevronRight className="w-5 h-5 text-slate-600" />
-              </button>
-              
-              <form onSubmit={handleJumpPage} className="flex items-center gap-1 ml-2 sm:ml-4 sm:border-l border-slate-300 sm:pl-4">
-                <span className="text-sm text-slate-500 hidden sm:inline">Ke halaman:</span>
-                <input 
-                  type="text" 
-                  value={jumpPage} 
-                  onChange={(e) => setJumpPage(e.target.value)}
-                  placeholder="#"
-                  className="w-12 px-2 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500 text-center"
-                />
-                <button type="submit" className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium rounded-md transition-colors">
-                  Go
-                </button>
-              </form>
-            </div>
-          </div>
+          ) : <div />
         )}
-      </div>
+      />
 
       {/* Comprehensive Dialog Overlay */}
       {isDialogOpen && (
