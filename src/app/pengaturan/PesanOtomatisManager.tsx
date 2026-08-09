@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, Plus, Edit2, Trash2, MessageSquare, AlertCircle } from "lucide-react";
+import { Loader2, Save, Plus, Edit2, Trash2, MessageSquare, AlertCircle, Wand2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { showConfirm } from "@/lib/sweetalert";
 import { 
@@ -14,7 +14,8 @@ import {
   getTemplatePesanList, 
   saveTemplatePesan, 
   deleteTemplatePesan, 
-  toggleTemplatePesan 
+  toggleTemplatePesan,
+  seedDefaultTemplates
 } from "./actions";
 
 const JENIS_PESAN_OPTIONS = [
@@ -53,6 +54,7 @@ export function PesanOtomatisManager() {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ jenisPesan: "", isiPesan: "", isAktif: true });
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [seedingTemplates, setSeedingTemplates] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -160,6 +162,27 @@ export function PesanOtomatisManager() {
     loadData(true);
   };
 
+  const handleSeedTemplates = async () => {
+    const confirmed = await showConfirm(
+      "Generate Template Bawaan?", 
+      "Sistem akan menambahkan beberapa variasi template secara acak (Auto-Rolling) tanpa menghapus template Anda yang sudah ada. Lanjutkan?",
+      "Ya, Generate",
+      false
+    );
+    if (confirmed) {
+      setSeedingTemplates(true);
+      try {
+        const count = await seedDefaultTemplates();
+        toast.success(`${count} template variasi berhasil ditambahkan!`);
+        loadData(true);
+      } catch (e: any) {
+        toast.error(e.message || "Gagal membuat template");
+      } finally {
+        setSeedingTemplates(false);
+      }
+    }
+  };
+
   const getLabelJenisPesan = (val: string) => {
     return JENIS_PESAN_OPTIONS.find(o => o.value === val)?.label || val;
   };
@@ -248,9 +271,15 @@ export function PesanOtomatisManager() {
             <CardTitle>Template Pesan Otomatis</CardTitle>
             <CardDescription>Atur format pesan yang akan dikirimkan untuk tiap kejadian (Masuk, Pulang, Alpa, dll).</CardDescription>
           </div>
-          <Button onClick={() => openAddDialog()} size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-            <Plus className="w-4 h-4 mr-1" /> Buat Template
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSeedTemplates} disabled={seedingTemplates} size="sm" variant="outline" className="text-emerald-700 border-emerald-200 hover:bg-emerald-50">
+              {seedingTemplates ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Wand2 className="w-4 h-4 mr-1" />}
+              Generate Bawaan
+            </Button>
+            <Button onClick={() => openAddDialog()} size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+              <Plus className="w-4 h-4 mr-1" /> Buat Template
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4 mt-4">

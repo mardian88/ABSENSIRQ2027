@@ -272,3 +272,98 @@ export async function toggleTemplatePesan(id: string, isAktif: boolean) {
   revalidatePath("/pengaturan");
   return true;
 }
+export async function seedDefaultTemplates() {
+  const templatesToSeed = [
+    // ABSEN MASUK
+    {
+      jenisPesan: "absen_masuk",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, ananda [NAMA_SANTRI] telah hadir di Rumah Qur'an pada pukul [WAKTU]. Semoga Allah jadikan setiap langkahnya menuju majelis ilmu sebagai pemberat timbangan amal kebaikan. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_masuk",
+      isiPesan: "Assalamu'alaikum wr. wb. Kami menginformasikan bahwa ananda [NAMA_SANTRI] sudah tiba di halaqah pada jam [WAKTU]. Semoga Allah SWT senantiasa memberikan kemudahan dan kefahaman dalam menuntut ilmu. Aamiin.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_masuk",
+      isiPesan: "Assalamu'alaikum. Puji syukur, ananda [NAMA_SANTRI] telah masuk kelas ([WAKTU]). 'Barangsiapa menempuh jalan untuk menuntut ilmu, Allah akan mudahkan baginya jalan menuju surga' (HR. Muslim).",
+      isAktif: true
+    },
+
+    // ABSEN PULANG
+    {
+      jenisPesan: "absen_pulang",
+      isiPesan: "Assalamu'alaikum. Alhamdulillah kegiatan belajar hari ini telah usai. Ananda [NAMA_SANTRI] telah pulang pada pukul [WAKTU]. Semoga ilmu yang didapat hari ini berkah dan bermanfaat.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_pulang",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Ananda [NAMA_SANTRI] telah menyelesaikan halaqah dan absen pulang jam [WAKTU]. Semoga lelahnya menjadi Lillah dan kelak menjadi ahlul qur'an yang membanggakan keluarga. Aamiin.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_pulang",
+      isiPesan: "Assalamu'alaikum wr. wb. Kami infokan bahwa ananda [NAMA_SANTRI] sudah bersiap pulang pukul [WAKTU]. Terima kasih atas dukungan Ayah/Bunda. Semoga Allah senantiasa merahmati keluarga di rumah.",
+      isAktif: true
+    },
+
+    // ABSEN TELAT
+    {
+      jenisPesan: "absen_telat",
+      isiPesan: "Assalamu'alaikum. Ananda [NAMA_SANTRI] hari ini hadir terlambat pada pukul [WAKTU]. Mohon kerjasamanya agar esok hari bisa hadir lebih tepat waktu, agar keberkahan awal majelis tidak terlewat. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_telat",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Kami menginfokan ananda [NAMA_SANTRI] datang terlambat di kelas pada pukul [WAKTU]. Kedisiplinan adalah kunci kesuksesan seorang penuntut ilmu. Mohon dukungannya di rumah. Terima kasih.",
+      isAktif: true
+    },
+
+    // ALPA ORTU
+    {
+      jenisPesan: "alpa_ortu",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Hari ini ananda [NAMA_SANTRI] belum tercatat kehadirannya (Alpa) di halaqah. Jika ananda berhalangan hadir, mohon berkenan memberikan konfirmasi izin. Semoga Allah senantiasa melindungi kita semua.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "alpa_ortu",
+      isiPesan: "Assalamu'alaikum. Kami merindukan kehadiran ananda [NAMA_SANTRI] di majelis hari ini. Sampai saat ini ananda berstatus Alpa. Apabila ada udzur syar'i, mohon diinformasikan kepada ustaz/ustazah. Jazakumullah khairan.",
+      isAktif: true
+    },
+
+    // IZIN ORTU
+    {
+      jenisPesan: "izin_ortu",
+      isiPesan: "Assalamu'alaikum. Pengajuan izin (Keterangan: [KETERANGAN]) untuk ananda [NAMA_SANTRI] pada tanggal [TANGGAL] telah kami catat. Semoga urusannya dimudahkan Allah dan yang sakit segera diangkat penyakitnya. Aamiin.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "izin_ortu",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Kami telah merekap izin ananda [NAMA_SANTRI] (Alasan: [KETERANGAN]). Semoga Allah SWT senantiasa memberikan kelapangan. Kami tunggu kehadirannya kembali di halaqah dengan semangat baru.",
+      isAktif: true
+    },
+
+    // RAPOR BULANAN
+    {
+      jenisPesan: "rapor_bulanan",
+      isiPesan: "Assalamu'alaikum Warahmatullahi Wabarakatuh,\nBapak/Ibu Wali dari [NAMA_SANTRI],\n\nBerikut kami sampaikan Rapor Kedisiplinan Bulan Ini:\n✅ Hadir: [TOTAL_HADIR] kali\n🤒 Sakit: [TOTAL_SAKIT] hari\n✉️ Izin: [TOTAL_IZIN] hari\n❌ Alpa: [TOTAL_ALPA] kali\n\n🏅 Total Poin Santri: [TOTAL_POIN]\n\nSemoga Ananda semakin disiplin dan istiqomah dalam menuntut ilmu.\nJazakumullah Khairan.",
+      isAktif: true
+    }
+  ];
+
+  let addedCount = 0;
+  for (const tmpl of templatesToSeed) {
+    await db.insert(templatePesan).values({
+      id: uuidv4(),
+      jenisPesan: tmpl.jenisPesan,
+      isiPesan: tmpl.isiPesan,
+      isAktif: tmpl.isAktif
+    });
+    addedCount++;
+  }
+
+  revalidatePath("/pengaturan");
+  return addedCount;
+}
+

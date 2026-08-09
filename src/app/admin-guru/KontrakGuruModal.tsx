@@ -174,7 +174,21 @@ export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, o
                 
                 <div>
                   <label className="block text-sm font-medium mb-1">Satuan Kafalah per Kehadiran (Rp)</label>
-                  <input type="number" name="satuanKafalah" required defaultValue={editData?.satuanKafalah || 0} placeholder="Misal: 50000" className="w-full p-2 border border-slate-300 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 outline-none" />
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-slate-500 font-medium text-sm">Rp</span>
+                    <input 
+                      type="text" 
+                      name="satuanKafalah" 
+                      required 
+                      defaultValue={editData?.satuanKafalah ? editData.satuanKafalah.toLocaleString('id-ID') : "0"} 
+                      placeholder="Misal: 50.000" 
+                      className="w-full p-2 pl-9 border border-slate-300 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 outline-none" 
+                      onChange={(e) => {
+                        const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                        e.target.value = rawValue ? new Intl.NumberFormat('id-ID').format(parseInt(rawValue, 10)) : '';
+                      }}
+                    />
+                  </div>
                   <p className="text-[10px] text-slate-500 mt-1">Nilai ini akan dikalikan dengan total kehadiran guru pada bulan berjalan.</p>
                 </div>
 

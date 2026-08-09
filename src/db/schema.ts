@@ -339,3 +339,19 @@ export const riwayatPoinSantri = sqliteTable('riwayat_poin_santri', {
   keterangan: text('keterangan').notNull(),
   waktuDitambahkan: integer('waktu_ditambahkan', { mode: 'timestamp' }).notNull()
 });
+
+// ==========================================
+// MODUL MUTABAAH (CAPAIAN MENGAJI & HAFALAN)
+// ==========================================
+export const mutabaahSetoran = sqliteTable('mutabaah_setoran', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  inputOleh: text('input_oleh').notNull().default('guru'), // 'guru' atau 'ortu'
+  idGuru: text('id_guru').references(() => guru.id), // Opsional, hanya jika diinput guru
+  jenis: text('jenis').notNull(), // 'mengaji' atau 'hafalan'
+  capaian: text('capaian').notNull(), // Keterangan capaian, misal "Surah Al-Baqarah 1-5" atau "Iqro 3 Hal 14"
+  tanggal: text('tanggal').notNull(), // Format YYYY-MM-DD
+  isSeenByOrtu: integer('is_seen_by_ortu', { mode: 'boolean' }).default(false), // true jika ortu sudah mengecek
+  catatanOrtu: text('catatan_ortu'), // Komentar dari orang tua saat mengecek
+  waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
+});

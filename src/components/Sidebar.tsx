@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight } from "lucide-react";
+import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight, UserMinus } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
@@ -45,9 +45,11 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       title: "Laporan",
       icon: ClipboardList,
       items: [
-        { name: "Laporan Hadir", href: "/laporan-absensi", icon: ClipboardList },
-        { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText },
+        { name: "Laporan Hadir", href: "/laporan-absensi", icon: ClipboardList, exact: true },
+        { name: "History Belum Hadir", href: "/laporan-absensi/belum-hadir", icon: UserMinus },
+        { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText, exact: true },
         { name: "Laporan Kafalah", href: "/admin-penggajian", icon: Coins },
+        { name: "Laporan Mutabaah", href: "/dashboard/mutabaah", icon: BookOpen },
         { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
       ]
     },
@@ -72,9 +74,15 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     const newExpanded = { ...expandedGroups };
     navGroups.forEach(group => {
       if (group.title && group.items.length > 1) {
-        const isChildActive = group.items.some(item => pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href)));
+        const isChildActive = group.items.some(item => {
+          const isExactMatch = pathname === item.href;
+          const isPrefixMatch = item.href !== "/" && pathname.startsWith(item.href + '/');
+          return (item as any).exact ? isExactMatch : (isExactMatch || isPrefixMatch);
+        });
         if (isChildActive) {
           newExpanded[group.title] = true;
+        } else {
+          newExpanded[group.title] = false;
         }
       }
     });
@@ -82,7 +90,13 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   }, [pathname]);
 
   const toggleGroup = (title: string) => {
-    setExpandedGroups(prev => ({...prev, [title]: !prev[title]}));
+    setExpandedGroups(prev => {
+      const isCurrentlyOpen = prev[title];
+      const newExpanded = { ...prev };
+      Object.keys(newExpanded).forEach(key => newExpanded[key] = false);
+      newExpanded[title] = !isCurrentlyOpen;
+      return newExpanded;
+    });
   };
 
   useEffect(() => {
@@ -121,7 +135,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             return (
               <div key={idx} className="space-y-1.5">
                 {group.items.map((item) => {
-                  const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                  const isExactMatch = pathname === item.href;
+                  const isPrefixMatch = item.href !== "/" && pathname.startsWith(item.href + '/');
+                  const isActive = (item as any).exact ? isExactMatch : (isExactMatch || isPrefixMatch);
                   const Icon = item.icon;
                   return (
                     <Link
@@ -163,7 +179,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                 <div className="pl-9 space-y-1 relative">
                   <div className="absolute left-5 top-0 bottom-2 w-px bg-slate-800" />
                   {group.items.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                    const isExactMatch = pathname === item.href;
+                    const isPrefixMatch = item.href !== "/" && pathname.startsWith(item.href + '/');
+                    const isActive = (item as any).exact ? isExactMatch : (isExactMatch || isPrefixMatch);
                     const Icon = item.icon;
                     return (
                       <Link

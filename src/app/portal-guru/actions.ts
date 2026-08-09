@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, halaqoh } from "@/db/schema";
+import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, halaqoh, absensi } from "@/db/schema";
 import { eq, and, desc, between, lte, gte, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -148,3 +148,49 @@ export async function getSantriIzinHariIni() {
     return { success: false, data: [] };
   }
 }
+
+export async function getSantriBelumHadirGuru() {
+  const session = await getGuruSession();
+  if (!session) return { success: false, data: [] };
+
+  try {
+    const guruHalaqoh = await db.select({ id: halaqoh.id }).from(halaqoh).where(eq(halaqoh.idGuru, session.id));
+    const halaqohIds = guruHalaqoh.map(h => h.id);
+    if (halaqohIds.length === 0) return { success: true, data: [] };
+
+    // Format WIB Start of Today
+    const now = new Date();
+    const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const wibDateString = dateFormatter.format(now);
+    const startOfTodayWIB = new Date(`${wibDateString}T00:00:00.000+07:00`);
+
+    const attendedRecords = await db.select({ idSantri: absensi.idSantri })
+      .from(absensi)
+      .where(gte(absensi.waktuScan, startOfTodayWIB));
+    const attendedIds = new Set(attendedRecords.map(r => r.idSantri));
+
+    const allActiveSantri = await db.select({
+      id: santri.id,
+      nomorInduk: santri.nomorInduk,
+      namaLengkap: santri.namaLengkap,
+      halaqoh: halaqoh.namaHalaqoh
+    })
+    .from(santri)
+    .innerJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
+    .where(
+      and(
+        eq(santri.statusSantri, 'aktif'),
+        inArray(santri.idHalaqoh, halaqohIds)
+      )
+    );
+
+    const belumHadir = allActiveSantri.filter(s => !attendedIds.has(s.id));
+    belumHadir.sort((a, b) => a.namaLengkap.localeCompare(b.namaLengkap));
+
+    return { success: true, data: belumHadir };
+  } catch (err: any) {
+    console.error("Error getSantriBelumHadirGuru:", err);
+    return { success: false, data: [] };
+  }
+}
+

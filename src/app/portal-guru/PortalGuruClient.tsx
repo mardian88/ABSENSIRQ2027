@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { LogOut, CalendarCheck, FileSignature, Coins, ChevronRight, X, RefreshCw, ExternalLink } from "lucide-react";
-import { logoutGuru, updateKontrakSignature, getSantriIzinHariIni } from "./actions";
+import { LogOut, CalendarCheck, FileSignature, Coins, ChevronRight, X, RefreshCw, ExternalLink, UserMinus, BookOpen } from "lucide-react";
+import { logoutGuru, updateKontrakSignature, getSantriIzinHariIni, getSantriBelumHadirGuru } from "./actions";
 import { showSuccess, showError, showConfirm } from "@/lib/sweetalert";
 import { useRouter } from "next/navigation";
 
@@ -17,6 +17,9 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
   const [loadingIzin, setLoadingIzin] = useState(false);
   const [buktiModal, setBuktiModal] = useState<string | null>(null);
 
+  const [belumHadirHariIni, setBelumHadirHariIni] = useState<any[]>([]);
+  const [loadingBelumHadir, setLoadingBelumHadir] = useState(false);
+
   const fetchIzinHariIni = async () => {
     setLoadingIzin(true);
     const res = await getSantriIzinHariIni();
@@ -26,8 +29,18 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
     setLoadingIzin(false);
   };
 
+  const fetchBelumHadirHariIni = async () => {
+    setLoadingBelumHadir(true);
+    const res = await getSantriBelumHadirGuru();
+    if (res.success && res.data) {
+      setBelumHadirHariIni(res.data);
+    }
+    setLoadingBelumHadir(false);
+  };
+
   useEffect(() => {
     fetchIzinHariIni();
+    fetchBelumHadirHariIni();
   }, []);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -140,6 +153,9 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
         <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm overflow-x-auto">
           <button onClick={()=>setActiveTab('dashboard')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'dashboard' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
             <CalendarCheck className="w-4 h-4 inline mr-2" /> Riwayat Absensi
+          </button>
+          <button onClick={()=>router.push('/portal-guru/mutabaah')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors text-slate-500 hover:bg-slate-50`}>
+            <BookOpen className="w-4 h-4 inline mr-2" /> Mutabaah Santri
           </button>
           <button onClick={()=>setActiveTab('kontrak')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'kontrak' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
             <FileSignature className="w-4 h-4 inline mr-2" /> Kontrak & Dokumen
@@ -255,6 +271,66 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
             ) : (
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center">
                 <p className="text-slate-500">Tidak ada santri dari halaqah Anda yang izin hari ini.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SANTRI BELUM HADIR (HARIAN) SECTION */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-4 mt-8">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                <UserMinus className="w-5 h-5 text-rose-500" />
+                Santri Belum Hadir (Hari Ini)
+              </h2>
+              <button 
+                onClick={fetchBelumHadirHariIni} 
+                disabled={loadingBelumHadir}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingBelumHadir ? 'animate-spin text-orange-500' : ''}`} />
+                Segarkan
+              </button>
+            </div>
+            
+            {loadingBelumHadir ? (
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex justify-center">
+                <RefreshCw className="w-6 h-6 animate-spin text-orange-500" />
+              </div>
+            ) : belumHadirHariIni.length > 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3 w-12 text-center">NO</th>
+                        <th className="px-4 py-3">SANTRI</th>
+                        <th className="px-4 py-3">HALAQAH</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {belumHadirHariIni.map((santri, idx) => (
+                        <tr key={santri.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-3 text-center font-medium text-slate-500">
+                            {idx + 1}
+                          </td>
+                          <td className="px-4 py-3">
+                            <p className="font-bold text-slate-800">{santri.namaLengkap}</p>
+                            <p className="text-xs text-slate-500 mt-0.5">NIS: {santri.nomorInduk}</p>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {santri.halaqoh || "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center">
+                <p className="text-slate-500 font-medium text-emerald-600">Alhamdulillah! Semua santri di halaqah Anda sudah diabsen hari ini.</p>
               </div>
             )}
           </div>

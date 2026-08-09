@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { sendTemplatedMessage } from "@/lib/fonnte";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { auth } from "@/lib/auth";
 
 import { formatTimeID } from "@/lib/date";
@@ -112,7 +113,9 @@ export async function recordAbsensiById(idSantriOrGuru: string, jenisAbsen: stri
       const [h] = santriData.idHalaqoh ? await db.select().from(halaqoh).where(eq(halaqoh.id, santriData.idHalaqoh)) : [null];
       if (h) payload.halaqah = h.namaHalaqoh;
 
-      await sendTemplatedMessage(santriData.kontakOrtu, "gagal_absen_masuk", payload);
+      after(async () => {
+        await sendTemplatedMessage(santriData.kontakOrtu, "gagal_absen_masuk", payload);
+      });
       
       return { success: false, message: "Absen gagal, silakan melakukan absen masuk" };
     }
@@ -187,9 +190,10 @@ export async function recordAbsensiById(idSantriOrGuru: string, jenisAbsen: stri
       keterangan: "-"
     };
     
-    // Using fire-and-forget for speed, or await it if strict delivery is needed
-    // In serverless, await is safer. We will await it.
-    await sendTemplatedMessage(santriData.kontakOrtu, jenisPesan, payload);
+    // Menggunakan after() agar proses absensi tidak terblokir menunggu response WhatsApp API
+    after(async () => {
+      await sendTemplatedMessage(santriData.kontakOrtu, jenisPesan, payload);
+    });
   }
 
   revalidatePath("/");
@@ -240,7 +244,9 @@ export async function recordAbsensiGuruById(idGuru: string, jenisAbsen: string, 
   
   // Trigger notif khusus guru
   const jenisPesan = jenisAbsen === "masuk" ? "absen_guru_masuk" : "absen_guru_pulang";
-  await sendTemplatedMessage(guruData.kontakWa, jenisPesan, payload);
+  after(async () => {
+    await sendTemplatedMessage(guruData.kontakWa, jenisPesan, payload);
+  });
 
   revalidatePath("/");
   return { success: true, data: { namaLengkap: guruData.namaLengkap, waktu: formatTimeID(now) } };

@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Public paths that do not require any authentication
-  const isPublicPath = path === '/' || path === '/login' || path.startsWith('/psb') || path.startsWith('/api/') || path === '/akses-absen' || path.startsWith('/uploads/') || path.startsWith('/izin') || path.startsWith('/portal-guru');
+  const isPublicPath = path === '/' || path === '/login' || path.startsWith('/psb') || path.startsWith('/api/') || path === '/akses-absen' || path.startsWith('/uploads/') || path.startsWith('/izin') || path.startsWith('/portal-guru') || path.startsWith('/portal-ortu');
   
   // Scanner paths (Kiosk mode)
   const isScannerPath = path === '/pindai-wajah' || path === '/pindai-qr' || path === '/absensi/manual';

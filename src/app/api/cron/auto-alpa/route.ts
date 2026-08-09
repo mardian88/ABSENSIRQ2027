@@ -7,9 +7,10 @@ import { sendTemplatedMessage } from "@/lib/fonnte";
 import { halaqoh, pengaturanHumas } from "@/db/schema";
 
 export async function GET(request: Request) {
-  // Verifikasi (Opsional): 
-  // Anda bisa menambahkan header Authorization bearer token di sini 
-  // agar tidak sembarang orang bisa men-trigger cron ini.
+  const authHeader = request.headers.get('authorization');
+  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     // 1. Cek apakah fitur Auto-Alpa aktif

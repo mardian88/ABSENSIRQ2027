@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { santri, perizinanSantri, absensi, pengaturanHumas } from "@/db/schema";
+import { santri, perizinanSantri, absensi, pengaturanHumas, mutabaahSetoran, pengaturanHariAktif, hariLibur } from "@/db/schema";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -63,7 +63,42 @@ export async function submitIzin(formData: FormData) {
     return { success: false, message: "Jumlah hari tidak valid" };
   }
 
-  const now = new Date();
+  // --- PAKSA ZONA WAKTU LOKAL WIB (Asia/Jakarta) ---
+  const options = { timeZone: "Asia/Jakarta" };
+  const rawNow = new Date();
+  
+  // 1. Dapatkan nama hari dalam bahasa Indonesia (Cth: "Senin")
+  const hariIniStr = rawNow.toLocaleDateString("id-ID", { weekday: "long", ...options });
+  const hariIni = hariIniStr.charAt(0).toUpperCase() + hariIniStr.slice(1).toLowerCase();
+
+  // 2. Dapatkan string tanggal format YYYY-MM-DD
+  const dateFormatter = new Intl.DateTimeFormat('en-CA', { ...options, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const todayStr = dateFormatter.format(rawNow);
+
+  // 3. Konversi waktu spesifik hari ini di WIB untuk boundary (start/end)
+  // Trick: Parse the WIB time string back to a Date object to get local values
+  const wibTimeStr = rawNow.toLocaleString("en-US", { ...options }); 
+  const now = new Date(wibTimeStr);
+  
+  // --- VALIDASI HARI LIBUR ---
+  // A. Cek apakah hari ini adalah hari aktif
+  const aktifHariIni = await db.select().from(pengaturanHariAktif)
+    .where(eq(pengaturanHariAktif.hari, hariIni))
+    .limit(1);
+    
+  if (aktifHariIni.length > 0 && !aktifHariIni[0].isAktif) {
+    return { success: false, message: `Hari ini (${hariIni}) adalah hari libur KBM. Tidak perlu mengajukan izin.` };
+  }
+
+  // B. Cek apakah hari ini adalah libur khusus (libur tanggal)
+  const liburTanggal = await db.select().from(hariLibur)
+    .where(and(eq(hariLibur.tanggal, todayStr), eq(hariLibur.isAktif, true)))
+    .limit(1);
+
+  if (liburTanggal.length > 0) {
+    return { success: false, message: `Hari ini sedang libur (${liburTanggal[0].keterangan}). Tidak perlu mengajukan izin.` };
+  }
+
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
@@ -217,5 +252,89 @@ export async function resetFotoProfil(idSantri: string): Promise<{success: boole
     return { success: true, message: "Foto profil direset ke default" };
   } catch (error) {
     return { success: false, message: "Gagal mereset foto profil" };
+  }
+}
+
+
+// --- MUTABAAH ACTIONS ---
+
+
+
+
+
+
+
+
+
+
+
+export async function getMutabaahOrtuData() {
+  const sessionSantri = await getOrtuSession();
+  if (!sessionSantri) return null;
+  const santriId = sessionSantri.id;
+
+  try {
+    const [santriData] = await db.select({
+      id: santri.id,
+      namaLengkap: santri.namaLengkap,
+      nomorInduk: santri.nomorInduk,
+      namaHalaqoh: halaqoh.namaHalaqoh
+    })
+    .from(santri)
+    .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
+    .where(eq(santri.id, santriId));
+
+    if (!santriData) return null;
+
+    const riwayat = await db.select()
+      .from(mutabaahSetoran)
+      .where(eq(mutabaahSetoran.idSantri, santriId))
+      .orderBy(desc(mutabaahSetoran.waktuDibuat))
+      .limit(100);
+
+    return { profil: santriData, riwayat };
+  } catch (err: any) {
+    return null;
+  }
+}
+
+export async function tandaiTelahDilihat(idSetoran: string, catatanOrtu: string) {
+  const sessionSantri = await getOrtuSession();
+  if (!sessionSantri) return { success: false, message: "Akses ditolak" };
+  const santriId = sessionSantri.id;
+
+  try {
+    await db.update(mutabaahSetoran)
+      .set({ isSeenByOrtu: true, catatanOrtu })
+      .where(eq(mutabaahSetoran.id, idSetoran));
+    
+    revalidatePath("/portal-ortu/mutabaah");
+    return { success: true, message: "Berhasil ditandai" };
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function tambahSetoranLiburOrtu(jenis: 'mengaji' | 'hafalan', capaian: string, tanggal: string) {
+  const sessionSantri = await getOrtuSession();
+  if (!sessionSantri) return { success: false, message: "Akses ditolak" };
+  const santriId = sessionSantri.id;
+
+  try {
+    await db.insert(mutabaahSetoran).values({
+      id: uuidv4(),
+      idSantri: santriId,
+      inputOleh: 'ortu',
+      jenis,
+      capaian,
+      tanggal,
+      isSeenByOrtu: true, // Otomatis checked karena ortu yang input
+      waktuDibuat: new Date()
+    });
+
+    revalidatePath("/portal-ortu/mutabaah");
+    return { success: true, message: "Setoran mandiri berhasil disimpan" };
+  } catch (err: any) {
+    return { success: false, message: err.message };
   }
 }

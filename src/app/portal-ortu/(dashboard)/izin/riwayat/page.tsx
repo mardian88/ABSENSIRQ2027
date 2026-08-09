@@ -1,4 +1,4 @@
-import { getOrtuSession, getRiwayatIzin } from "../actions";
+import { getOrtuSession, getRiwayatIzin } from "../../../actions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Clock, FileText, CheckCircle2 } from "lucide-react";

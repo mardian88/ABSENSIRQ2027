@@ -61,7 +61,7 @@ export default function FormIzinPage() {
       // Needs to fetch the current user's ID via an API or we can just send it to a server action that knows it from cookies.
       // Let's call our server action via fetch to an API route, or just use the server action directly.
       // Wait, server actions with FormData can just be imported.
-      const { submitIzin, getOrtuSession } = await import("../actions");
+      const { submitIzin, getOrtuSession } = await import("../../../actions");
       const session = await getOrtuSession();
       if (!session) {
         toast.error("Sesi telah habis");
@@ -84,7 +84,8 @@ export default function FormIzinPage() {
       setUploadProgress(100);
       
       if (res.success) {
-        setTimeout(() => router.push("/izin/sukses"), 400);
+        toast.success("Pengajuan izin berhasil terkirim!");
+        setTimeout(() => router.push("/portal-ortu/izin/riwayat"), 400);
       } else {
         toast.error(res.message || "Gagal mengirim pengajuan");
         setLoading(false);

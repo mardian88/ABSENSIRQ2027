@@ -106,7 +106,7 @@ export async function saveKontrakGuru(data: any) {
         jenisKontrak: data.jenisKontrak,
         tanggalMulai: isPermanen || !data.tanggalMulai ? null : new Date(data.tanggalMulai),
         tanggalSelesai: isPermanen || !data.tanggalSelesai ? null : new Date(data.tanggalSelesai),
-        satuanKafalah: parseFloat(data.satuanKafalah),
+        satuanKafalah: parseFloat(String(data.satuanKafalah).replace(/\./g, '')),
         statusKontrak: data.statusKontrak
       }).where(eq(kontrakGuru.id, data.id));
     } else {
@@ -117,7 +117,7 @@ export async function saveKontrakGuru(data: any) {
         jenisKontrak: data.jenisKontrak,
         tanggalMulai: isPermanen || !data.tanggalMulai ? null : new Date(data.tanggalMulai),
         tanggalSelesai: isPermanen || !data.tanggalSelesai ? null : new Date(data.tanggalSelesai),
-        satuanKafalah: parseFloat(data.satuanKafalah),
+        satuanKafalah: parseFloat(String(data.satuanKafalah).replace(/\./g, '')),
         statusKontrak: 'menunggu_ttd',
         createdAt: new Date()
       });
