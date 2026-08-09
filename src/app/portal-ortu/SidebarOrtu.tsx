@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, FileText, LogOut, X, User } from "lucide-react";
+import { Home, BookOpen, FileText, LogOut, X, User, Wallet } from "lucide-react";
 import { logoutOrtu } from "./actions";
 
 export function SidebarOrtu({ 
@@ -16,6 +16,7 @@ export function SidebarOrtu({
 
   const menuItems = [
     { name: "Dashboard", href: "/portal-ortu", icon: Home, exact: true },
+    { name: "Keuangan", href: "/portal-ortu/keuangan", icon: Wallet },
     { name: "Mutabaah Santri", href: "/portal-ortu/mutabaah", icon: BookOpen },
     { name: "Perizinan", href: "/portal-ortu/izin", icon: FileText },
   ];
