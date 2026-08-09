@@ -26,7 +26,7 @@ export function NotFoundPage() {
       </p>
 
       <Button
-        onClick={() => router.push("/home")}
+        onClick={() => router.push("/")}
         className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-8 py-6 text-base font-semibold shadow-lg shadow-emerald-200 transition-all hover:scale-105 active:scale-95"
       >
         <ArrowLeft className="w-5 h-5" />
