@@ -301,7 +301,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-slate-500 mb-1">Satuan Kafalah</p>
-                        <p className="font-bold text-emerald-600">Rp {k.satuanKafalah.toLocaleString('id-ID')} <span className="text-xs font-normal text-slate-500">/Hadir</span></p>
+                        <p className="font-bold text-emerald-600">Rp xx.xxx <span className="text-xs font-normal text-slate-500">/Hadir</span></p>
                       </div>
                     </div>
 

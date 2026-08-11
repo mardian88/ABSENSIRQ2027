@@ -61,8 +61,13 @@ export default async function ParentKeuanganPage() {
 
       <main className="max-w-md mx-auto p-4 space-y-6 mt-4">
         {/* Profile Card */}
-        <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 text-white shadow-lg shadow-emerald-900/20">
-          <p className="text-emerald-100 text-sm mb-1">Nama Santri</p>
+        <div className="sticky top-[72px] z-10 bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 text-white shadow-lg shadow-emerald-900/20">
+          <div className="flex items-center gap-2 mb-1">
+            <a href="/portal-ortu" className="bg-white/10 hover:bg-white/20 p-1 rounded-md transition-colors mr-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </a>
+            <p className="text-emerald-100 text-sm">Nama Santri</p>
+          </div>
           <h2 className="text-2xl font-bold mb-6">{santri.namaLengkap}</h2>
           
           <div className="grid grid-cols-2 gap-3">
