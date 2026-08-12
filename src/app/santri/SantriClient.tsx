@@ -12,6 +12,9 @@ import * as XLSX from "xlsx";
 import QRCode from "qrcode";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { getSantriColumns } from "./columns";
+import { Controller } from "react-hook-form";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 
 const santriSchema = z.object({
   nomorInduk: z.string().optional(),
@@ -608,7 +611,18 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Lahir</label>
-                      <input type="date" {...form.register("tanggalLahir")} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+                      <Controller
+                        control={form.control}
+                        name="tanggalLahir"
+                        render={({ field }) => (
+                          <DatePicker
+                            name={field.name}
+                            date={field.value ? new Date(field.value) : undefined}
+                            setDate={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                            placeholder="DD/MM/YYYY"
+                          />
+                        )}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Jenis Kelamin</label>

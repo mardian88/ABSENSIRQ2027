@@ -8,6 +8,7 @@ import { showSuccess, showError, showConfirm } from "@/lib/sweetalert";
 import { logoutGuru } from "../actions";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { getMutabaahRiwayatColumns } from "./columns";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: any, listSantri: any[], riwayat: any[] }) {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
   const [jenis, setJenis] = useState<'mengaji'|'hafalan'>('mengaji');
   const [capaian, setCapaian] = useState("");
   const [catatanGuru, setCatatanGuru] = useState("");
-  const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
+  const [tanggal, setTanggal] = useState<Date | undefined>(new Date());
   const [editId, setEditId] = useState<string | null>(null);
 
   const handleLogout = async () => {
@@ -31,14 +32,17 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idSantri || !capaian) return showError("Gagal", "Pilih santri dan isi capaian!");
+    if (!idSantri || !capaian || !tanggal) return showError("Gagal", "Pilih santri, isi capaian, dan pilih tanggal!");
 
     setLoading(true);
     let res;
+    // Format tanggal ke YYYY-MM-DD
+    const dateStr = `${tanggal.getFullYear()}-${String(tanggal.getMonth() + 1).padStart(2, '0')}-${String(tanggal.getDate()).padStart(2, '0')}`;
+    
     if (editId) {
-      res = await editMutabaahGuru(editId, jenis, capaian, tanggal, catatanGuru);
+      res = await editMutabaahGuru(editId, jenis, capaian, dateStr, catatanGuru);
     } else {
-      res = await tambahSetoranMutabaah(idSantri, jenis, capaian, tanggal, catatanGuru);
+      res = await tambahSetoranMutabaah(idSantri, jenis, capaian, dateStr, catatanGuru);
     }
     setLoading(false);
 
@@ -58,7 +62,7 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
     setIdSantri(item.idSantri);
     setJenis(item.jenis);
     setCapaian(item.capaian);
-    setTanggal(item.tanggal);
+    setTanggal(item.tanggal ? new Date(item.tanggal) : undefined);
     setCatatanGuru(item.catatanGuru || "");
     setActiveTab('input');
   };
@@ -83,7 +87,7 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
     setJenis('mengaji');
     setCapaian("");
     setCatatanGuru("");
-    setTanggal(new Date().toISOString().split('T')[0]);
+    setTanggal(new Date());
   };
 
   return (
@@ -134,13 +138,7 @@ export function MutabaahGuruClient({ profil, listSantri, riwayat }: { profil: an
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-                <input 
-                  type="date" 
-                  value={tanggal}
-                  onChange={e => setTanggal(e.target.value)}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                  required
-                />
+                <DatePicker date={tanggal} setDate={setTanggal} placeholder="DD/MM/YYYY" />
               </div>
 
               <div>

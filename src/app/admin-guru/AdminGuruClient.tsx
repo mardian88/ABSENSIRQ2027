@@ -9,6 +9,7 @@ import { KontrakGuruModal } from "./KontrakGuruModal";
 import QRCode from "qrcode";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { getGuruColumns } from "./columns";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function AdminGuruClient({ initialData }: { initialData: any[] }) {
   const [data, setData] = useState(initialData);
@@ -19,6 +20,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
   const [isLoading, setIsLoading] = useState(false);
   const [faceRegistrationGuru, setFaceRegistrationGuru] = useState<{id: string, namaLengkap: string} | null>(null);
   const [kontrakGuru, setKontrakGuru] = useState<any>(null);
+  const [tanggalLahir, setTanggalLahir] = useState<Date | undefined>(undefined);
 
   const selectedIds = Object.keys(rowSelection)
     .filter(k => (rowSelection as any)[k])
@@ -107,7 +109,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
             </button>
           )}
           <button 
-            onClick={() => { setEditingData(null); setIsModalOpen(true); }}
+            onClick={() => { setEditingData(null); setTanggalLahir(undefined); setIsModalOpen(true); }}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -120,7 +122,10 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
         columns={getGuruColumns({
           handleDownloadQR,
           setFaceRegistrationGuru,
-          setEditingData,
+          setEditingData: (data) => {
+            setEditingData(data);
+            setTanggalLahir(data?.tanggalLahir ? new Date(data.tanggalLahir) : undefined);
+          },
           setIsModalOpen,
           setKontrakGuru,
         })}
@@ -157,7 +162,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Tanggal Lahir</label>
-                  <input type="date" name="tanggalLahir" defaultValue={editingData?.tanggalLahir} className="w-full p-2 border border-slate-300 rounded-lg" />
+                  <DatePicker name="tanggalLahir" date={tanggalLahir} setDate={setTanggalLahir} placeholder="DD/MM/YYYY" />
                 </div>
               </div>
               <div>

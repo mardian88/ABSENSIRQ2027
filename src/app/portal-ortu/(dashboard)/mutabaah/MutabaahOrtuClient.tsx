@@ -5,6 +5,7 @@ import { LogOut, ArrowLeft, CheckCircle2, Clock, CalendarCheck, BookOpen, User, 
 import { useRouter } from "next/navigation";
 import { tandaiTelahDilihat, tambahSetoranLiburOrtu } from "../../actions";
 import { showSuccess, showError } from "@/lib/sweetalert";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: any[] }) {
   const router = useRouter();
@@ -14,7 +15,7 @@ export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: 
 
   const [jenis, setJenis] = useState<'mengaji'|'hafalan'>('mengaji');
   const [capaian, setCapaian] = useState("");
-  const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0]);
+  const [tanggal, setTanggal] = useState<Date | undefined>(new Date());
 
   
 
@@ -38,10 +39,12 @@ export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: 
 
   const handleInputLiburan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!capaian) return showError("Gagal", "Harap isi capaian.");
+    if (!capaian || !tanggal) return showError("Gagal", "Harap isi capaian dan pilih tanggal.");
     
     setLoading(true);
-    const res = await tambahSetoranLiburOrtu(jenis, capaian, tanggal);
+    // Format tanggal ke YYYY-MM-DD
+    const dateStr = `${tanggal.getFullYear()}-${String(tanggal.getMonth() + 1).padStart(2, '0')}-${String(tanggal.getDate()).padStart(2, '0')}`;
+    const res = await tambahSetoranLiburOrtu(jenis, capaian, dateStr);
     setLoading(false);
 
     if (res.success) {
@@ -157,13 +160,9 @@ export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-                <input 
-                  type="date" 
-                  value={tanggal}
-                  onChange={e => setTanggal(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                  required
-                />
+                <div className="bg-slate-50 border border-slate-200 rounded-xl px-1 py-1">
+                  <DatePicker date={tanggal} setDate={setTanggal} placeholder="DD/MM/YYYY" />
+                </div>
               </div>
 
               <div>

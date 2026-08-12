@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Briefcase, X, Plus, Edit, Trash2 } from "lucide-react";
 import { getKontrakByGuruId, saveKontrakGuru } from "./actions";
 import { showError, showSuccess, showConfirm } from "@/lib/sweetalert";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, onClose: () => void, guru: any }) {
   const [kontrakList, setKontrakList] = useState<any[]>([]);
@@ -11,6 +12,9 @@ export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, o
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [jenisKontrak, setJenisKontrak] = useState("temporer");
+  
+  const [tanggalMulai, setTanggalMulai] = useState<Date | undefined>(undefined);
+  const [tanggalSelesai, setTanggalSelesai] = useState<Date | undefined>(undefined);
   
   useEffect(() => {
     if (isOpen && guru) {
@@ -84,7 +88,13 @@ export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, o
                   {kontrakList.map(k => (
                     <div key={k.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 relative group">
                       <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => { setEditData(k); setIsEditing(true); }} className="text-blue-600 hover:text-blue-800 bg-white p-1.5 rounded shadow-sm border border-slate-200" title="Edit">
+                        <button onClick={() => { 
+                          setEditData(k); 
+                          setJenisKontrak(k.jenisKontrak);
+                          if (k.tanggalMulai) setTanggalMulai(new Date(k.tanggalMulai));
+                          if (k.tanggalSelesai) setTanggalSelesai(new Date(k.tanggalSelesai));
+                          setIsEditing(true); 
+                        }} className="text-blue-600 hover:text-blue-800 bg-white p-1.5 rounded shadow-sm border border-slate-200" title="Edit">
                           <Edit className="w-4 h-4" />
                         </button>
                       </div>
@@ -131,7 +141,12 @@ export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, o
               ) : (
                 <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-xl">
                   <p className="text-slate-500 mb-2">Belum ada kontrak untuk guru ini.</p>
-                  <button onClick={() => setIsEditing(true)} className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700">
+                  <button onClick={() => {
+                    setEditData(null);
+                    setTanggalMulai(undefined);
+                    setTanggalSelesai(undefined);
+                    setIsEditing(true);
+                  }} className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700">
                     Buat Kontrak Pertama
                   </button>
                 </div>
@@ -163,11 +178,11 @@ export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, o
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1">Tanggal Mulai</label>
-                      <input type="date" name="tanggalMulai" required defaultValue={editData?.tanggalMulai ? new Date(editData.tanggalMulai).toISOString().split('T')[0] : ''} className="w-full p-2 border border-slate-300 rounded-lg text-sm" />
+                      <DatePicker name="tanggalMulai" date={tanggalMulai} setDate={setTanggalMulai} placeholder="DD/MM/YYYY" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Tanggal Selesai</label>
-                      <input type="date" name="tanggalSelesai" required defaultValue={editData?.tanggalSelesai ? new Date(editData.tanggalSelesai).toISOString().split('T')[0] : ''} className="w-full p-2 border border-slate-300 rounded-lg text-sm" />
+                      <DatePicker name="tanggalSelesai" date={tanggalSelesai} setDate={setTanggalSelesai} placeholder="DD/MM/YYYY" />
                     </div>
                   </div>
                 )}
@@ -202,7 +217,7 @@ export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, o
                 </div>
                 
                 <div className="pt-4 flex justify-end gap-2 border-t border-slate-200 mt-4">
-                  <button type="button" onClick={() => { setIsEditing(false); setEditData(null); setJenisKontrak("temporer"); }} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
+                  <button type="button" onClick={() => { setIsEditing(false); setEditData(null); setJenisKontrak("temporer"); setTanggalMulai(undefined); setTanggalSelesai(undefined); }} className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100">Batal</button>
                   <button type="submit" disabled={isLoading} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50">
                     {isLoading ? "Menyimpan..." : "Simpan Kontrak"}
                   </button>
