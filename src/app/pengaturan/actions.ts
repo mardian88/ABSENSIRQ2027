@@ -237,6 +237,62 @@ export async function updatePengaturanHumas(data: { id: string, tokenFonnte: str
   return true;
 }
 
+// --- Fonnte Tokens CRUD & Realtime Quota ---
+import { fonnteTokens } from "@/db/schema";
+import { desc } from "drizzle-orm";
+
+export async function getFonnteTokens() {
+  return await db.select().from(fonnteTokens).orderBy(desc(fonnteTokens.isActive));
+}
+
+export async function saveFonnteToken(data: { id?: string, name: string, token: string, isActive: boolean }) {
+  if (data.id) {
+    if (data.isActive) {
+      // Deactivate all others first
+      await db.update(fonnteTokens).set({ isActive: false, isExhausted: false });
+    }
+    await db.update(fonnteTokens).set({
+      name: data.name,
+      token: data.token,
+      isActive: data.isActive,
+      updatedAt: new Date()
+    }).where(eq(fonnteTokens.id, data.id));
+  } else {
+    if (data.isActive) {
+      await db.update(fonnteTokens).set({ isActive: false, isExhausted: false });
+    }
+    await db.insert(fonnteTokens).values({
+      id: uuidv4(),
+      name: data.name,
+      token: data.token,
+      isActive: data.isActive,
+      isExhausted: false,
+      updatedAt: new Date()
+    });
+  }
+  revalidatePath("/pengaturan");
+  return true;
+}
+
+export async function deleteFonnteToken(id: string) {
+  await db.delete(fonnteTokens).where(eq(fonnteTokens.id, id));
+  revalidatePath("/pengaturan");
+  return true;
+}
+
+export async function checkFonnteQuota(token: string) {
+  try {
+    const res = await fetch("https://api.fonnte.com/device", {
+      method: "POST",
+      headers: { Authorization: token }
+    });
+    const data = await res.json();
+    return data;
+  } catch (err: any) {
+    return { status: false, reason: err.message };
+  }
+}
+
 // --- Template Pesan CRUD ---
 export async function getTemplatePesanList() {
   return await db.select().from(templatePesan);

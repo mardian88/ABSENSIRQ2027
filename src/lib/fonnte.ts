@@ -1,34 +1,90 @@
 import { db } from "@/db";
-import { pengaturanHumas, templatePesan } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { pengaturanHumas, templatePesan, fonnteTokens } from "@/db/schema";
+import { eq, and, ne } from "drizzle-orm";
 
 export async function sendFonnteMessage(phone: string, message: string) {
   try {
     const [config] = await db.select().from(pengaturanHumas).limit(1);
     
-    if (!config || !config.isAktif || !config.tokenFonnte) {
-      console.log("[FONNTE] Messaging is disabled or token not set.");
-      return { success: false, message: "Pengiriman pesan tidak aktif atau token kosong" };
+    if (!config || !config.isAktif) {
+      console.log("[FONNTE] Messaging is disabled globally.");
+      return { success: false, message: "Pengiriman pesan tidak aktif" };
     }
 
-    console.log(`[FONNTE] Sending message to ${phone}`);
-    
-    const response = await fetch("https://api.fonnte.com/send", {
-      method: "POST",
-      headers: {
-        "Authorization": config.tokenFonnte
-      },
-      body: new URLSearchParams({
-        target: phone,
-        message: message,
-        countryCode: "62",
-      })
-    });
+    // Ambil token utama yang aktif dan belum habis
+    let activeTokenRow = await db.select().from(fonnteTokens).where(
+      and(eq(fonnteTokens.isActive, true), eq(fonnteTokens.isExhausted, false))
+    ).limit(1).then(res => res[0]);
 
-    const result = await response.json();
-    console.log("[FONNTE] Response:", result);
-    
-    return { success: result.status, message: result.detail || "Berhasil dikirim" };
+    if (!activeTokenRow) {
+      // Coba cari token lain yang belum habis
+      activeTokenRow = await db.select().from(fonnteTokens).where(
+        eq(fonnteTokens.isExhausted, false)
+      ).limit(1).then(res => res[0]);
+
+      if (!activeTokenRow) {
+        console.log("[FONNTE] No usable token found (all exhausted or none exists).");
+        return { success: false, message: "Semua kuota token Fonnte habis atau belum disetting." };
+      }
+
+      // Jadikan ini sebagai active token
+      await db.update(fonnteTokens).set({ isActive: false });
+      await db.update(fonnteTokens).set({ isActive: true }).where(eq(fonnteTokens.id, activeTokenRow.id));
+    }
+
+    let currentTokenRow = activeTokenRow;
+    let attempts = 0;
+    const maxAttempts = 3; // Coba maksimal 3 token berbeda
+
+    while (attempts < maxAttempts && currentTokenRow) {
+      console.log(`[FONNTE] Sending message to ${phone} using token ${currentTokenRow.name}`);
+      
+      const response = await fetch("https://api.fonnte.com/send", {
+        method: "POST",
+        headers: {
+          "Authorization": currentTokenRow.token
+        },
+        body: new URLSearchParams({
+          target: phone,
+          message: message,
+          countryCode: "62",
+        })
+      });
+
+      const result = await response.json();
+      console.log("[FONNTE] Response:", result);
+      
+      if (result.status === true) {
+        return { success: true, message: result.detail || "Berhasil dikirim" };
+      } else {
+        // Gagal, periksa apakah karena limit/kuota
+        const reason = (result.reason || result.detail || "").toLowerCase();
+        if (reason.includes("quota") || reason.includes("limit") || reason.includes("package") || reason.includes("empty")) {
+          console.log(`[FONNTE] Token ${currentTokenRow.name} exhausted. Marking as exhausted and switching...`);
+          // Tandai token ini habis
+          await db.update(fonnteTokens).set({ isExhausted: true, isActive: false }).where(eq(fonnteTokens.id, currentTokenRow.id));
+          
+          // Cari token berikutnya
+          const nextTokenRow = await db.select().from(fonnteTokens).where(
+            eq(fonnteTokens.isExhausted, false)
+          ).limit(1).then(res => res[0]);
+
+          if (nextTokenRow) {
+            await db.update(fonnteTokens).set({ isActive: true }).where(eq(fonnteTokens.id, nextTokenRow.id));
+            currentTokenRow = nextTokenRow;
+            attempts++;
+            continue; // Ulangi loop dengan token baru
+          } else {
+            return { success: false, message: "Semua kuota token Fonnte habis saat mencoba mengirim pesan." };
+          }
+        } else {
+          // Gagal karena alasan lain (misal: nomor tidak valid, device disconnect)
+          return { success: false, message: result.reason || result.detail || "Gagal mengirim pesan" };
+        }
+      }
+    }
+
+    return { success: false, message: "Gagal mengirim pesan setelah beberapa percobaan." };
   } catch (error) {
     console.error("[FONNTE ERROR]", error);
     return { success: false, message: "Terjadi kesalahan internal saat mengirim pesan" };

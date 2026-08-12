@@ -17,6 +17,7 @@ import {
   toggleTemplatePesan,
   seedDefaultTemplates
 } from "./actions";
+import { FonnteTokenManager } from "./FonnteTokenManager";
 
 const JENIS_PESAN_OPTIONS = [
   { value: "absen_masuk", label: "Absen Masuk" },
@@ -39,7 +40,6 @@ export function PesanOtomatisManager() {
   
   // Fonnte Settings
   const [humasId, setHumasId] = useState("");
-  const [tokenFonnte, setTokenFonnte] = useState("");
   const [nomorAdmin, setNomorAdmin] = useState("");
   const [isFonnteAktif, setIsFonnteAktif] = useState(false);
   const [nomorReminder, setNomorReminder] = useState("");
@@ -63,7 +63,7 @@ export function PesanOtomatisManager() {
   const loadData = async (silent: boolean = false) => {
     if (!silent) setLoading(true);
     const humas = await getPengaturanHumas();
-    setTokenFonnte(humas.tokenFonnte || "");
+    setHumasId(humas.id);
     setNomorAdmin(humas.nomorAdmin || "");
     setIsFonnteAktif(humas.isAktif ?? false);
     setNomorReminder(humas.nomorReminder || "");
@@ -81,7 +81,7 @@ export function PesanOtomatisManager() {
     try {
       await updatePengaturanHumas({
         id: humasId,
-        tokenFonnte,
+        tokenFonnte: "multi-token",
         nomorAdmin,
         isAktif: isFonnteAktif,
         nomorReminder,
@@ -206,34 +206,31 @@ export function PesanOtomatisManager() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Token Fonnte</Label>
-              <Input 
-                value={tokenFonnte}
-                onChange={(e) => setTokenFonnte(e.target.value)}
-                placeholder="Contoh: xxxxxxxx-xxxx-xxxx-xxxx"
-                type="password"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Nomor WhatsApp Admin (Penerima Notif Izin)</Label>
-              <Input 
-                value={nomorAdmin}
-                onChange={(e) => setNomorAdmin(e.target.value)}
-                placeholder="Contoh: 081234567890"
-              />
-            </div>
-            <div className="flex items-center gap-2 mb-4">
-              <input 
-                type="checkbox"
-                id="fonnteAktif"
-                checked={isFonnteAktif}
-                onChange={(e) => setIsFonnteAktif(e.target.checked)}
-                className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
-              />
-              <Label htmlFor="fonnteAktif" className="font-medium">Aktifkan Pengiriman Pesan Otomatis</Label>
-            </div>
+          <div className="space-y-6">
+            <FonnteTokenManager />
+            
+            <hr className="my-4 border-slate-200" />
+            
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-800">Pengaturan Umum Pengiriman</h3>
+              <div className="space-y-2">
+                <Label>Nomor WhatsApp Admin (Penerima Notif Izin/Alpa)</Label>
+                <Input 
+                  value={nomorAdmin}
+                  onChange={(e) => setNomorAdmin(e.target.value)}
+                  placeholder="Contoh: 081234567890"
+                />
+              </div>
+              <div className="flex items-center gap-2 mb-4">
+                <input 
+                  type="checkbox"
+                  id="fonnteAktif"
+                  checked={isFonnteAktif}
+                  onChange={(e) => setIsFonnteAktif(e.target.checked)}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                />
+                <Label htmlFor="fonnteAktif" className="font-medium">Aktifkan Pengiriman Pesan Otomatis (Global)</Label>
+              </div>
             
             <hr className="my-4" />
             
@@ -260,6 +257,7 @@ export function PesanOtomatisManager() {
               {savingFonnte ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Simpan Pengaturan
             </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

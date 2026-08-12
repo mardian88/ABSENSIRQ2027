@@ -135,6 +135,15 @@ export const santri = sqliteTable('santri', {
   instansiIbu: text('instansi_ibu'),
 });
 
+export const fonnteTokens = sqliteTable('fonnte_tokens', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  token: text('token').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(false).notNull(),
+  isExhausted: integer('is_exhausted', { mode: 'boolean' }).default(false).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+});
+
 export const absensi = sqliteTable('absensi', {
   id: text('id').primaryKey(),
   idSantri: text('id_santri').references(() => santri.id).notNull(),
