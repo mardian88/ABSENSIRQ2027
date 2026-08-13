@@ -162,7 +162,7 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
             </div>
           )}
           
-          <DataTable sortColumn=waktuScan
+          <DataTable sortColumn="waktuMasuk"
             columns={getLaporanColumns()}
             data={data}
             searchKey="namaLengkap"

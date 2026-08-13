@@ -118,7 +118,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
         </div>
       </div>
 
-      <DataTable sortColumn=nip
+      <DataTable sortColumn="nip"
         columns={getGuruColumns({
           handleDownloadQR,
           setFaceRegistrationGuru,

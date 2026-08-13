@@ -335,7 +335,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
-            <DataTable sortColumn=waktuPengajuan
+            <DataTable sortColumn="waktuPengajuan"
               columns={activeTab === 'izin' ? getIzinColumns(handleOpenDetailModal) : getAlpaColumns(handleOpenEditModal)}
               data={activeTab === 'izin' ? dataIzin : dataAlpa}
               searchKey="namaLengkap"

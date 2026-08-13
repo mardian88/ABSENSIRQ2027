@@ -50,7 +50,7 @@ export function AlumniClient({ alumniList }: { alumniList: any[] }) {
         </div>
       </div>
 
-      <DataTable sortColumn=nomorInduk
+      <DataTable sortColumn="nomorInduk"
         columns={getAlumniColumns({ handleAktifkan, handleDelete, isLoading })}
         data={alumniList}
         searchKey="namaLengkap"
