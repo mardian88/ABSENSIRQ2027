@@ -348,13 +348,44 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       return;
     }
 
-    const exportData = dataToExport.map(s => ({
-      NIS: s.nomorInduk,
-      "Nama Lengkap": s.namaLengkap,
-      Halaqoh: s.halaqoh || "",
-      "Kontak Wali": s.kontakOrtu,
-      Status: s.statusSantri,
-    }));
+    const exportData = dataToExport.map(s => {
+      const formatDate = (dateString: string) => {
+        if (!dateString) return "";
+        try {
+          const [y, m, d] = dateString.split("-");
+          return `${d}/${m}/${y}`;
+        } catch(e) {
+          return dateString;
+        }
+      };
+      
+      return {
+        "NIS": s.nomorInduk || "",
+        "Nama Lengkap": s.namaLengkap || "",
+        "Tempat Lahir": s.tempatLahir || "",
+        "Tanggal Lahir": formatDate(s.tanggalLahir),
+        "Jenis Kelamin": s.jenisKelamin === 'laki-laki' ? 'Laki-Laki' : s.jenisKelamin === 'perempuan' ? 'Perempuan' : "",
+        "Alamat Lengkap": s.alamatLengkap || "",
+        "Alamat Domisili Sesuai KK": s.isAlamatDomisiliSama ? "Ya" : "Tidak",
+        "Alamat Domisili": s.alamatDomisili || "",
+        "Jenjang Sekolah": s.jenjangSekolah === 'lainnya' ? (s.jenjangSekolahLainnya || "Lainnya") : (s.jenjangSekolah || ""),
+        "Nama Sekolah": s.namaSekolah || "",
+        "Kelas Sekolah": s.kelasSekolah || "",
+        "Ikut Les/Ekskul Luar": s.ikutLes ? "Ya" : "Tidak",
+        "Hari Les": s.hariLes || "",
+        "Jam Les": s.jamLesMulai ? `${s.jamLesMulai} - ${s.jamLesSelesai || 'Selesai'}` : "",
+        "Nama Ayah": s.namaAyah || "",
+        "Pekerjaan Ayah": s.pekerjaanAyah === 'lainnya' ? (s.pekerjaanAyahLainnya || "Lainnya") : (s.pekerjaanAyah || ""),
+        "Instansi Ayah": s.instansiAyah || "",
+        "Nama Ibu": s.namaIbu || "",
+        "Pekerjaan Ibu": s.pekerjaanIbu === 'lainnya' ? (s.pekerjaanIbuLainnya || "Lainnya") : (s.pekerjaanIbu || ""),
+        "Instansi Ibu": s.instansiIbu || "",
+        "Nomor WhatsApp Wali": s.kontakOrtu || "",
+        "Halaqoh": s.halaqoh || "",
+        "Jadwal Sesi Absensi": sesiList.find((sesi: any) => sesi.id === s.idSesiAbsensi)?.namaSesi || "",
+        "Status Santri": s.statusSantri === 'aktif' ? 'Aktif' : 'Non-Aktif',
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
