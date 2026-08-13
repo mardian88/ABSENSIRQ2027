@@ -546,7 +546,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
           </button>
         </div>
       </div>
-      <DataTable
+      <DataTable sortColumn=nomorInduk
         columns={getSantriColumns({
           halaqohList,
           handleHalaqohChange,
