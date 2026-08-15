@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { CheckCircle2, QrCode, Camera, Keyboard, Flashlight, RefreshCcw, XCircle } from "lucide-react";
 import { Html5Qrcode, CameraDevice } from "html5-qrcode";
 import { showError } from "@/lib/sweetalert";
-import { recordAbsensiByQR, simulateQRScanAbsen } from "../absensi/actions";
+import { recordAbsensiByQR } from "../absensi/actions";
 import { formatTimeID } from "@/lib/date";
 import { KioskNav } from "@/components/KioskNav";
 
@@ -219,38 +219,7 @@ export default function PindaiQR() {
     }
   };
 
-  const handleSimulateScan = async () => {
-    if (isProcessingRef.current) return;
-    setIsProcessing(true);
-    try {
-      const res = await simulateQRScanAbsen(jenisAbsenRef.current);
-      if (res.success && res.data) {
-        setScanResult({
-          nama: res.data.namaLengkap,
-          waktu: res.data.waktu,
-          jenis: jenisAbsenRef.current
-        });
-      } else {
-        setScanResult({
-          nama: res.message || "Santri tidak ditemukan",
-          waktu: formatTimeID(new Date()),
-          jenis: "error"
-        });
-      }
-    } catch (e: any) {
-      console.error(e);
-      setScanResult({
-        nama: e.message || "Gagal Server",
-        waktu: formatTimeID(new Date()),
-        jenis: "error"
-      });
-    } finally {
-      setTimeout(() => {
-        setScanResult(null);
-        setIsProcessing(false);
-      }, 3000);
-    }
-  };
+
 
   return (
     <div className="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center bg-slate-900 relative overflow-hidden">
@@ -329,7 +298,7 @@ export default function PindaiQR() {
           
           <div 
             id="qr-reader" 
-            className={`w-full h-full bg-black [&_video]:!-scale-x-100 ${inputMode === 'kamera' && !cameraError ? 'block' : 'hidden'}`}
+            className={`w-full h-full bg-black [&>div]:w-full [&>div]:h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_video]:!-scale-x-100 ${inputMode === 'kamera' && !cameraError ? 'block' : 'hidden'}`}
           ></div>
 
           {inputMode === "kamera" && cameraError && (
@@ -387,12 +356,6 @@ export default function PindaiQR() {
             </div>
           )}
         </div>
-
-        {!scanResult && (
-          <button onClick={handleSimulateScan} className="mt-8 px-6 py-4 w-full sm:w-auto bg-slate-700 text-white rounded-xl hover:bg-slate-600 font-bold shadow-lg transition-all active:scale-95">
-            Simulasi QR Berhasil
-          </button>
-        )}
       </div>
     </div>
   );

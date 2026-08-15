@@ -1,41 +1,82 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import * as faceapi from "face-api.js";
-import { Camera, X, CheckCircle, Loader2 } from "lucide-react";
+import type { Human, Config } from "@vladmandic/human";
+import { Camera, X, CheckCircle, Loader2, Search, FlipHorizontal } from "lucide-react";
 import { simpanVektorWajah } from "./actions";
 
 interface RegisterWajahModalProps {
   isOpen: boolean;
   onClose: () => void;
-  santri: { id: string; namaLengkap: string } | null;
+  santri: { id: string; namaLengkap: string; nomorInduk?: string } | null;
+  santriList?: { id: string; namaLengkap: string; nomorInduk?: string }[];
 }
 
-export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahModalProps) {
+const humanConfig: Partial<Config> = {
+  modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
+  face: {
+    enabled: true,
+    detector: { return: true, rotation: true, maxDetected: 1, iouThreshold: 0.1, minConfidence: 0.5 },
+    mesh: { enabled: true },
+    iris: { enabled: false },
+    description: { enabled: true },
+    emotion: { enabled: false },
+    antispoof: { enabled: false },
+    liveness: { enabled: false },
+  },
+  body: { enabled: false },
+  hand: { enabled: false },
+  object: { enabled: false },
+  gesture: { enabled: false },
+  filter: { enabled: false }
+};
+
+let humanInstance: Human | null = null;
+
+export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }: RegisterWajahModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const requestRef = useRef<number>(0);
   
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [faceDescriptor, setFaceDescriptor] = useState<Float32Array | null>(null);
+  const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+
+  // Selection state
+  const [activeSantriId, setActiveSantriId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && santri) {
+      setActiveSantriId(santri.id);
+    }
+  }, [isOpen, santri]);
+
+  const activeSantriObj = santriList.find(s => s.id === activeSantriId) || santri;
+
+  const filteredSantriList = santriList.filter(s => 
+    s.namaLengkap.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (s.nomorInduk && s.nomorInduk.includes(searchQuery))
+  ).slice(0, 50); // Batasi maksimal 50 agar tidak lag saat render dropdown
 
   // Load Models
   useEffect(() => {
     if (isOpen) {
       const loadModels = async () => {
         try {
-          const MODEL_URL = '/models';
-          await Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-          ]);
+          if (!humanInstance) {
+            const humanModule = await import("@vladmandic/human");
+            humanInstance = new humanModule.Human(humanConfig);
+            await humanInstance.load();
+          }
           setIsModelLoaded(true);
         } catch (err) {
           console.error("Gagal memuat model:", err);
-          setCameraError("Gagal memuat model pendeteksi wajah. Pastikan file model tersedia.");
+          setCameraError("Gagal memuat model pendeteksi wajah. Pastikan koneksi internet stabil untuk unduh model pertama kali.");
         }
       };
       
@@ -53,14 +94,18 @@ export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahMod
       startCamera();
     }
     return () => stopCamera();
-  }, [isOpen, isModelLoaded]);
+  }, [isOpen, isModelLoaded, facingMode]);
 
   const startCamera = async () => {
+    stopCamera();
     setCameraError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => {
+          if (e.name !== 'AbortError') console.error('Video play error:', e);
+        });
       }
     } catch (err) {
       console.error(err);
@@ -69,6 +114,7 @@ export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahMod
   };
 
   const stopCamera = () => {
+    if (requestRef.current) cancelAnimationFrame(requestRef.current);
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
@@ -76,65 +122,78 @@ export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahMod
     }
   };
 
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === "user" ? "environment" : "user");
+  };
+
   // Video Playing handler to detect face
   const handleVideoPlay = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || !humanInstance) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    // Sesuaikan ukuran canvas dengan video
-    const displaySize = { width: video.videoWidth || 640, height: video.videoHeight || 480 };
-    faceapi.matchDimensions(canvas, displaySize);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-    const interval = setInterval(async () => {
-      if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) {
-        return;
-      }
+    const detectFrame = async () => {
+      if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) return;
 
-      const detection = await faceapi.detectSingleFace(
-        video, 
-        new faceapi.TinyFaceDetectorOptions()
-      ).withFaceLandmarks().withFaceDescriptor();
-
+      const result = await humanInstance!.detect(video);
+      
       const context = canvas.getContext('2d');
       if (context) {
         context.clearRect(0, 0, canvas.width, canvas.height);
       }
 
-      if (detection) {
-        // Gambar kotak dan landmarks
-        const resizedDetections = faceapi.resizeResults(detection, displaySize);
-        faceapi.draw.drawDetections(canvas, resizedDetections);
-        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+      // Hanya izinkan mendeteksi vektor kalau kita punya santri yang aktif dipilih
+      if (result.face && result.face.length > 0) {
+        const face = result.face[0];
+        
+        // Gambar kotak secara manual agar bisa diflip X-nya sesuai video (tanpa CSS flip pada kanvas)
+        if (context && face.box) {
+          context.strokeStyle = '#3b82f6'; // warna biru sesuai tema modal
+          context.lineWidth = 4;
+          let drawX = face.box[0];
+          if (facingMode === 'user') {
+            drawX = canvas.width - face.box[0] - face.box[2];
+          }
+          context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
+        }
 
-        // Simpan descriptor terbaru
-        setFaceDescriptor(detection.descriptor);
+        if (face.embedding && activeSantriId) {
+          setFaceDescriptor(Array.from(face.embedding));
+        }
       } else {
         setFaceDescriptor(null);
       }
-    }, 500);
-
-    return () => clearInterval(interval);
+      
+      requestRef.current = requestAnimationFrame(detectFrame);
+    };
+    
+    detectFrame();
   };
 
   const handleSimpan = async () => {
-    if (!santri || !faceDescriptor) return;
+    if (!activeSantriId || !faceDescriptor) return;
     
     setIsProcessing(true);
     setMessage(null);
     
     try {
-      // Ubah Float32Array menjadi array biasa lalu stringify
       const vektorArray = Array.from(faceDescriptor);
       const dataVektor = JSON.stringify(vektorArray);
       
-      const res = await simpanVektorWajah(santri.id, dataVektor);
+      const res = await simpanVektorWajah(activeSantriId, dataVektor);
       
       if (res.success) {
-        setMessage({ type: 'success', text: res.message });
+        setMessage({ type: 'success', text: "Berhasil! Silakan pilih santri selanjutnya jika ingin merekam lagi." });
+        
+        // Kosongkan form agar langsung bisa scan yang lain
         setTimeout(() => {
-          onClose();
+          setActiveSantriId(null);
+          setFaceDescriptor(null);
+          setSearchQuery("");
         }, 1500);
       } else {
         setMessage({ type: 'error', text: res.message });
@@ -158,15 +217,93 @@ export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahMod
             <Camera className="w-5 h-5 text-blue-400" />
             Daftarkan Wajah
           </h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleCamera} 
+              className="px-3 py-1.5 flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
+              title="Balik Kamera (Depan/Belakang)"
+            >
+              <FlipHorizontal className="w-4 h-4" />
+              Tukar
+            </button>
+            <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 flex-1 overflow-y-auto">
-          <p className="text-slate-300 text-sm mb-4">
-            Arahkan wajah <strong>{santri?.namaLengkap}</strong> ke kamera. Pastikan pencahayaan cukup dan wajah terlihat jelas dalam bingkai biru.
-          </p>
+          {/* Form Pencarian Santri */}
+          <div className="mb-5 relative">
+            <label className="block text-sm font-medium text-slate-300 mb-2">Pilih Santri yang Direkam:</label>
+            <div className="relative">
+              {activeSantriId && activeSantriObj ? (
+                <div className="flex items-center justify-between bg-slate-800 border border-emerald-500/50 p-3 rounded-xl shadow-inner">
+                  <div>
+                    <div className="font-semibold text-emerald-400">{activeSantriObj.namaLengkap}</div>
+                    {activeSantriObj.nomorInduk && <div className="text-xs text-slate-400">NIS: {activeSantriObj.nomorInduk}</div>}
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setActiveSantriId(null);
+                      setFaceDescriptor(null);
+                      setSearchQuery("");
+                    }} 
+                    className="p-1.5 text-slate-400 hover:text-rose-400 bg-slate-900 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Ketik nama / NIS santri..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setIsDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsDropdownOpen(true)}
+                      className="w-full pl-9 pr-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  
+                  {isDropdownOpen && searchQuery.length > 0 && (
+                    <div className="absolute z-[110] left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-xl max-h-60 overflow-y-auto shadow-2xl">
+                      {filteredSantriList.length === 0 ? (
+                        <div className="p-4 text-center text-slate-400 text-sm">Tidak ditemukan.</div>
+                      ) : (
+                        filteredSantriList.map((s) => (
+                          <div 
+                            key={s.id} 
+                            onClick={() => {
+                              setActiveSantriId(s.id);
+                              setIsDropdownOpen(false);
+                            }}
+                            className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0"
+                          >
+                            <div className="font-medium text-white">{s.namaLengkap}</div>
+                            {s.nomorInduk && <div className="text-xs text-slate-400">NIS: {s.nomorInduk}</div>}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            
+            {/* Tutup Dropdown kalau klik di luar area */}
+            {isDropdownOpen && (
+              <div 
+                className="fixed inset-0 z-[105]" 
+                onClick={() => setIsDropdownOpen(false)}
+              ></div>
+            )}
+          </div>
 
           <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-inner flex flex-col items-center justify-center">
             {!isModelLoaded ? (
@@ -183,7 +320,6 @@ export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahMod
               <>
                 <video 
                   ref={videoRef} 
-                  autoPlay 
                   muted 
                   playsInline 
                   onPlay={handleVideoPlay}
@@ -193,29 +329,33 @@ export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahMod
                       canvasRef.current.height = videoRef.current.videoHeight;
                     }
                   }}
-                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" 
+                  className={`absolute inset-0 w-full h-full object-cover ${facingMode === "user" ? "transform -scale-x-100" : ""}`} 
                 />
                 <canvas 
                   ref={canvasRef} 
-                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100 pointer-events-none" 
+                  className={`absolute inset-0 w-full h-full object-cover pointer-events-none`} 
                 />
                 
                 {/* Panduan UI Overlay */}
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                   <div className={`w-48 h-48 sm:w-64 sm:h-64 border-2 rounded-full transition-colors duration-300 ${faceDescriptor ? 'border-emerald-500 bg-emerald-500/10' : 'border-blue-500/50 bg-transparent'} border-dashed`}></div>
+                   <div className={`w-48 h-48 sm:w-64 sm:h-64 border-2 rounded-full transition-colors duration-300 ${faceDescriptor && activeSantriId ? 'border-emerald-500 bg-emerald-500/10' : 'border-blue-500/50 bg-transparent'} border-dashed`}></div>
                 </div>
               </>
             )}
           </div>
 
           <div className="mt-6 flex flex-col items-center text-center">
-            {faceDescriptor ? (
+            {faceDescriptor && activeSantriId ? (
               <div className="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 animate-in fade-in zoom-in">
                 <CheckCircle className="w-4 h-4" /> Wajah terdeteksi dan siap didaftarkan
               </div>
+            ) : !activeSantriId ? (
+              <div className="bg-slate-800 text-slate-400 px-4 py-2 rounded-lg text-sm font-medium">
+                Pilih santri terlebih dahulu untuk merekam
+              </div>
             ) : isModelLoaded && !cameraError ? (
               <div className="bg-amber-500/10 text-amber-400 px-4 py-2 rounded-lg text-sm font-medium animate-pulse">
-                Mencari wajah di kamera...
+                Arahkan wajah {activeSantriObj?.namaLengkap} ke kamera...
               </div>
             ) : null}
             
@@ -233,14 +373,14 @@ export function RegisterWajahModal({ isOpen, onClose, santri }: RegisterWajahMod
             onClick={onClose}
             className="px-5 py-2.5 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
           >
-            Batal
+            Tutup
           </button>
           <button 
             type="button"
             onClick={handleSimpan}
-            disabled={!faceDescriptor || isProcessing}
+            disabled={!faceDescriptor || !activeSantriId || isProcessing}
             className={`px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all flex items-center gap-2 shadow-lg
-              ${!faceDescriptor || isProcessing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
+              ${!faceDescriptor || !activeSantriId || isProcessing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
           >
             {isProcessing ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : "Simpan Wajah Ini"}
           </button>

@@ -1,7 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import * as faceapi from "face-api.js";
+import type { Human, Config } from "@vladmandic/human";
+
+const humanConfig: Partial<Config> = {
+  modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
+  face: {
+    enabled: true,
+    detector: { return: true, rotation: true, maxDetected: 1, iouThreshold: 0.1, minConfidence: 0.5 },
+    mesh: { enabled: true },
+    iris: { enabled: false },
+    description: { enabled: true },
+    emotion: { enabled: false },
+    antispoof: { enabled: false },
+    liveness: { enabled: false },
+  },
+  body: { enabled: false },
+  hand: { enabled: false },
+  object: { enabled: false },
+  gesture: { enabled: false },
+  filter: { enabled: false }
+};
+
+let humanInstance: Human | null = null;
 import { Camera, X, CheckCircle, Loader2 } from "lucide-react";
 import { updateGuruFaceData } from "./actions";
 
@@ -17,25 +38,26 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
   
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [faceDescriptor, setFaceDescriptor] = useState<Float32Array | null>(null);
+  const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
+  const requestRef = useRef<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
   // Load Models
   useEffect(() => {
     if (isOpen) {
       const loadModels = async () => {
         try {
-          const MODEL_URL = '/models';
-          await Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-          ]);
+          if (!humanInstance) {
+            const humanModule = await import("@vladmandic/human");
+            humanInstance = new humanModule.Human(humanConfig);
+            await humanInstance.load();
+          }
           setIsModelLoaded(true);
         } catch (err) {
           console.error("Gagal memuat model:", err);
-          setCameraError("Gagal memuat model pendeteksi wajah. Pastikan file model tersedia.");
+          setCameraError("Gagal memuat model pendeteksi wajah. Pastikan koneksi internet stabil.");
         }
       };
       
@@ -53,14 +75,18 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
       startCamera();
     }
     return () => stopCamera();
-  }, [isOpen, isModelLoaded]);
+  }, [isOpen, isModelLoaded, facingMode]);
 
   const startCamera = async () => {
+    stopCamera();
     setCameraError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => {
+          if (e.name !== 'AbortError') console.error('Video play error:', e);
+        });
       }
     } catch (err) {
       console.error(err);
@@ -78,44 +104,62 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
 
   // Video Playing handler to detect face
   const handleVideoPlay = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || !humanInstance) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    // Sesuaikan ukuran canvas dengan video
-    const displaySize = { width: video.videoWidth || 640, height: video.videoHeight || 480 };
-    faceapi.matchDimensions(canvas, displaySize);
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
 
-    const interval = setInterval(async () => {
+    const detectLoop = async () => {
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) {
+        requestRef.current = requestAnimationFrame(detectLoop);
         return;
       }
 
-      const detection = await faceapi.detectSingleFace(
-        video, 
-        new faceapi.TinyFaceDetectorOptions()
-      ).withFaceLandmarks().withFaceDescriptor();
+      try {
+        const result = await humanInstance!.detect(video);
 
-      const context = canvas.getContext('2d');
-      if (context) {
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        const context = canvas.getContext('2d');
+        if (context) {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        if (result.face && result.face.length > 0) {
+          const face = result.face[0];
+
+          // Gambar kotak
+          if (context && face.box) {
+            context.strokeStyle = '#10b981';
+            context.lineWidth = 4;
+            let drawX = face.box[0];
+            if (facingMode === 'user') {
+              drawX = canvas.width - face.box[0] - face.box[2];
+            }
+            context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
+          }
+
+          if (face.embedding) {
+            setFaceDescriptor(Array.from(face.embedding));
+          } else {
+            setFaceDescriptor(null);
+          }
+        } else {
+          setFaceDescriptor(null);
+        }
+      } catch (e) {
+        // Abaikan error deteksi sementara
+      } finally {
+        requestRef.current = requestAnimationFrame(detectLoop);
       }
+    };
 
-      if (detection) {
-        // Gambar kotak dan landmarks
-        const resizedDetections = faceapi.resizeResults(detection, displaySize);
-        faceapi.draw.drawDetections(canvas, resizedDetections);
-        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+    detectLoop();
 
-        // Simpan descriptor terbaru
-        setFaceDescriptor(detection.descriptor);
-      } else {
-        setFaceDescriptor(null);
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
+    return () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
   };
 
   const handleSimpan = async () => {
@@ -125,9 +169,8 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
     setMessage(null);
     
     try {
-      // Ubah Float32Array menjadi array biasa lalu stringify
-      const vektorArray = Array.from(faceDescriptor);
-      const dataVektor = JSON.stringify(vektorArray);
+      // Array sudah berupa number[]
+      const dataVektor = JSON.stringify(faceDescriptor);
       
       const res = await updateGuruFaceData(guru.id, dataVektor);
       
@@ -158,9 +201,18 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
             <Camera className="w-5 h-5 text-blue-400" />
             Daftarkan Wajah
           </h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setFacingMode(prev => prev === "user" ? "environment" : "user")} 
+              className="px-3 py-1.5 flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
+              title="Balik Kamera"
+            >
+              Tukar
+            </button>
+            <button onClick={onClose} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 flex-1 overflow-y-auto">
@@ -182,7 +234,6 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
               <>
                 <video 
                   ref={videoRef} 
-                  autoPlay 
                   muted 
                   playsInline 
                   onPlay={handleVideoPlay}
@@ -192,11 +243,11 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
                       canvasRef.current.height = videoRef.current.videoHeight;
                     }
                   }}
-                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100" 
+                  className={`absolute inset-0 w-full h-full object-cover ${facingMode === "user" ? "transform -scale-x-100" : ""}`} 
                 />
                 <canvas 
                   ref={canvasRef} 
-                  className="absolute inset-0 w-full h-full object-cover transform -scale-x-100 pointer-events-none" 
+                  className={`absolute inset-0 w-full h-full object-cover pointer-events-none`} 
                 />
                 
                 {/* Panduan UI Overlay */}

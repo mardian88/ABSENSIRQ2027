@@ -105,11 +105,7 @@ export const santri = sqliteTable('santri', {
   statusSantri: text('status_santri').notNull().default('aktif'),
   idCabang: text('id_cabang'), // Fase 4: Referensi cabang
 
-  // --- Extended fields for Finance (Saku Santri) ---
-  cardCode: text('card_code').unique(),
-  walletBalance: integer('wallet_balance').notNull().default(0),
-  savingsBalance: integer('savings_balance').notNull().default(0),
-
+  
   // --- Extended fields from PSB ---
   tempatLahir: text('tempat_lahir'),
   tanggalLahir: text('tanggal_lahir'), // ISO Date String format YYYY-MM-DD
@@ -369,46 +365,4 @@ export const mutabaahSetoran = sqliteTable('mutabaah_setoran', {
   catatanOrtu: text('catatan_ortu'), // Komentar dari orang tua saat mengecek
   catatanGuru: text('catatan_guru'), // Komentar/pesan dari guru
   waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
-});
-
-// ==========================================
-// MODUL KEUANGAN (SAKU SANTRI)
-// ==========================================
-export const transactions = sqliteTable('transactions', {
-  id: text('id').primaryKey(),
-  santriId: text('santri_id').notNull().references(() => santri.id),
-  type: text('type').notNull(), // 'topup', 'infaq', 'kas', 'saving', 'purchase'
-  amount: integer('amount').notNull(), // positive or negative
-  status: text('status').notNull().default('completed'), // 'pending', 'completed'
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
-});
-
-export const infaqRecords = sqliteTable('infaq_records', {
-  id: text('id').primaryKey(),
-  santriId: text('santri_id').notNull().references(() => santri.id),
-  month: integer('month').notNull(), // 1 - 12
-  year: integer('year').notNull(),
-  amount: integer('amount').notNull(),
-  method: text('method').notNull(), // 'saldo' or 'tunai'
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
-});
-
-export const kasRecords = sqliteTable('kas_records', {
-  id: text('id').primaryKey(),
-  santriId: text('santri_id').notNull().references(() => santri.id),
-  month: integer('month').notNull(), // 1 - 12
-  year: integer('year').notNull(),
-  amount: integer('amount').notNull(),
-  method: text('method').notNull(), // 'saldo' or 'tunai'
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
-});
-
-export const topupRequests = sqliteTable('topup_requests', {
-  id: text('id').primaryKey(),
-  santriId: text('santri_id').notNull().references(() => santri.id),
-  amount: integer('amount').notNull(),
-  type: text('type').notNull().default('tabungan'), // 'tabungan', 'utama'
-  status: text('status').notNull().default('pending'), // 'pending', 'approved', 'rejected'
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
 });

@@ -300,3 +300,22 @@ export async function getAllSantriFaceVectors() {
   const list = await db.select({ id: santri.id, namaLengkap: santri.namaLengkap, dataVektorWajah: santri.dataVektorWajah }).from(santri).where(eq(santri.statusSantri, 'aktif'));  
   return list.filter((s: any) => s.dataVektorWajah !== null);  
 }
+
+export async function hapusVektorWajahBatch(ids: string[]) {
+  for (const id of ids) {
+    await db.update(santri).set({ dataVektorWajah: null }).where(eq(santri.id, id));
+  }
+  revalidatePath('/santri');
+  return { success: true };
+}
+
+export async function importVektorWajahBatch(dataList: any[]) {
+  let count = 0;
+  for (const item of dataList) {
+    if (!item.nis || !item.vector) continue;
+    const res = await db.update(santri).set({ dataVektorWajah: item.vector }).where(eq(santri.nomorInduk, item.nis));
+    count++;
+  }
+  revalidatePath('/santri');
+  return { success: true, count };
+}

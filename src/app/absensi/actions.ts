@@ -279,18 +279,6 @@ export async function getSantriForManualAbsen() {
   return await query.orderBy(desc(santri.id));
 }
 
-export async function simulateFaceScanAbsen(jenisAbsen: 'masuk' | 'pulang') {
-  // For simulation: pick the first santri in the database
-  const [firstSantri] = await db.select().from(santri).limit(1);
-  if (!firstSantri) return { success: false, message: "Tidak ada data santri di database" };
 
-  return await recordAbsensiById(firstSantri.id, jenisAbsen, 'wajah', 'hadir');
-}
 
-export async function simulateQRScanAbsen(jenisAbsen: 'masuk' | 'pulang') {
-  // For simulation: pick the first santri in the database
-  const [firstSantri] = await db.select().from(santri).limit(1);
-  if (!firstSantri) return { success: false, message: "Tidak ada data santri di database" };
 
-  return await recordAbsensiById(firstSantri.id, jenisAbsen, 'qr', 'hadir');
-}

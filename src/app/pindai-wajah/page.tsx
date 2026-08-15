@@ -9,13 +9,37 @@ import { useRouter } from "next/navigation";
 import { formatTimeID } from "@/lib/date";
 import { showError } from "@/lib/sweetalert";
 import { KioskNav } from "@/components/KioskNav";
-import * as faceapi from "face-api.js";
+import type { Human, Config } from "@vladmandic/human";
+
+const humanConfig: Partial<Config> = {
+  modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
+  face: {
+    enabled: true,
+    detector: { return: true, rotation: true, maxDetected: 1, iouThreshold: 0.1, minConfidence: 0.5 },
+    mesh: { enabled: true },
+    iris: { enabled: false },
+    description: { enabled: true },
+    emotion: { enabled: false },
+    antispoof: { enabled: false },
+    liveness: { enabled: false },
+  },
+  body: { enabled: false },
+  hand: { enabled: false },
+  object: { enabled: false },
+  gesture: { enabled: false },
+  filter: { enabled: false }
+};
+
+let humanInstance: Human | null = null;
+let registeredFaces: { id: string; nama: string; embedding: number[] }[] = [];
+
 
 export default function PindaiWajah() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const requestRef = useRef<number>(0);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
-  const [faceMatcher, setFaceMatcher] = useState<faceapi.FaceMatcher | null>(null);
+  const [hasFaceData, setHasFaceData] = useState(false);
   
   const [scanResult, setScanResult] = useState<{ nama: string; waktu: string; jenis: string } | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -51,33 +75,27 @@ export default function PindaiWajah() {
     let isMounted = true;
     const initializeApp = async () => {
       try {
-        const MODEL_URL = '/models';
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]);
+        if (!humanInstance) {
+          const humanModule = await import("@vladmandic/human");
+          humanInstance = new humanModule.Human(humanConfig);
+          await humanInstance.load();
+        }
 
         const dataSantri = await getFaces();
         
-        const labeledDescriptors = dataSantri.map((santri: any) => {
+        registeredFaces = dataSantri.map((santri: any) => {
           try {
             const arr = JSON.parse(santri.dataVektorWajah);
-            const float32Arr = new Float32Array(arr);
-            return new faceapi.LabeledFaceDescriptors(
-              JSON.stringify({ id: santri.id, nama: santri.namaLengkap }),
-              [float32Arr]
-            );
+            return { id: santri.id, nama: santri.namaLengkap, embedding: arr };
           } catch (e) {
             console.error("Gagal memproses data wajah untuk santri", santri.id);
             return null;
           }
-        }).filter(Boolean) as faceapi.LabeledFaceDescriptors[];
+        }).filter(Boolean) as { id: string; nama: string; embedding: number[] }[];
 
         if (isMounted) {
-          if (labeledDescriptors.length > 0) {
-            // Distance threshold 0.5 for strict matching (default is 0.6)
-            setFaceMatcher(new faceapi.FaceMatcher(labeledDescriptors, 0.5));
+          if (registeredFaces.length > 0) {
+            setHasFaceData(true);
           }
           setIsModelLoaded(true);
         }
@@ -136,6 +154,9 @@ export default function PindaiWajah() {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => {
+          if (e.name !== 'AbortError') console.error('Video play error:', e);
+        });
       }
     } catch (err: any) {
       console.error(err);
@@ -148,86 +169,88 @@ export default function PindaiWajah() {
   };
 
   const handleVideoPlay = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || !faceMatcher || isProcessing) return;
+    if (!videoRef.current || !canvasRef.current || !humanInstance || isProcessing) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    const displaySize = { width: video.videoWidth || 640, height: video.videoHeight || 480 };
-    faceapi.matchDimensions(canvas, displaySize);
-
-    let stopRequested = false;
-    let isDetecting = false;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
 
     const detectLoop = async () => {
-      if (stopRequested) return;
-
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) {
-        // Jika video belum siap, tunggu sebentar lalu coba lagi
-        setTimeout(detectLoop, 100);
+        requestRef.current = requestAnimationFrame(detectLoop);
         return;
       }
-
-      if (isDetecting) {
-        requestAnimationFrame(detectLoop);
-        return;
-      }
-
-      isDetecting = true;
 
       try {
-        const detection = await faceapi.detectSingleFace(
-          video, 
-          new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
-        ).withFaceLandmarks().withFaceDescriptor();
+        const result = await humanInstance!.detect(video);
 
         const context = canvas.getContext('2d');
         if (context) {
           context.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        if (detection) {
-          const resizedDetections = faceapi.resizeResults(detection, displaySize);
+        if (result.face && result.face.length > 0) {
+          const face = result.face[0];
           
-          const match = faceMatcher.findBestMatch(detection.descriptor);
+          let bestMatch = { id: '', nama: 'Tidak Dikenal', similarity: 0 };
           
-          // Gambar kotak bounding box
-          const box = resizedDetections.detection.box;
-          const drawBox = new faceapi.draw.DrawBox(box, { 
-            label: match.label !== 'unknown' ? JSON.parse(match.label).nama : "Tidak Dikenal",
-            boxColor: match.label !== 'unknown' ? '#10b981' : '#f43f5e'
-          });
-          drawBox.draw(canvas);
+          if (face.embedding && registeredFaces.length > 0) {
+            for (const reg of registeredFaces) {
+              const sim = humanInstance!.match.similarity(face.embedding, reg.embedding);
+              if (sim > bestMatch.similarity) {
+                bestMatch = { id: reg.id, nama: reg.nama, similarity: sim };
+              }
+            }
+          }
 
-          if (match.label !== 'unknown' && match.distance < 0.5) {
-            const santriData = JSON.parse(match.label);
+          const isMatch = bestMatch.similarity > 0.5;
+
+          // Draw custom bounding box
+          if (context && face.box) {
+            context.strokeStyle = isMatch ? '#10b981' : '#f43f5e';
+            context.lineWidth = 4;
             
+            let drawX = face.box[0];
+            if (facingMode === 'user') {
+               drawX = canvas.width - face.box[0] - face.box[2];
+            }
+            
+            context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
+            
+            context.fillStyle = isMatch ? '#10b981' : '#f43f5e';
+            context.font = "bold 20px Arial";
+            context.fillText(
+              isMatch ? bestMatch.nama : "Tidak Dikenal", 
+              drawX, 
+              face.box[1] > 20 ? face.box[1] - 10 : 20
+            );
+          }
+
+          if (isMatch) {
             // Mencegah scan berulang (debounce 5 detik per orang) dan cegah proses tumpang tindih
             const now = Date.now();
-            if (lastScannedId.current === santriData.id && (now - lastScannedTime.current) < 5000) {
+            if (lastScannedId.current === bestMatch.id && (now - lastScannedTime.current) < 5000) {
               // skip
             } else if (!isProcessing) {
-              processAttendance(santriData.id, santriData.nama);
+              processAttendance(bestMatch.id, bestMatch.nama);
             }
           }
         }
       } catch (e) {
         // Abaikan error deteksi sementara
       } finally {
-        isDetecting = false;
-        if (!stopRequested) {
-          // Panggil frame berikutnya secepat mungkin
-          requestAnimationFrame(detectLoop);
-        }
+        requestRef.current = requestAnimationFrame(detectLoop);
       }
     };
 
     detectLoop();
 
     return () => {
-      stopRequested = true;
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [faceMatcher, isProcessing, jenisAbsen]);
+  }, [hasFaceData, isProcessing, jenisAbsen, facingMode]);
 
   const processAttendance = async (id: string, nama: string) => {
     setIsProcessing(true);
@@ -309,7 +332,7 @@ export default function PindaiWajah() {
           </button>
         </div>
 
-        <div className="relative w-full aspect-[3/4] sm:aspect-video bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl flex items-center justify-center">
+        <div className="relative w-full aspect-square max-w-sm md:max-w-md bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl flex items-center justify-center">
           {!isModelLoaded ? (
             <div className="flex flex-col items-center text-slate-400 p-6 text-center">
               <Loader2 className="animate-spin h-10 w-10 md:h-12 md:w-12 text-blue-500 mb-4" />
@@ -325,7 +348,6 @@ export default function PindaiWajah() {
             <>
               <video 
                 ref={videoRef} 
-                autoPlay 
                 muted 
                 playsInline 
                 onPlay={handleVideoPlay}
@@ -339,7 +361,7 @@ export default function PindaiWajah() {
               />
               <canvas 
                 ref={canvasRef} 
-                className={`absolute top-0 left-0 w-full h-full object-cover pointer-events-none transform ${facingMode === 'user' ? '-scale-x-100' : ''}`}
+                className={`absolute top-0 left-0 w-full h-full object-cover pointer-events-none`}
               />
               
               <div className={`absolute inset-0 border-4 ${jenisAbsen === 'masuk' ? 'border-emerald-500' : 'border-amber-500'} rounded-2xl m-4 md:m-8 opacity-60 transition-colors pointer-events-none`}></div>
@@ -360,7 +382,7 @@ export default function PindaiWajah() {
         </div>
 
         <p className="mt-6 text-slate-400 text-sm text-center max-w-sm">
-          {!faceMatcher ? "Belum ada wajah santri yang terdaftar di sistem." : "Arahkan wajah Anda ke kamera untuk mencatat absensi secara otomatis."}
+          {!hasFaceData ? "Belum ada wajah santri yang terdaftar di sistem." : "Arahkan wajah Anda ke kamera untuk mencatat absensi secara otomatis."}
         </p>
 
         {/* Notifikasi Hasil Absen Mewah & Cepat */}

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, Camera, Upload, Download, GraduationCap, QrCode, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { createSantri, updateSantri, deleteSantri, importSantriBatch, jadikanAlumni, jadikanAlumniBatch, syncQRCodeBatch, updateHalaqoh, updateHalaqohBatch, updateSesiBatch } from "./actions";
+import { createSantri, updateSantri, deleteSantri, importSantriBatch, jadikanAlumni, jadikanAlumniBatch, syncQRCodeBatch, updateHalaqoh, updateHalaqohBatch, updateSesiBatch, hapusVektorWajahBatch, importVektorWajahBatch } from "./actions";
 import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
 import { RegisterWajahModal } from "./RegisterWajahModal";
 import { useForm } from "react-hook-form";
@@ -61,12 +61,14 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
   const [jumpPage, setJumpPage] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [faceRegistrationSantri, setFaceRegistrationSantri] = useState<{id: string, namaLengkap: string} | null>(null);
+  const [faceRegistrationSantri, setFaceRegistrationSantri] = useState<{id: string, namaLengkap: string, nomorInduk?: string} | null>(null);
+  const [isContinuousRegistrationOpen, setIsContinuousRegistrationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rowSelection, setRowSelection] = useState({});
   const [batchHalaqoh, setBatchHalaqoh] = useState("");
   const [batchSesi, setBatchSesi] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileFaceRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<SantriFormValues>({
     resolver: zodResolver(santriSchema),
@@ -454,6 +456,69 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
     XLSX.writeFile(workbook, "Template_Import_Santri.xlsx");
   };
 
+  const handleHapusWajahBatch = async () => {
+    if (selectedIds.length === 0) return;
+    const confirmed = await showConfirm("Hapus Wajah?", `Anda yakin akan menghapus data wajah ${selectedIds.length} santri ini?`);
+    if (confirmed) {
+      setIsLoading(true);
+      try {
+        await hapusVektorWajahBatch(selectedIds);
+        setRowSelection({});
+        showSuccess("Berhasil", `Data wajah ${selectedIds.length} santri telah dihapus.`);
+      } catch (error) {
+        showError("Gagal", "Terjadi kesalahan sistem.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleExportWajahBatch = () => {
+    if (selectedIds.length === 0) return;
+    const selectedSantri = nonAlumniList.filter(s => selectedIds.includes(s.id) && s.hasFaceData);
+    if (selectedSantri.length === 0) {
+      showError("Gagal", "Santri yang dipilih belum memiliki data wajah.");
+      return;
+    }
+
+    const exportData = selectedSantri.map(s => ({
+      nis: s.nomorInduk,
+      nama: s.namaLengkap,
+      vector: s.hasFaceData
+    }));
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "FaceData_Export.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportWajahBatch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    try {
+      const text = await file.text();
+      const jsonData = JSON.parse(text);
+      if (!Array.isArray(jsonData)) throw new Error("Format tidak valid");
+
+      const res = await importVektorWajahBatch(jsonData);
+      if (res.success) {
+        showSuccess("Import Berhasil", `${res.count} data wajah berhasil diperbarui.`);
+      }
+    } catch (err) {
+      showError("Gagal", "Format file JSON tidak valid.");
+    } finally {
+      setIsLoading(false);
+      if (fileFaceRef.current) fileFaceRef.current.value = "";
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -565,6 +630,14 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
           </div>
 
           <button 
+            onClick={() => setIsContinuousRegistrationOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-semibold shadow-sm transition-colors"
+          >
+            <Camera className="w-5 h-5" />
+            Rekam Wajah
+          </button>
+          
+          <button 
             onClick={() => {
               setEditingId(null);
               form.reset({ nomorInduk: "", namaLengkap: "", idHalaqoh: "", kontakOrtu: "", statusSantri: "aktif", kodeQr: "" });
@@ -593,7 +666,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
         onRowSelectionChange={setRowSelection}
         toolbarActions={() => (
           selectedIds.length > 0 ? (
-            <div className="flex items-center gap-3 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center gap-3 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 w-full sm:w-auto">
               <span className="text-sm font-medium text-amber-800">{selectedIds.length} Terpilih</span>
               <button 
                 onClick={handleJadikanAlumniBatch}
@@ -601,6 +674,23 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
               >
                 <GraduationCap className="w-4 h-4" />
                 Jadikan Alumni
+              </button>
+              
+              <div className="h-6 w-px bg-amber-200 mx-1 hidden sm:block"></div>
+              
+              <input type="file" accept=".json" className="hidden" ref={fileFaceRef} onChange={handleImportWajahBatch} />
+              
+              <button onClick={() => fileFaceRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded font-medium text-sm hover:bg-blue-700 transition-colors" title="Import Wajah dari JSON">
+                <Upload className="w-4 h-4" />
+                Import Wajah
+              </button>
+              <button onClick={handleExportWajahBatch} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded font-medium text-sm hover:bg-indigo-700 transition-colors" title="Export Wajah ke JSON">
+                <Download className="w-4 h-4" />
+                Export Wajah
+              </button>
+              <button onClick={handleHapusWajahBatch} className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white rounded font-medium text-sm hover:bg-rose-700 transition-colors" title="Hapus Data Wajah Terpilih">
+                <Trash2 className="w-4 h-4" />
+                Hapus Wajah
               </button>
             </div>
           ) : <div />
@@ -858,11 +948,15 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       )}
 
       {/* Modal Pendaftaran Wajah */}
-      {faceRegistrationSantri && (
+      {(faceRegistrationSantri || isContinuousRegistrationOpen) && (
         <RegisterWajahModal 
-          isOpen={faceRegistrationSantri !== null}
+          isOpen={faceRegistrationSantri !== null || isContinuousRegistrationOpen}
           santri={faceRegistrationSantri}
-          onClose={() => setFaceRegistrationSantri(null)}
+          santriList={nonAlumniList}
+          onClose={() => {
+            setFaceRegistrationSantri(null);
+            setIsContinuousRegistrationOpen(false);
+          }}
         />
       )}
     </div>
