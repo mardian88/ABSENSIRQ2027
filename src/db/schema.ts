@@ -129,6 +129,9 @@ export const santri = sqliteTable('santri', {
   pekerjaanIbu: text('pekerjaan_ibu'),
   pekerjaanIbuLainnya: text('pekerjaan_ibu_lainnya'),
   instansiIbu: text('instansi_ibu'),
+  idKeluarga: text('id_keluarga').references(() => keluarga.id),
+  adaSaudara: integer('ada_saudara', { mode: 'boolean' }).default(false),
+  saldoTabungan: integer('saldo_tabungan').default(0),
 });
 
 export const fonnteTokens = sqliteTable('fonnte_tokens', {
@@ -366,3 +369,110 @@ export const mutabaahSetoran = sqliteTable('mutabaah_setoran', {
   catatanGuru: text('catatan_guru'), // Komentar/pesan dari guru
   waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
 });
+
+// ==========================================
+// MODUL KEUANGAN
+// ==========================================
+
+export const keluarga = sqliteTable('keluarga', {
+  id: text('id').primaryKey(),
+  namaWali: text('nama_wali').notNull(),
+  nomorWhatsapp: text('nomor_whatsapp'),
+  alamat: text('alamat')
+});
+
+export const pengaturanKeuangan = sqliteTable('pengaturan_keuangan', {
+  id: text('id').primaryKey(),
+  kode: text('kode').unique(), 
+  namaPembayaran: text('nama_pembayaran').notNull(),
+  nominalDefault: integer('nominal_default').notNull(),
+  nominalSaudara: integer('nominal_saudara').notNull().default(0),
+  diperbaruiPada: integer('diperbarui_pada', { mode: 'timestamp' }).notNull()
+});
+
+export const keuanganKas = sqliteTable('keuangan_kas', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').notNull().references(() => santri.id),
+  jenis: text('jenis').notNull().default('kas'),
+  bulan: integer('bulan').notNull(), // 1-12
+  tahun: integer('tahun').notNull(),
+  nominal: integer('nominal').notNull(),
+  tanggalBayar: integer('tanggal_bayar', { mode: 'timestamp' }),
+  status: text('status').notNull().default('belum_lunas'), // belum_lunas, lunas
+  idPenerima: text('id_penerima').references(() => user.id), // Admin yang menerima pembayaran
+  idTagihan: text('id_tagihan').references(() => pengaturanKeuangan.id),
+  metodeBayar: text('metode_bayar'), // tunai, potong_saldo, transfer, qris
+  idTopup: text('id_topup') // referensi history topup jika bayar via topup
+});
+
+export const keuanganInfaq = sqliteTable('keuangan_infaq', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').notNull().references(() => santri.id),
+  jenis: text('jenis').notNull().default('infaq'),
+  bulan: integer('bulan').notNull(), // 1-12
+  tahun: integer('tahun').notNull(),
+  nominal: integer('nominal').notNull(),
+  tanggalBayar: integer('tanggal_bayar', { mode: 'timestamp' }),
+  status: text('status').notNull().default('belum_lunas'),
+  idPenerima: text('id_penerima').references(() => user.id),
+  idTagihan: text('id_tagihan').references(() => pengaturanKeuangan.id),
+  metodeBayar: text('metode_bayar'),
+  idTopup: text('id_topup')
+});
+
+export const keuanganTabungan = sqliteTable('keuangan_tabungan', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  jenis: text('jenis').notNull(), // setor, tarik, topup, belanja
+  nominal: integer('nominal').notNull(),
+  keterangan: text('keterangan').notNull(),
+  tanggal: integer('tanggal', { mode: 'timestamp' }).notNull(),
+  idAdmin: text('id_admin').references(() => user.id), // Null jika topup/belanja via portal
+  idTopup: text('id_topup') // referensi history topup jika bayar via topup
+});
+
+export const keuanganBukuKas = sqliteTable('keuangan_buku_kas', {
+  id: text('id').primaryKey(),
+  jenis: text('jenis').notNull(), // pemasukan, pengeluaran
+  kategori: text('kategori').notNull(),
+  nominal: integer('nominal').notNull(),
+  keterangan: text('keterangan'),
+  tanggal: integer('tanggal', { mode: 'timestamp' }).notNull(),
+  idAdmin: text('id_admin').references(() => user.id)
+});
+
+export const keuanganTopup = sqliteTable('keuangan_topup', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  nominal: integer('nominal').notNull(),
+  metode: text('metode').notNull(), // transfer, qris, tunai
+  status: text('status').notNull().default('pending'), // pending, success, failed
+  buktiUrl: text('bukti_url'),
+  tanggalAjuan: integer('tanggal_ajuan', { mode: 'timestamp' }).notNull(),
+  idAdmin: text('id_admin').references(() => user.id),
+  jenisPembayaran: text('jenis_pembayaran'), // topup_tabungan, kas, infaq, kas_infaq
+  bulanTarget: integer('bulan_target'),
+  tahunTarget: integer('tahun_target'),
+  angkaUnik: integer('angka_unik'),
+  batasWaktu: integer('batas_waktu', { mode: 'timestamp' })
+});
+
+export const pengumumanPortal = sqliteTable('pengumuman_portal', {
+  id: text('id').primaryKey(),
+  judul: text('judul').notNull(),
+  isi: text('isi').notNull(),
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
+  tanggal: integer('tanggal', { mode: 'timestamp' }).notNull(),
+  idAdmin: text('id_admin').references(() => user.id)
+});
+
+export const notifikasiPortal = sqliteTable('notifikasi_portal', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  judul: text('judul').notNull(),
+  isi: text('isi').notNull(),
+  jenis: text('jenis').notNull(), // 'pengumuman', 'pembayaran'
+  isRead: integer('is_read', { mode: 'boolean' }).default(false),
+  tanggal: integer('tanggal', { mode: 'timestamp' }).notNull()
+});
+

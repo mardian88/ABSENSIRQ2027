@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { pengaturanProfil, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanAbsensiGlobal } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { pengaturanProfil, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanAbsensiGlobal, pengumumanPortal, notifikasiPortal, santri } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 
@@ -239,7 +239,6 @@ export async function updatePengaturanHumas(data: { id: string, tokenFonnte: str
 
 // --- Fonnte Tokens CRUD & Realtime Quota ---
 import { fonnteTokens } from "@/db/schema";
-import { desc } from "drizzle-orm";
 
 export async function getFonnteTokens() {
   return await db.select().from(fonnteTokens).orderBy(desc(fonnteTokens.isActive));
@@ -405,6 +404,28 @@ export async function seedDefaultTemplates() {
       jenisPesan: "rapor_bulanan",
       isiPesan: "Assalamu'alaikum Warahmatullahi Wabarakatuh,\nBapak/Ibu Wali dari [NAMA_SANTRI],\n\nBerikut kami sampaikan Rapor Kedisiplinan Bulan Ini:\n✅ Hadir: [TOTAL_HADIR] kali\n🤒 Sakit: [TOTAL_SAKIT] hari\n✉️ Izin: [TOTAL_IZIN] hari\n❌ Alpa: [TOTAL_ALPA] kali\n\n🏅 Total Poin Santri: [TOTAL_POIN]\n\nSemoga Ananda semakin disiplin dan istiqomah dalam menuntut ilmu.\nJazakumullah Khairan.",
       isAktif: true
+    },
+
+    // KEUANGAN
+    {
+      jenisPesan: "topup_tabungan_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pengajuan Top-up Tabungan ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Saldo tabungan saat ini: [SALDO_AKHIR]. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "infaq_kas_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pembayaran Infaq & Kas ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Jazakumullah khairan atas partisipasinya.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "infaq_saja_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pembayaran Infaq ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Semoga pahalanya mengalir tiada henti. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "kas_saja_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pembayaran Uang Kas ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Jazakumullah khairan.",
+      isAktif: true
     }
   ];
 
@@ -423,3 +444,55 @@ export async function seedDefaultTemplates() {
   return addedCount;
 }
 
+
+export async function getPengumumanPortal() {
+  return await db.select().from(pengumumanPortal).orderBy(desc(pengumumanPortal.tanggal));
+}
+
+export async function tambahPengumuman(judul: string, isi: string, isAktif: boolean) {
+  const admin = await requireAdmin();
+  await db.insert(pengumumanPortal).values({
+    id: uuidv4(),
+    judul,
+    isi,
+    tanggal: new Date(),
+    isAktif,
+    idAdmin: admin.id
+  });
+
+  if (isAktif) {
+    const santriList = await db.select({ id: santri.id }).from(santri).where(eq(santri.statusSantri, 'aktif'));
+    for (const s of santriList) {
+      await db.insert(notifikasiPortal).values({
+        id: uuidv4(),
+        idSantri: s.id,
+        judul: judul,
+        isi: isi,
+        jenis: 'pengumuman',
+        isRead: false,
+        tanggal: new Date()
+      });
+    }
+  }
+
+  revalidatePath('/pengaturan');
+  revalidatePath('/portal-ortu');
+}
+
+export async function updatePengumuman(id: string, judul: string, isi: string, isAktif: boolean) {
+  await requireAdmin();
+  await db.update(pengumumanPortal).set({ judul, isi, isAktif }).where(eq(pengumumanPortal.id, id));
+
+  // Note: We only send notification on creation for now, to avoid spamming if just fixing typos.
+  // If needed, we can add logic to broadcast if changing from inactive to active.
+  
+  revalidatePath('/pengaturan');
+  revalidatePath('/portal-ortu');
+}
+
+export async function hapusPengumuman(id: string) {
+  await requireAdmin();
+  await db.delete(pengumumanPortal).where(eq(pengumumanPortal.id, id));
+  revalidatePath('/pengaturan');
+  revalidatePath('/portal-ortu');
+}

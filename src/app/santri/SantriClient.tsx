@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Plus, Search, Edit2, Trash2, Camera, Upload, Download, GraduationCap, QrCode, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { createSantri, updateSantri, deleteSantri, importSantriBatch, jadikanAlumni, jadikanAlumniBatch, syncQRCodeBatch, updateHalaqoh, updateHalaqohBatch, updateSesiBatch, hapusVektorWajahBatch, importVektorWajahBatch } from "./actions";
+import { createSantri, updateSantri, deleteSantri, importSantriBatch, jadikanAlumni, jadikanAlumniBatch, syncQRCodeBatch, updateHalaqoh, updateHalaqohBatch, updateSesiBatch, hapusVektorWajahBatch, importVektorWajahBatch, updateSaudaraBatch } from "./actions";
 import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
 import { RegisterWajahModal } from "./RegisterWajahModal";
 import { useForm } from "react-hook-form";
@@ -48,6 +48,7 @@ const santriSchema = z.object({
   pekerjaanIbu: z.string().optional(),
   pekerjaanIbuLainnya: z.string().optional(),
   instansiIbu: z.string().optional(),
+  adaSaudara: z.boolean().optional(),
 });
 
 type SantriFormValues = z.infer<typeof santriSchema>;
@@ -101,6 +102,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       pekerjaanIbu: "",
       pekerjaanIbuLainnya: "",
       instansiIbu: "",
+      adaSaudara: false,
     },
   });
 
@@ -171,6 +173,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       pekerjaanIbu: santri.pekerjaanIbu || "",
       pekerjaanIbuLainnya: santri.pekerjaanIbuLainnya || "",
       instansiIbu: santri.instansiIbu || "",
+      adaSaudara: santri.adaSaudara ?? false,
     });
     setIsDialogOpen(true);
   };
@@ -224,6 +227,23 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
     }
   };
 
+  const handleUpdateSaudaraBatch = async (isSaudara: boolean) => {
+    if (selectedIds.length === 0) return;
+    const statusText = isSaudara ? "mengaktifkan" : "menonaktifkan";
+    const confirmed = await showConfirm(`Set Saudara?`, `Anda yakin ingin ${statusText} status saudara untuk ${selectedIds.length} santri ini?`);
+    if (confirmed) {
+      setIsLoading(true);
+      try {
+        await updateSaudaraBatch(selectedIds, isSaudara);
+        setRowSelection({});
+        showSuccess("Berhasil", `${selectedIds.length} santri berhasil diupdate.`);
+      } catch (error) {
+        showError("Gagal", "Terjadi kesalahan sistem.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   const handleHalaqohChange = async (id: string, newIdHalaqoh: string) => {
     try {
@@ -406,8 +426,9 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-      const res = await importSantriBatch(jsonData);
+      
+      const plainData = JSON.parse(JSON.stringify(jsonData));
+      const res = await importSantriBatch(plainData);
       if (res.success) {
         showSuccess("Import Berhasil", `${res.count} data santri baru berhasil ditambahkan. Data duplikat diabaikan.`);
       } else {
@@ -547,86 +568,37 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
             Import Excel
           </button>
           
-          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg relative group/more">
             <button 
-              onClick={() => handleExport(false)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white text-slate-700 shadow-sm rounded font-medium text-sm hover:text-emerald-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-white text-slate-700 shadow-sm rounded font-medium text-sm hover:text-indigo-600 transition-colors"
             >
-              <Download className="w-4 h-4" />
-              Export Pilihan
+              Aksi Lainnya
+              <ChevronDown className="w-4 h-4" />
             </button>
-            <button 
-              onClick={() => handleExport(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white text-slate-700 shadow-sm rounded font-medium text-sm hover:text-emerald-600 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Export Semua
-            </button>
-          </div>
-
-          <div className="flex gap-1 bg-indigo-50 p-1 rounded-lg">
-            <button 
-              onClick={handleDownloadQRSelected}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white text-indigo-700 shadow-sm rounded font-medium text-sm hover:text-indigo-900 transition-colors"
-            >
-              <QrCode className="w-4 h-4" />
-              QR Terpilih
-            </button>
-            <button 
-              onClick={handleDownloadQRAll}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white text-indigo-700 shadow-sm rounded font-medium text-sm hover:text-indigo-900 transition-colors"
-            >
-              <QrCode className="w-4 h-4" />
-              Semua QR
-            </button>
-            <button 
-              onClick={handleSyncQR}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white text-rose-600 shadow-sm rounded font-medium text-sm hover:text-rose-800 transition-colors"
-            >
-              <QrCode className="w-4 h-4" />
-              Sinkronisasi QR Lama
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1 bg-amber-50 p-1 rounded-lg">
-            <select
-              value={batchHalaqoh}
-              onChange={(e) => setBatchHalaqoh(e.target.value)}
-              className="bg-white border border-amber-200 text-amber-900 text-sm rounded px-2 py-1.5 focus:ring-amber-500 focus:border-amber-500 max-w-[120px]"
-            >
-              <option value="">Pilih Halaqoh...</option>
-              {halaqohList.map((h) => (
-                <option key={h.id} value={h.id}>{h.namaHalaqoh}</option>
-              ))}
-            </select>
-            <button 
-              onClick={handleHalaqohBatchChange}
-              disabled={isLoading || selectedIds.length === 0}
-              className="px-3 py-1.5 bg-amber-600 text-white shadow-sm rounded font-medium text-sm hover:bg-amber-700 transition-colors disabled:opacity-50"
-            >
-              Pindah Massal
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1 bg-emerald-50 p-1 rounded-lg">
-            <select
-              value={batchSesi}
-              onChange={(e) => setBatchSesi(e.target.value)}
-              className="bg-white border border-emerald-200 text-emerald-900 text-sm rounded px-2 py-1.5 focus:ring-emerald-500 focus:border-emerald-500 max-w-[120px]"
-            >
-              <option value="">Pilih Sesi...</option>
-              {sesiList?.map((s) => (
-                <option key={s.id} value={s.id}>{s.namaSesi}</option>
-              ))}
-            </select>
-            <button 
-              onClick={handleSesiBatchChange}
-              disabled={isLoading || selectedIds.length === 0}
-              className="px-3 py-1.5 bg-emerald-600 text-white shadow-sm rounded font-medium text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50"
-            >
-              Ubah Sesi
-            </button>
+            <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border border-slate-200 opacity-0 invisible group-hover/more:opacity-100 group-hover/more:visible transition-all z-20 flex flex-col overflow-hidden">
+              <button 
+                onClick={() => handleExport(true)}
+                className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-100"
+              >
+                <Download className="w-4 h-4" />
+                Export Semua Santri (Excel)
+              </button>
+              <button 
+                onClick={handleDownloadQRAll}
+                className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-100"
+              >
+                <QrCode className="w-4 h-4" />
+                Download Semua QR
+              </button>
+              <button 
+                onClick={handleSyncQR}
+                disabled={isLoading}
+                className="flex items-center gap-2 px-4 py-2.5 hover:bg-rose-50 text-rose-600 text-sm text-left"
+              >
+                <QrCode className="w-4 h-4" />
+                Sinkronisasi QR Lama
+              </button>
+            </div>
           </div>
 
           <button 
@@ -666,32 +638,72 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
         onRowSelectionChange={setRowSelection}
         toolbarActions={() => (
           selectedIds.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-3 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 w-full sm:w-auto">
-              <span className="text-sm font-medium text-amber-800">{selectedIds.length} Terpilih</span>
-              <button 
-                onClick={handleJadikanAlumniBatch}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded font-medium text-sm hover:bg-amber-700 transition-colors"
-              >
-                <GraduationCap className="w-4 h-4" />
-                Jadikan Alumni
-              </button>
-              
-              <div className="h-6 w-px bg-amber-200 mx-1 hidden sm:block"></div>
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto z-10 relative">
+              <span className="text-sm font-medium text-indigo-800 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 shadow-sm">
+                {selectedIds.length} Terpilih
+              </span>
+
+              <div className="relative group/menu inline-block">
+                <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                  Aksi Massal
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                
+                <div className="absolute left-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all flex flex-col overflow-hidden pb-1 z-[60]">
+                  
+                  {/* Status & Data Wajah Section */}
+                  <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">Status & Data Umum</div>
+                  <button onClick={handleJadikanAlumniBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                    <GraduationCap className="w-4 h-4" /> Jadikan Alumni
+                  </button>
+                  <button onClick={() => handleUpdateSaudaraBatch(true)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-emerald-50 text-emerald-700 text-sm text-left border-b border-slate-50">
+                    <Plus className="w-4 h-4" /> Set Status Saudara
+                  </button>
+                  <button onClick={() => handleUpdateSaudaraBatch(false)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                    <Trash2 className="w-4 h-4" /> Hapus Status Saudara
+                  </button>
+                  <button onClick={() => handleExport(false)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                    <Download className="w-4 h-4" /> Export Excel (Terpilih)
+                  </button>
+                  <button onClick={handleDownloadQRSelected} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                    <QrCode className="w-4 h-4" /> Download QR (Terpilih)
+                  </button>
+                  
+                  {/* Pengaturan Halaqoh & Sesi Section */}
+                  <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-y border-slate-100 mt-1">Halaqoh & Sesi Absensi</div>
+                  <div className="px-4 py-3 bg-white space-y-2 border-b border-slate-100">
+                    <div className="flex gap-2">
+                      <select value={batchHalaqoh} onChange={(e) => setBatchHalaqoh(e.target.value)} className="flex-1 text-sm border border-slate-200 rounded p-1.5 focus:ring-amber-500 focus:border-amber-500">
+                        <option value="">Pilih Halaqoh...</option>
+                        {halaqohList.map((h) => <option key={h.id} value={h.id}>{h.namaHalaqoh}</option>)}
+                      </select>
+                      <button onClick={handleHalaqohBatchChange} className="bg-amber-600 hover:bg-amber-700 text-white px-3 rounded text-sm font-medium transition-colors">Pindah</button>
+                    </div>
+                    <div className="flex gap-2">
+                      <select value={batchSesi} onChange={(e) => setBatchSesi(e.target.value)} className="flex-1 text-sm border border-slate-200 rounded p-1.5 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">Pilih Sesi...</option>
+                        {sesiList?.map((s) => <option key={s.id} value={s.id}>{s.namaSesi}</option>)}
+                      </select>
+                      <button onClick={handleSesiBatchChange} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 rounded text-sm font-medium transition-colors">Ubah</button>
+                    </div>
+                  </div>
+
+                  {/* Data Wajah Section */}
+                  <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">Data Vektor Wajah</div>
+                  <button onClick={() => fileFaceRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                    <Upload className="w-4 h-4" /> Import JSON Wajah
+                  </button>
+                  <button onClick={handleExportWajahBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                    <Download className="w-4 h-4" /> Export JSON Wajah
+                  </button>
+                  <button onClick={handleHapusWajahBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-rose-50 text-rose-600 text-sm text-left">
+                    <Trash2 className="w-4 h-4" /> Hapus Data Wajah
+                  </button>
+                  
+                </div>
+              </div>
               
               <input type="file" accept=".json" className="hidden" ref={fileFaceRef} onChange={handleImportWajahBatch} />
-              
-              <button onClick={() => fileFaceRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded font-medium text-sm hover:bg-blue-700 transition-colors" title="Import Wajah dari JSON">
-                <Upload className="w-4 h-4" />
-                Import Wajah
-              </button>
-              <button onClick={handleExportWajahBatch} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded font-medium text-sm hover:bg-indigo-700 transition-colors" title="Export Wajah ke JSON">
-                <Download className="w-4 h-4" />
-                Export Wajah
-              </button>
-              <button onClick={handleHapusWajahBatch} className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white rounded font-medium text-sm hover:bg-rose-700 transition-colors" title="Hapus Data Wajah Terpilih">
-                <Trash2 className="w-4 h-4" />
-                Hapus Wajah
-              </button>
             </div>
           ) : <div />
         )}
@@ -726,6 +738,16 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
                       <input {...form.register("namaLengkap")} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
                       {form.formState.errors.namaLengkap && <span className="text-xs text-rose-500">{form.formState.errors.namaLengkap.message}</span>}
                     </div>
+
+                    {/* Fitur Keuangan: Saudara */}
+                    <div className="flex items-center space-x-3 pt-6 md:col-span-2 bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                      <input type="checkbox" id="adaSaudara" {...form.register("adaSaudara")} className="w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" />
+                      <div>
+                        <label htmlFor="adaSaudara" className="block text-sm font-medium text-emerald-800">Ada Kakak/Adik (Saudara)?</label>
+                        <p className="text-xs text-emerald-600">Jika dicentang, Iuran Kas bulanan santri ini otomatis menjadi Rp 5.000 (Normal Rp 10.000)</p>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Tempat Lahir</label>
                       <input {...form.register("tempatLahir")} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />

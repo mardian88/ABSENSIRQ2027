@@ -113,6 +113,7 @@ export async function createSantri(data: any) {
     pekerjaanIbu: data.pekerjaanIbu,
     pekerjaanIbuLainnya: data.pekerjaanIbuLainnya,
     instansiIbu: data.instansiIbu,
+    adaSaudara: data.adaSaudara,
   });
   revalidatePath("/santri");
 }
@@ -148,6 +149,7 @@ export async function updateSantri(id: string, data: any) {
     pekerjaanIbu: data.pekerjaanIbu,
     pekerjaanIbuLainnya: data.pekerjaanIbuLainnya,
     instansiIbu: data.instansiIbu,
+    adaSaudara: data.adaSaudara,
   };
 
   await db
@@ -318,4 +320,12 @@ export async function importVektorWajahBatch(dataList: any[]) {
   }
   revalidatePath('/santri');
   return { success: true, count };
+}
+
+export async function updateSaudaraBatch(ids: string[], adaSaudara: boolean) {
+  for (const id of ids) {
+    await db.update(santri).set({ adaSaudara }).where(eq(santri.id, id));
+  }
+  revalidatePath('/santri');
+  return { success: true };
 }

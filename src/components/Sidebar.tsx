@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight, UserMinus, CheckCircle2 } from "lucide-react";
+import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight, UserMinus, CheckCircle2, RefreshCw } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { getPengaturanProfil } from "@/app/pengaturan/actions";
+import { getPsbCounts } from "@/app/admin-psb/actions";
+import { getPendingTopupCount } from "@/app/admin-keuangan/top-up/actions";
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
@@ -61,6 +64,19 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       ]
     },
     {
+      title: "Keuangan",
+      icon: Wallet,
+      items: [
+        { name: "Beranda Keuangan", href: "/admin-keuangan", icon: Wallet, exact: true },
+        { name: "Monitoring Pembayaran", href: "/admin-keuangan/monitoring", icon: ClipboardList },
+        { name: "Pembayaran (Kas/Iuran)", href: "/admin-keuangan/pembayaran", icon: Coins },
+        { name: "Buku Kas Umum", href: "/admin-keuangan/buku-kas", icon: FileText },
+        { name: "Top-Up Saldo", href: "/admin-keuangan/top-up", icon: CheckCircle2 },
+        { name: "Tabungan Santri", href: "/admin-keuangan/tabungan", icon: UserCheck },
+        { name: "Kebutuhan Santri", href: "/admin-keuangan/katalog", icon: BookOpen },
+      ]
+    },
+    {
       title: "System",
       items: [
         { name: "Pengaturan", href: "/pengaturan", icon: Settings },
@@ -75,6 +91,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     "Database": false,
     "Laporan": false,
     "Mutabaah": false,
+    "Keuangan": false,
   });
 
   // Auto-expand group if current route is inside it
@@ -107,18 +124,20 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     });
   };
 
+  const [pendingTopup, setPendingTopup] = useState(0);
+
   useEffect(() => {
-    // Import dinamis untuk menghindari dependency cycle atau error client
-    import("@/app/pengaturan/actions").then(({ getPengaturanProfil }) => {
-      getPengaturanProfil().then(res => {
-        if(res) setProfil({ namaRumahQuran: res.namaRumahQuran, urlLogo: res.urlLogo || "" });
-      });
-    });
-    import("@/app/admin-psb/actions").then(({ getPsbCounts }) => {
-      getPsbCounts().then(res => {
-        if(res) setPsbCounts(res);
-      });
-    });
+    getPengaturanProfil().then(res => {
+      if(res) setProfil({ namaRumahQuran: res.namaRumahQuran, urlLogo: res.urlLogo || "" });
+    }).catch(console.error);
+
+    getPsbCounts().then(res => {
+      if(res) setPsbCounts(res);
+    }).catch(console.error);
+
+    getPendingTopupCount().then(res => {
+      setPendingTopup(res);
+    }).catch(console.error);
   }, [pathname]);
 
   return (
@@ -128,11 +147,20 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
            {profil.urlLogo && <img src={profil.urlLogo} alt="Logo" className="w-8 h-8 rounded-full object-cover" />}
            <span className="text-xl font-bold truncate max-w-[150px]">{profil.namaRumahQuran}</span>
         </div>
-        {onClose && (
-          <button onClick={onClose} className="md:hidden p-1 -mr-2 text-slate-400 hover:text-white transition-colors">
-            <X className="w-6 h-6" />
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => window.location.reload()} 
+            className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors"
+            title="Refresh Aplikasi"
+          >
+            <RefreshCw className="w-4 h-4" />
           </button>
-        )}
+          {onClose && (
+            <button onClick={onClose} className="md:hidden p-1 -mr-2 text-slate-400 hover:text-white transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          )}
+        </div>
       </div>
       <nav className="flex-1 space-y-2 p-4 overflow-y-auto">
         {navGroups.map((group, idx) => {
@@ -180,7 +208,14 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                   <GroupIcon className="h-5 w-5 text-slate-400" />
                   <span className="font-medium text-sm">{group.title}</span>
                 </div>
-                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
+                <div className="flex items-center gap-2">
+                  {group.title === "Keuangan" && pendingTopup > 0 && (
+                    <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {pendingTopup}
+                    </span>
+                  )}
+                  {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500" /> : <ChevronRight className="w-4 h-4 text-slate-500" />}
+                </div>
               </button>
               
               {isExpanded && (
@@ -213,6 +248,11 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                             {psbCounts.read > 0 && (
                               <span className="bg-slate-500 text-white px-1.5 py-0.5 rounded-full">{psbCounts.read}</span>
                             )}
+                          </div>
+                        )}
+                        {item.name === "Top-Up Saldo" && pendingTopup > 0 && (
+                          <div className="flex items-center gap-1 text-[10px] font-bold">
+                            <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded-full">{pendingTopup}</span>
                           </div>
                         )}
                       </Link>

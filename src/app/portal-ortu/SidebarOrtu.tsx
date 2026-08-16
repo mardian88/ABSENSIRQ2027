@@ -19,6 +19,7 @@ export function SidebarOrtu({
 
     { name: "Mutabaah Santri", href: "/portal-ortu/mutabaah", icon: BookOpen },
     { name: "Perizinan", href: "/portal-ortu/izin", icon: FileText },
+    { name: "Keuangan & Tabungan", href: "/portal-ortu/keuangan", icon: Wallet },
   ];
 
   const handleLogout = async () => {

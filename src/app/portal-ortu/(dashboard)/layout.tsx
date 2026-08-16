@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
-import { SidebarOrtu } from "../SidebarOrtu";
 import { getOrtuSession } from "../actions";
 import { redirect } from "next/navigation";
-import MobileSidebarWrapper from "../MobileSidebarWrapper";
+import { BottomNavOrtu } from "@/components/BottomNavOrtu";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const profil = await getOrtuSession();
@@ -12,16 +11,15 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex">
-        <SidebarOrtu profil={profil} />
+    <div className="bg-slate-200 h-screen overflow-hidden">
+      <div className="max-w-md mx-auto bg-slate-50 h-full relative shadow-2xl flex flex-col">
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto w-full pb-20 relative">
+          {children}
+        </main>
+        
+        <BottomNavOrtu />
       </div>
-
-      {/* Mobile Sidebar */}
-      <MobileSidebarWrapper profil={profil}>
-        {children}
-      </MobileSidebarWrapper>
     </div>
   );
 }

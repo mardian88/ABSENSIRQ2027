@@ -16,6 +16,9 @@ import { AutoAlpaManager } from "./AutoAlpaManager";
 import { ThankYouPageManager } from "./ThankYouPageManager";
 import { KategoriPoinManager } from "./KategoriPoinManager";
 import { PesanOtomatisManager } from "./PesanOtomatisManager";
+import { KeuanganManager } from "./KeuanganManager";
+import { SaudaraManager } from "./SaudaraManager";
+import { PengumumanManager } from "./PengumumanManager";
 
 export default function PengaturanPage() {
   const [loading, setLoading] = useState(true);
@@ -107,9 +110,16 @@ export default function PengaturanPage() {
         >
           📍 Cabang
         </button>
+        <button 
+          onClick={() => setActiveTab("keuangan")} 
+          className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'keuangan' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
+        >
+          💰 Keuangan
+        </button>
       </div>
 
       {activeTab === "profil" && (
+        <>
         <Card className="animate-in fade-in duration-300 slide-in-from-bottom-2">
           <CardHeader>
             <CardTitle>Profil Rumah Qur'an</CardTitle>
@@ -201,7 +211,8 @@ export default function PengaturanPage() {
             )}
           </CardContent>
         </Card>
-      )}
+        <PengumumanManager />
+      </>)}
 
       {activeTab === "absensi" && (
         <SesiAbsensiManager />
@@ -215,6 +226,13 @@ export default function PengaturanPage() {
         <div className="space-y-6">
           <AutoAlpaManager />
           <PesanOtomatisManager />
+        </div>
+      )}
+      
+      {activeTab === "keuangan" && (
+        <div className="space-y-6">
+          <KeuanganManager />
+          <SaudaraManager />
         </div>
       )}
 
