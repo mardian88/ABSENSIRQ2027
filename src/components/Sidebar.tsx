@@ -67,7 +67,6 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       title: "Keuangan",
       icon: Wallet,
       items: [
-        { name: "Beranda Keuangan", href: "/admin-keuangan", icon: Wallet, exact: true },
         { name: "Monitoring Pembayaran", href: "/admin-keuangan/monitoring", icon: ClipboardList },
         { name: "Pembayaran (Kas/Iuran)", href: "/admin-keuangan/pembayaran", icon: Coins },
         { name: "Buku Kas Umum", href: "/admin-keuangan/buku-kas", icon: FileText },
