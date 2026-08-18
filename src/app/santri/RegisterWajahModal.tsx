@@ -188,37 +188,41 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
     detectFrame();
   };
 
-  const handleSimpan = async () => {
-    if (!activeSantriId || !faceDescriptor) return;
-    
-    setIsProcessing(true);
-    setMessage(null);
-    
-    try {
-      const vektorArray = Array.from(faceDescriptor);
-      const dataVektor = JSON.stringify(vektorArray);
-      
-      const res = await simpanVektorWajah(activeSantriId, dataVektor);
-      
-      if (res.success) {
-        setMessage({ type: 'success', text: "Berhasil! Silakan pilih santri selanjutnya jika ingin merekam lagi." });
+  const saveMultiAngleData = async (samples: number[][]) => {
+      setIsProcessing(true);
+      try {
+        const dataVektor = JSON.stringify(samples);
+        const res = await simpanVektorWajah(activeSantriId!, dataVektor);
         
-        // Kosongkan form agar langsung bisa scan yang lain
-        setTimeout(() => {
-          setActiveSantriId(null);
-          setFaceDescriptor(null);
-          setSearchQuery("");
-        }, 1500);
-      } else {
-        setMessage({ type: 'error', text: res.message });
+        if (res.success) {
+          setMessage({ type: 'success', text: "Berhasil merekam 10 sampel wajah!" });
+          setTimeout(() => {
+            setActiveSantriId(null);
+            setFaceDescriptor(null);
+            setSearchQuery("");
+            setCaptureProgress(0);
+          }, 1500);
+        } else {
+          setMessage({ type: 'error', text: res.message });
+        }
+      } catch (err: any) {
+        console.error(err);
+        setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
+      } finally {
+        setIsProcessing(false);
       }
-    } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    };
+
+    const handleSimpan = async () => {
+      if (!activeSantriId || !faceDescriptor) return;
+      setMessage(null);
+      
+      // Start multi-angle capture
+      samplesRef.current = [];
+      lastCaptureTimeRef.current = performance.now();
+      setIsCapturingSamples(true);
+      setCaptureProgress(0);
+    };
 
   if (!isOpen) return null;
 
@@ -319,7 +323,7 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
             )}
           </div>
 
-          <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-inner flex flex-col items-center justify-center">
+          <div className="relative w-full aspect-square sm:aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-inner flex flex-col items-center justify-center">
             {!isModelLoaded ? (
               <div className="flex flex-col items-center justify-center text-slate-400 p-8">
                 <Loader2 className="w-8 h-8 animate-spin mb-4 text-blue-500" />

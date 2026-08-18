@@ -198,10 +198,31 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
     }
   };
 
+  const saveMultiAngleData = async (samples: number[][]) => {
+    setIsProcessing(true);
+    try {
+      const dataVektor = JSON.stringify(samples);
+      const res = await updateGuruFaceData(guru!.id, dataVektor);
+      
+      if (res.success) {
+        setMessage({ type: 'success', text: res.message || "Berhasil merekam sampel wajah" });
+        setTimeout(() => {
+          onClose();
+          setCaptureProgress(0);
+        }, 1500);
+      } else {
+        setMessage({ type: 'error', text: res.message });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleSimpan = async () => {
     if (!guru || !faceDescriptor) return;
-    
-    setIsProcessing(true);
     setMessage(null);
     
     samplesRef.current = [];
@@ -239,7 +260,7 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
           <h2 className="text-lg font-bold text-slate-800">Daftarkan Wajah Guru</h2>
           <p className="text-sm text-slate-500 mt-1 mb-4">Sistem akan mengambil data biometrik untuk {guru?.namaLengkap}. Pastikan pencahayaan cukup dan wajah terlihat jelas dalam bingkai biru.</p>
 
-          <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-inner flex flex-col items-center justify-center">
+          <div className="relative w-full aspect-square sm:aspect-video bg-black rounded-xl overflow-hidden border border-slate-700 shadow-inner flex flex-col items-center justify-center">
             {!isModelLoaded ? (
               <div className="flex flex-col items-center justify-center text-slate-400 p-8">
                 <Loader2 className="w-8 h-8 animate-spin mb-4 text-blue-500" />
