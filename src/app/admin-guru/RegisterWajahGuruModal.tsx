@@ -39,6 +39,10 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
+  const [captureProgress, setCaptureProgress] = useState<number>(0);
+  const [isCapturingSamples, setIsCapturingSamples] = useState(false);
+  const samplesRef = useRef<number[][]>([]);
+  const lastCaptureTimeRef = useRef<number>(0);
   const requestRef = useRef<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -172,22 +176,16 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
     };
   };
 
-  const handleSimpan = async () => {
-    if (!guru || !faceDescriptor) return;
-    
-    setIsProcessing(true);
-    setMessage(null);
-    
+  const saveMultiAngleData = async (samples: number[][]) => {
     try {
-      // Array sudah berupa number[]
-      const dataVektor = JSON.stringify(faceDescriptor);
-      
-      const res = await updateGuruFaceData(guru.id, dataVektor);
+      const dataVektor = JSON.stringify(samples);
+      const res = await updateGuruFaceData(guru!.id, dataVektor);
       
       if (res.success) {
-        setMessage({ type: 'success', text: res.message });
+        setMessage({ type: 'success', text: res.message || "Berhasil merekam sampel wajah" });
         setTimeout(() => {
           onClose();
+          setCaptureProgress(0);
         }, 1500);
       } else {
         setMessage({ type: 'error', text: res.message });
@@ -198,6 +196,18 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleSimpan = async () => {
+    if (!guru || !faceDescriptor) return;
+    
+    setIsProcessing(true);
+    setMessage(null);
+    
+    samplesRef.current = [];
+    lastCaptureTimeRef.current = performance.now();
+    setIsCapturingSamples(true);
+    setCaptureProgress(0);
   };
 
   if (!isOpen) return null;

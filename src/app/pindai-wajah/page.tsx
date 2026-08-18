@@ -124,15 +124,20 @@ export default function PindaiWajah() {
 
         const dataSantri = await getFaces();
         
-        registeredFaces = dataSantri.map((santri: any) => {
-          try {
-            const arr = JSON.parse(santri.dataVektorWajah);
-            return { id: santri.id, nama: santri.namaLengkap, embedding: arr };
-          } catch (e) {
-            console.error("Gagal memproses data wajah untuk santri", santri.id);
-            return null;
-          }
-        }).filter(Boolean) as { id: string; nama: string; embedding: number[] }[];
+                  registeredFaces = dataSantri.flatMap((santri: any) => {
+            try {
+              const arr = JSON.parse(santri.dataVektorWajah);
+              // Handle new Multi-Angle format (array of arrays)
+              if (Array.isArray(arr) && arr.length > 0 && Array.isArray(arr[0])) {
+                return arr.map((vector: number[]) => ({ id: santri.id, nama: santri.namaLengkap, embedding: vector }));
+              }
+              // Handle old Single format (array of numbers)
+              return [{ id: santri.id, nama: santri.namaLengkap, embedding: arr }];
+            } catch (e) {
+              console.error("Gagal memproses data wajah untuk santri", santri.id);
+              return [];
+            }
+          });
 
         if (isMounted) {
           if (registeredFaces.length > 0) {
