@@ -177,28 +177,6 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
   };
 
   const saveMultiAngleData = async (samples: number[][]) => {
-    try {
-      const dataVektor = JSON.stringify(samples);
-      const res = await updateGuruFaceData(guru!.id, dataVektor);
-      
-      if (res.success) {
-        setMessage({ type: 'success', text: res.message || "Berhasil merekam sampel wajah" });
-        setTimeout(() => {
-          onClose();
-          setCaptureProgress(0);
-        }, 1500);
-      } else {
-        setMessage({ type: 'error', text: res.message });
-      }
-    } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const saveMultiAngleData = async (samples: number[][]) => {
     setIsProcessing(true);
     try {
       const dataVektor = JSON.stringify(samples);
