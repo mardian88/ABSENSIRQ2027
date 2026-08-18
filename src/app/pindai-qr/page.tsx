@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { CheckCircle2, QrCode, Camera, Keyboard, Flashlight, RefreshCcw, XCircle } from "lucide-react";
 import { Html5Qrcode, CameraDevice } from "html5-qrcode";
+import { getAudioSettings } from "@/app/pengaturan/actions";
 import { showError } from "@/lib/sweetalert";
 import { recordAbsensiByQR } from "../absensi/actions";
 import { formatTimeID } from "@/lib/date";
@@ -13,6 +14,34 @@ export default function PindaiQR() {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [jenisAbsen, setJenisAbsen] = useState<"masuk" | "pulang">("masuk");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [audioConfig, setAudioConfig] = useState<any>(null);
+  
+  const playAudioResult = (success: boolean, jenis: string) => {
+    if (!audioConfig) {
+      if (success) new Audio('/notif/berhasil.wav').play().catch(() => {});
+      else new Audio('/notif/gagal.wav').play().catch(() => {});
+      return;
+    }
+    try {
+      if (success) {
+        if (jenis === 'masuk' && audioConfig.isAudioMasukAktif && audioConfig.urlAudioMasuk) {
+          new Audio(audioConfig.urlAudioMasuk).play().catch(() => {});
+        } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
+          new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
+        } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
+          new Audio('/notif/berhasil.wav').play().catch(() => {});
+        }
+      } else {
+        if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
+          new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
+        } else if (audioConfig.isAudioGagalAktif) {
+          new Audio('/notif/gagal.wav').play().catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => { getAudioSettings().then(setAudioConfig); }, []);
 
   // Fitur Kamera vs Fisik
   const [inputMode, setInputMode] = useState<"kamera" | "fisik">("kamera");

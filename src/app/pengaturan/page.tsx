@@ -18,10 +18,10 @@ import { KategoriPoinManager } from "./KategoriPoinManager";
 import { PesanOtomatisManager } from "./PesanOtomatisManager";
 import { KeuanganManager } from "./KeuanganManager";
 import { SaudaraManager } from "./SaudaraManager";
-import { PengumumanManager } from "./PengumumanManager";
+import { PengumumanManager } from "./PengumumanManager";\nimport { AudioNotifManager } from "./AudioNotifManager";\nimport { getAudioSettings } from "./actions";\n
 
 export default function PengaturanPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);\n  const [audioData, setAudioData] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("profil");
   const [data, setData] = useState({ id: "", namaRumahQuran: "", urlLogo: "", warnaTema: "", passwordAbsensi: "", isPsbAktif: true, isCountdownAktif: false, batasWaktuPsb: "" });
@@ -215,7 +215,7 @@ export default function PengaturanPage() {
       </>)}
 
       {activeTab === "absensi" && (
-        <SesiAbsensiManager />
+        <SesiAbsensiManager />\n        <AudioNotifManager initialData={audioData} />
       )}
 
       {activeTab === "hari" && (

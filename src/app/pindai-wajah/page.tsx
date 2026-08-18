@@ -7,6 +7,7 @@ import { recordAbsensiById } from "../absensi/actions";
 import { getFaces } from "./actions";
 import { useRouter } from "next/navigation";
 import { formatTimeID } from "@/lib/date";
+import { getAudioSettings } from "@/app/pengaturan/actions";
 import { showError } from "@/lib/sweetalert";
 import { KioskNav } from "@/components/KioskNav";
 import type { Human, Config } from "@vladmandic/human";
@@ -55,6 +56,34 @@ export default function PindaiWajah() {
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [audioConfig, setAudioConfig] = useState<any>(null);
+  
+  const playAudioResult = (success: boolean, jenis: string) => {
+    if (!audioConfig) {
+      if (success) new Audio('/notif/berhasil.wav').play().catch(() => {});
+      else new Audio('/notif/gagal.wav').play().catch(() => {});
+      return;
+    }
+    try {
+      if (success) {
+        if (jenis === 'masuk' && audioConfig.isAudioMasukAktif && audioConfig.urlAudioMasuk) {
+          new Audio(audioConfig.urlAudioMasuk).play().catch(() => {});
+        } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
+          new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
+        } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
+          new Audio('/notif/berhasil.wav').play().catch(() => {});
+        }
+      } else {
+        if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
+          new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
+        } else if (audioConfig.isAudioGagalAktif) {
+          new Audio('/notif/gagal.wav').play().catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => { getAudioSettings().then(setAudioConfig); }, []);
 
   // Buffer untuk debounce scan per orang (jangan sampai 1 wajah kescan 10x per detik)
   const lastScannedId = useRef<string | null>(null);

@@ -2,6 +2,7 @@
 
 import { Search, CheckCircle, XCircle, Clock, History } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getAudioSettings } from "@/app/pengaturan/actions";
 import { recordAbsensiById } from "../actions";
 import { KioskNav } from "@/components/KioskNav";
 import { formatTimeID } from "@/lib/date";
@@ -25,6 +26,34 @@ type HistoryData = {
 export function ManualAbsenClient({ initialData }: { initialData: SantriData[] }) {
   const [search, setSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [audioConfig, setAudioConfig] = useState<any>(null);
+  
+  const playAudioResult = (success: boolean, jenis: string) => {
+    if (!audioConfig) {
+      if (success) new Audio('/notif/berhasil.wav').play().catch(() => {});
+      else new Audio('/notif/gagal.wav').play().catch(() => {});
+      return;
+    }
+    try {
+      if (success) {
+        if (jenis === 'masuk' && audioConfig.isAudioMasukAktif && audioConfig.urlAudioMasuk) {
+          new Audio(audioConfig.urlAudioMasuk).play().catch(() => {});
+        } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
+          new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
+        } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
+          new Audio('/notif/berhasil.wav').play().catch(() => {});
+        }
+      } else {
+        if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
+          new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
+        } else if (audioConfig.isAudioGagalAktif) {
+          new Audio('/notif/gagal.wav').play().catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => { getAudioSettings().then(setAudioConfig); }, []);
   const [scanResult, setScanResult] = useState<{ nama: string; waktu: string; jenis: string } | null>(null);
   
   // State untuk menyimpan history absen sesi ini

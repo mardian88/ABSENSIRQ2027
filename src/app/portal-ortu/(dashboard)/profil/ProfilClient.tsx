@@ -1,10 +1,15 @@
 "use client";
 
-import { User, LogOut, Phone, Shield } from "lucide-react";
-import { logoutOrtu } from "../../actions";
+import { User, LogOut, Phone, Shield, Camera, Trash2, Loader2 } from "lucide-react";
+import { logoutOrtu, updateFotoProfil, resetFotoProfil } from "../../actions";
 import toast from "react-hot-toast";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 export function ProfilClient({ profil, santriData }: any) {
+  const [loadingPic, setLoadingPic] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleLogout = async () => {
     const { showConfirm } = await import("@/lib/sweetalert");
@@ -14,15 +19,59 @@ export function ProfilClient({ profil, santriData }: any) {
     try {
       await logoutOrtu();
       toast.success("Berhasil keluar");
-      // Redirect happens in action
+      window.location.href = "/portal-ortu/login";
     } catch (err) {
       toast.error("Gagal keluar");
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoadingPic(true);
+    const formData = new FormData();
+    formData.append("fotoFile", file);
+    
+    try {
+      const res = await updateFotoProfil(profil.id, formData);
+      if (res.success) {
+        toast.success(res.message);
+        router.refresh();
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan saat mengunggah foto.");
+    } finally {
+      setLoadingPic(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleResetPic = async () => {
+    const { showConfirm } = await import("@/lib/sweetalert");
+    const isConfirmed = await showConfirm("Hapus Foto", "Apakah Anda yakin ingin menghapus foto profil?", "Hapus");
+    if (!isConfirmed) return;
+
+    setLoadingPic(true);
+    try {
+      const res = await resetFotoProfil(profil.id);
+      if (res.success) {
+        toast.success(res.message);
+        router.refresh();
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan.");
+    } finally {
+      setLoadingPic(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-full pb-6 bg-slate-50">
-      {/* Header */}
       <header className="sticky top-0 z-10 bg-slate-50/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <h1 className="text-lg font-bold text-slate-800">Profil Saya</h1>
         <div className="p-2 bg-emerald-100/50 rounded-full text-emerald-700">
@@ -32,13 +81,46 @@ export function ProfilClient({ profil, santriData }: any) {
 
       <div className="px-6 mt-2 space-y-6">
         <div className="flex flex-col items-center mt-6">
-          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center border-4 border-white shadow-md mb-4">
-            {profil.urlFotoWajah ? (
-              <img src={profil.urlFotoWajah} alt="Foto" className="w-full h-full rounded-full object-cover" />
-            ) : (
-              <User className="w-10 h-10 text-emerald-600" />
+          <div className="relative w-28 h-28 mb-4 group">
+            <div className="w-full h-full bg-emerald-100 rounded-full flex items-center justify-center border-4 border-white shadow-md overflow-hidden">
+              {loadingPic ? (
+                <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+              ) : profil.urlFotoWajah ? (
+                <img src={profil.urlFotoWajah} alt="Foto" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-12 h-12 text-emerald-600" />
+              )}
+            </div>
+            
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loadingPic}
+              className="absolute bottom-0 right-0 p-2 bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition active:scale-95 disabled:opacity-50"
+            >
+              <Camera className="w-4 h-4" />
+            </button>
+            <input 
+              type="file" 
+              accept="image/*" 
+              capture="user"
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            {profil.urlFotoWajah && (
+              <button 
+                onClick={handleResetPic}
+                disabled={loadingPic}
+                className="text-xs text-rose-500 font-medium flex items-center gap-1 hover:text-rose-600 bg-rose-50 px-3 py-1.5 rounded-full mb-2 disabled:opacity-50"
+              >
+                <Trash2 className="w-3 h-3" /> Hapus Foto
+              </button>
             )}
           </div>
+          
           <h2 className="text-xl font-bold text-slate-800">{profil.namaLengkap}</h2>
           <span className="text-sm text-slate-500 font-medium mt-1">Wali Santri</span>
         </div>
