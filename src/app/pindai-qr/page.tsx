@@ -210,13 +210,20 @@ export default function PindaiQR() {
   // Mulai/Hentikan kamera berdasarkan Mode & Pilihan Kamera
   useEffect(() => {
     if (inputMode === "kamera") {
-      startCamera(selectedCamera || undefined);
+      setTimeout(() => startCamera(selectedCamera || undefined), 800);
     } else {
       stopCamera();
     }
     
     return () => {
       stopCamera();
+      // Force hardware release for mobile browsers
+      try {
+        const video = document.querySelector('#qr-reader video');
+        if (video && video.srcObject) {
+          video.srcObject.getTracks().forEach(t => t.stop());
+        }
+      } catch(e) {}
     };
   }, [inputMode, selectedCamera, facingMode]);
 

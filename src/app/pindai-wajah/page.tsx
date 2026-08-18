@@ -153,8 +153,18 @@ export default function PindaiWajah() {
   // Mulai kamera saat model siap atau arah kamera diganti
   useEffect(() => {
     if (isModelLoaded) {
-      startVideo();
+      setTimeout(() => startVideo(), 600);
     }
+    
+    // CLEANUP CAMERA ON UNMOUNT OR CHANGE
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject;
+        if (stream && typeof stream.getTracks === 'function') {
+           stream.getTracks().forEach((track) => track.stop());
+        }
+      }
+    };
   }, [facingMode, isModelLoaded]);
 
   const toggleFacingMode = () => {
