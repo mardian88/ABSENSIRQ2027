@@ -27,11 +27,11 @@ export function ManualAbsenClient({ initialData }: { initialData: SantriData[] }
   const [search, setSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioConfig, setAudioConfig] = useState<any>(null);
-  
+
   const playAudioResult = (success: boolean, jenis: string) => {
     if (!audioConfig) {
-      if (success) new Audio('/notif/berhasil.wav').play().catch(() => {});
-      else new Audio('/notif/gagal.wav').play().catch(() => {});
+      if (success) playAudioResult(true, jenis);
+      else playAudioResult(false, jenis);
       return;
     }
     try {
@@ -41,13 +41,13 @@ export function ManualAbsenClient({ initialData }: { initialData: SantriData[] }
         } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
           new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
         } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
-          new Audio('/notif/berhasil.wav').play().catch(() => {});
+          playAudioResult(true, jenis);
         }
       } else {
         if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
           new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
         } else if (audioConfig.isAudioGagalAktif) {
-          new Audio('/notif/gagal.wav').play().catch(() => {});
+          playAudioResult(false, jenis);
         }
       }
     } catch (e) {}
@@ -105,7 +105,7 @@ export function ManualAbsenClient({ initialData }: { initialData: SantriData[] }
     try {
       const res = await recordAbsensiById(idSantri, jenisAbsen, 'manual', 'hadir');
       if (res.success) {
-         new Audio('/notif/berhasil.wav').play().catch(e => console.error("Audio error:", e));
+         playAudioResult(true, jenis);
          
          const waktuAbsen = res.data?.waktu || formatTimeID(new Date());
          

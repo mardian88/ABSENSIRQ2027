@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save, Volume2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { updateAudioSettings } from "./actions";
-import { Switch } from "@/components/ui/switch";
+
 import { Input } from "@/components/ui/input";
 
 export function AudioNotifManager({ initialData }: { initialData: any }) {
@@ -78,10 +78,7 @@ export function AudioNotifManager({ initialData }: { initialData: any }) {
               <Label className="text-base font-semibold">Audio Absen Masuk</Label>
               <p className="text-sm text-slate-500">Berbunyi jika scan absen masuk berhasil</p>
             </div>
-            <Switch 
-              checked={settings.isAudioMasukAktif} 
-              onCheckedChange={(c) => setSettings({...settings, isAudioMasukAktif: c})} 
-            />
+            <input type="checkbox" checked={settings.isAudioMasukAktif} onChange={(e) => setSettings({...settings, isAudioMasukAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />
           </div>
           <div className="flex items-center gap-4">
             <Input type="file" accept="audio/*" onChange={(e) => handleFileChange("masuk", e)} className="flex-1" />
@@ -97,10 +94,7 @@ export function AudioNotifManager({ initialData }: { initialData: any }) {
               <Label className="text-base font-semibold">Audio Absen Pulang</Label>
               <p className="text-sm text-slate-500">Berbunyi jika scan absen pulang berhasil</p>
             </div>
-            <Switch 
-              checked={settings.isAudioPulangAktif} 
-              onCheckedChange={(c) => setSettings({...settings, isAudioPulangAktif: c})} 
-            />
+            <input type="checkbox" checked={settings.isAudioPulangAktif} onChange={(e) => setSettings({...settings, isAudioPulangAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />
           </div>
           <div className="flex items-center gap-4">
             <Input type="file" accept="audio/*" onChange={(e) => handleFileChange("pulang", e)} className="flex-1" />
@@ -116,10 +110,7 @@ export function AudioNotifManager({ initialData }: { initialData: any }) {
               <Label className="text-base font-semibold">Audio Scan Gagal</Label>
               <p className="text-sm text-slate-500">Berbunyi jika scan ditolak atau gagal</p>
             </div>
-            <Switch 
-              checked={settings.isAudioGagalAktif} 
-              onCheckedChange={(c) => setSettings({...settings, isAudioGagalAktif: c})} 
-            />
+            <input type="checkbox" checked={settings.isAudioGagalAktif} onChange={(e) => setSettings({...settings, isAudioGagalAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />
           </div>
           <div className="flex items-center gap-4">
             <Input type="file" accept="audio/*" onChange={(e) => handleFileChange("gagal", e)} className="flex-1" />

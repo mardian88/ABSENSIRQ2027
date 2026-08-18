@@ -15,11 +15,11 @@ export default function PindaiQR() {
   const [jenisAbsen, setJenisAbsen] = useState<"masuk" | "pulang">("masuk");
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioConfig, setAudioConfig] = useState<any>(null);
-  
+
   const playAudioResult = (success: boolean, jenis: string) => {
     if (!audioConfig) {
-      if (success) new Audio('/notif/berhasil.wav').play().catch(() => {});
-      else new Audio('/notif/gagal.wav').play().catch(() => {});
+      if (success) playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
+      else playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
       return;
     }
     try {
@@ -29,13 +29,13 @@ export default function PindaiQR() {
         } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
           new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
         } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
-          new Audio('/notif/berhasil.wav').play().catch(() => {});
+          playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
         }
       } else {
         if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
           new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
         } else if (audioConfig.isAudioGagalAktif) {
-          new Audio('/notif/gagal.wav').play().catch(() => {});
+          playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
         }
       }
     } catch (e) {}
@@ -84,14 +84,14 @@ export default function PindaiQR() {
     try {
       const res = await recordAbsensiByQR(decodedText, jenisAbsenRef.current);
       if (res.success && 'data' in res && res.data) {
-        new Audio('/notif/berhasil.wav').play().catch(e => console.error("Audio error:", e));
+        playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
         setScanResult({
           nama: res.data.namaLengkap,
           waktu: res.data.waktu,
           jenis: jenisAbsenRef.current
         });
       } else {
-        new Audio('/notif/gagal.wav').play().catch(e => console.error("Audio error:", e));
+        playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
         setScanResult({
           nama: (res as any).message || "Santri tidak ditemukan",
           waktu: formatTimeID(new Date()),
@@ -100,7 +100,7 @@ export default function PindaiQR() {
       }
     } catch (e: any) {
       console.error(e);
-      new Audio('/notif/gagal.wav').play().catch(err => console.error("Audio error:", err));
+      playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
       setScanResult({
         nama: e.message || "Gagal Server",
         waktu: formatTimeID(new Date()),

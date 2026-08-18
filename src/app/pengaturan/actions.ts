@@ -1,3 +1,4 @@
+"use server";
 
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 
@@ -6,7 +7,7 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
-\n"use server";
+
 
 import { db } from "@/db";
 import { pengaturanProfil, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanAbsensiGlobal, pengumumanPortal, notifikasiPortal, santri } from "@/db/schema";
@@ -504,7 +505,8 @@ export async function hapusPengumuman(id: string) {
   revalidatePath('/pengaturan');
   revalidatePath('/portal-ortu');
 }
-\n
+
+
 // --- PENGATURAN AUDIO NOTIFIKASI ---
 export async function getAudioSettings() {
   const [data] = await db.select().from(pengaturanAbsensiGlobal).limit(1);

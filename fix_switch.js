@@ -1,0 +1,13 @@
+const fs = require('fs');
+let content = fs.readFileSync('src/app/pengaturan/AudioNotifManager.tsx', 'utf8');
+content = content.replace('import { Switch } from "@/components/ui/switch";\\n', '');
+content = content.replace(/<Switch \n              checked=\{settings\.isAudioMasukAktif\} \n              onCheckedChange=\{\(c\) => setSettings\(\{\.\.\.settings, isAudioMasukAktif: c\}\)\} \n            \/>/g, '<input type="checkbox" checked={settings.isAudioMasukAktif} onChange={(e) => setSettings({...settings, isAudioMasukAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />');
+content = content.replace(/<Switch \n              checked=\{settings\.isAudioPulangAktif\} \n              onCheckedChange=\{\(c\) => setSettings\(\{\.\.\.settings, isAudioPulangAktif: c\}\)\} \n            \/>/g, '<input type="checkbox" checked={settings.isAudioPulangAktif} onChange={(e) => setSettings({...settings, isAudioPulangAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />');
+content = content.replace(/<Switch \n              checked=\{settings\.isAudioGagalAktif\} \n              onCheckedChange=\{\(c\) => setSettings\(\{\.\.\.settings, isAudioGagalAktif: c\}\)\} \n            \/>/g, '<input type="checkbox" checked={settings.isAudioGagalAktif} onChange={(e) => setSettings({...settings, isAudioGagalAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />');
+
+// also generic replace in case line breaks didn't match
+content = content.replace(/<Switch([^>]+)checked=\{settings.isAudioMasukAktif\}([^>]+)onCheckedChange=\{\(c\) => setSettings\(\{\.\.\.settings, isAudioMasukAktif: c\}\)\}([^>]+)\/>/gs, '<input type="checkbox" checked={settings.isAudioMasukAktif} onChange={(e) => setSettings({...settings, isAudioMasukAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />');
+content = content.replace(/<Switch([^>]+)checked=\{settings.isAudioPulangAktif\}([^>]+)onCheckedChange=\{\(c\) => setSettings\(\{\.\.\.settings, isAudioPulangAktif: c\}\)\}([^>]+)\/>/gs, '<input type="checkbox" checked={settings.isAudioPulangAktif} onChange={(e) => setSettings({...settings, isAudioPulangAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />');
+content = content.replace(/<Switch([^>]+)checked=\{settings.isAudioGagalAktif\}([^>]+)onCheckedChange=\{\(c\) => setSettings\(\{\.\.\.settings, isAudioGagalAktif: c\}\)\}([^>]+)\/>/gs, '<input type="checkbox" checked={settings.isAudioGagalAktif} onChange={(e) => setSettings({...settings, isAudioGagalAktif: e.target.checked})} className="w-5 h-5 accent-indigo-600" />');
+
+fs.writeFileSync('src/app/pengaturan/AudioNotifManager.tsx', content);
