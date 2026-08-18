@@ -7,6 +7,10 @@ import toast from "react-hot-toast";
 export function ProfilClient({ profil, santriData }: any) {
 
   const handleLogout = async () => {
+    const { showConfirm } = await import("@/lib/sweetalert");
+    const isConfirmed = await showConfirm("Konfirmasi Keluar", "Apakah Anda yakin ingin keluar?", "Ya, Keluar");
+    if(!isConfirmed) return;
+
     try {
       await logoutOrtu();
       toast.success("Berhasil keluar");

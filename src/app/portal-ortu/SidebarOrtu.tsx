@@ -23,8 +23,12 @@ export function SidebarOrtu({
   ];
 
   const handleLogout = async () => {
-    await logoutOrtu();
-    window.location.href = "/portal-ortu/login";
+    const { showConfirm } = await import("@/lib/sweetalert");
+    const isConfirmed = await showConfirm("Konfirmasi Keluar", "Apakah Anda yakin ingin keluar?", "Ya, Keluar");
+    if(isConfirmed) {
+      await logoutOrtu();
+      window.location.href = "/portal-ortu/login";
+    }
   };
 
   return (

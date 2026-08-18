@@ -66,7 +66,9 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
           </button>
           <button 
             onClick={async () => {
-              if(confirm("Apakah Anda yakin ingin keluar?")) {
+              const { showConfirm } = await import("@/lib/sweetalert");
+              const isConfirmed = await showConfirm("Konfirmasi Keluar", "Apakah Anda yakin ingin keluar?", "Ya, Keluar");
+              if(isConfirmed) {
                 await logoutOrtu();
                 router.push('/portal-ortu');
               }

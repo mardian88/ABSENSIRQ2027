@@ -20,6 +20,10 @@ export async function loginOrtu(nis: string) {
   const [data] = await db.select().from(santri).where(eq(santri.nomorInduk, nis)).limit(1);
   if (!data) return { success: false, message: "NIS tidak ditemukan" };
 
+  if (data.statusSantri === "alumni" || data.statusSantri === "nonaktif") {
+    return { success: false, message: "NIS Belum aktif atau Belum Terdaftar. Hubungi admin." };
+  }
+
   // Set session cookie
   const cookieStore = await cookies();
   cookieStore.set("ortu_session", data.id, {
