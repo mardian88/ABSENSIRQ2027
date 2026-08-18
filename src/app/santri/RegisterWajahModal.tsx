@@ -41,10 +41,11 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
-    const [captureProgress, setCaptureProgress] = useState<number>(0);
-    const [isCapturingSamples, setIsCapturingSamples] = useState(false);
-    const samplesRef = useRef<number[][]>([]);
-    const lastCaptureTimeRef = useRef<number>(0);
+  const [captureProgress, setCaptureProgress] = useState<number>(0);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const samplesRef = useRef<number[][]>([]);
+  const isCapturingRef = useRef(false);
+  const activeSantriIdRef = useRef<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
@@ -53,6 +54,9 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
   const [activeSantriId, setActiveSantriId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Keep ref in sync with state
+  useEffect(() => { activeSantriIdRef.current = activeSantriId; }, [activeSantriId]);
 
   useEffect(() => {
     if (isOpen && santri) {
@@ -65,7 +69,7 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
   const filteredSantriList = santriList.filter(s => 
     s.namaLengkap.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (s.nomorInduk && s.nomorInduk.includes(searchQuery))
-  ).slice(0, 50); // Batasi maksimal 50 agar tidak lag saat render dropdown
+  ).slice(0, 50);
 
   // Load Models
   useEffect(() => {
@@ -130,6 +134,32 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
     setFacingMode(prev => prev === "user" ? "environment" : "user");
   };
 
+  // Save multi-angle data
+  const doSaveMultiAngle = async (samples: number[][]) => {
+    setIsProcessing(true);
+    try {
+      const dataVektor = JSON.stringify(samples);
+      const res = await simpanVektorWajah(activeSantriIdRef.current!, dataVektor);
+      
+      if (res.success) {
+        setMessage({ type: 'success', text: `Berhasil merekam ${samples.length} sampel wajah!` });
+        setTimeout(() => {
+          setActiveSantriId(null);
+          setFaceDescriptor(null);
+          setSearchQuery("");
+          setCaptureProgress(0);
+        }, 1500);
+      } else {
+        setMessage({ type: 'error', text: res.message });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   // Video Playing handler to detect face
   const handleVideoPlay = async () => {
     if (!videoRef.current || !canvasRef.current || !humanInstance) return;
@@ -139,6 +169,8 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
     
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
+    let lastSampleTime = 0;
 
     const detectFrame = async () => {
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) return;
@@ -150,33 +182,49 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
         context.clearRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Hanya izinkan mendeteksi vektor kalau kita punya santri yang aktif dipilih
       if (result.face && result.face.length > 0) {
         const face = result.face[0];
         
-        // Gambar kotak secara manual agar bisa diflip X-nya sesuai video (tanpa CSS flip pada kanvas)
         if (context && face.box) {
-          context.strokeStyle = '#3b82f6'; // warna biru sesuai tema modal
+          context.strokeStyle = '#3b82f6';
           context.lineWidth = 4;
           let drawX = face.box[0];
           if (facingMode === 'user') {
             drawX = canvas.width - face.box[0] - face.box[2];
           }
           context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
-            if (face.mesh) {
-              context.fillStyle = 'rgba(16, 185, 129, 0.4)';
-              for (let i = 0; i < face.mesh.length; i++) {
-                let px = face.mesh[i][0];
-                if (facingMode === 'user') px = canvas.width - px;
-                context.beginPath();
-                context.arc(px, face.mesh[i][1], 1.5, 0, 2 * Math.PI);
-                context.fill();
-              }
+          if (face.mesh) {
+            context.fillStyle = 'rgba(16, 185, 129, 0.4)';
+            for (let i = 0; i < face.mesh.length; i++) {
+              let px = face.mesh[i][0];
+              if (facingMode === 'user') px = canvas.width - px;
+              context.beginPath();
+              context.arc(px, face.mesh[i][1], 1.5, 0, 2 * Math.PI);
+              context.fill();
             }
+          }
         }
 
-        if (face.embedding && activeSantriId) {
+        if (face.embedding && activeSantriIdRef.current) {
           setFaceDescriptor(Array.from(face.embedding));
+
+          // Multi-angle capture: collect samples using ref (not state)
+          if (isCapturingRef.current) {
+            const now = performance.now();
+            if (now - lastSampleTime > 300) {
+              samplesRef.current.push(Array.from(face.embedding));
+              lastSampleTime = now;
+              const count = samplesRef.current.length;
+              setCaptureProgress(count);
+
+              if (count >= 10) {
+                isCapturingRef.current = false;
+                setIsCapturing(false);
+                const collectedSamples = [...samplesRef.current];
+                doSaveMultiAngle(collectedSamples);
+              }
+            }
+          }
         }
       } else {
         setFaceDescriptor(null);
@@ -188,41 +236,16 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
     detectFrame();
   };
 
-  const saveMultiAngleData = async (samples: number[][]) => {
-      setIsProcessing(true);
-      try {
-        const dataVektor = JSON.stringify(samples);
-        const res = await simpanVektorWajah(activeSantriId!, dataVektor);
-        
-        if (res.success) {
-          setMessage({ type: 'success', text: "Berhasil merekam 10 sampel wajah!" });
-          setTimeout(() => {
-            setActiveSantriId(null);
-            setFaceDescriptor(null);
-            setSearchQuery("");
-            setCaptureProgress(0);
-          }, 1500);
-        } else {
-          setMessage({ type: 'error', text: res.message });
-        }
-      } catch (err: any) {
-        console.error(err);
-        setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
-      } finally {
-        setIsProcessing(false);
-      }
-    };
+  const handleSimpan = () => {
+    if (!activeSantriId || !faceDescriptor) return;
+    setMessage(null);
 
-    const handleSimpan = async () => {
-      if (!activeSantriId || !faceDescriptor) return;
-      setMessage(null);
-      
-      // Start multi-angle capture
-      samplesRef.current = [];
-      lastCaptureTimeRef.current = performance.now();
-      setIsCapturingSamples(true);
-      setCaptureProgress(0);
-    };
+    // Reset and start capturing
+    samplesRef.current = [];
+    setCaptureProgress(0);
+    isCapturingRef.current = true;
+    setIsCapturing(true);
+  };
 
   if (!isOpen) return null;
 
@@ -363,7 +386,11 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
           </div>
 
           <div className="mt-6 flex flex-col items-center text-center">
-            {faceDescriptor && activeSantriId ? (
+            {isCapturing ? (
+              <div className="bg-amber-500/10 text-amber-400 px-4 py-2 rounded-lg text-sm font-medium animate-pulse flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Merekam sampel... {captureProgress}/10 — Gerakkan wajah perlahan
+              </div>
+            ) : faceDescriptor && activeSantriId ? (
               <div className="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 animate-in fade-in zoom-in">
                 <CheckCircle className="w-4 h-4" /> Wajah terdeteksi dan siap didaftarkan
               </div>
@@ -385,23 +412,31 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
           </div>
         </div>
 
-        <div className="p-5 border-t border-slate-800 bg-slate-900/80 flex justify-end gap-3">
-          <button 
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-          >
-            Tutup
-          </button>
-          <button 
-            type="button"
-            onClick={handleSimpan}
-            disabled={!faceDescriptor || !activeSantriId || isProcessing}
-            className={`px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all flex items-center gap-2 shadow-lg
-              ${!faceDescriptor || !activeSantriId || isProcessing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
-          >
-            {isProcessing ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : "Simpan Wajah Ini"}
-          </button>
+        <div className="p-5 border-t border-slate-800 bg-slate-900/80 flex flex-col gap-2">
+          <div className="flex justify-end gap-3">
+            <button 
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              Tutup
+            </button>
+            <button 
+              type="button"
+              onClick={handleSimpan}
+              disabled={!faceDescriptor || !activeSantriId || isProcessing || isCapturing}
+              className={`px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all flex items-center gap-2 shadow-lg
+                ${!faceDescriptor || !activeSantriId || isProcessing || isCapturing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
+            >
+              {isCapturing ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Merekam {captureProgress}/10</>
+              ) : isProcessing ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+              ) : (
+                "Rekam Wajah (10 Sampel)"
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

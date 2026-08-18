@@ -40,9 +40,9 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [faceDescriptor, setFaceDescriptor] = useState<number[] | null>(null);
   const [captureProgress, setCaptureProgress] = useState<number>(0);
-  const [isCapturingSamples, setIsCapturingSamples] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const samplesRef = useRef<number[][]>([]);
-  const lastCaptureTimeRef = useRef<number>(0);
+  const isCapturingRef = useRef(false);
   const requestRef = useRef<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -99,10 +99,35 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
   };
 
   const stopCamera = () => {
+    if (requestRef.current) cancelAnimationFrame(requestRef.current);
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
+    }
+  };
+
+  // Save multi-angle data
+  const doSaveMultiAngle = async (samples: number[][]) => {
+    setIsProcessing(true);
+    try {
+      const dataVektor = JSON.stringify(samples);
+      const res = await updateGuruFaceData(guru!.id, dataVektor);
+      
+      if (res.success) {
+        setMessage({ type: 'success', text: res.message || `Berhasil merekam ${samples.length} sampel wajah!` });
+        setTimeout(() => {
+          onClose();
+          setCaptureProgress(0);
+        }, 1500);
+      } else {
+        setMessage({ type: 'error', text: res.message });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -115,6 +140,8 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
     
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
+
+    let lastSampleTime = 0;
 
     const detectLoop = async () => {
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) {
@@ -156,6 +183,24 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
 
           if (face.embedding) {
             setFaceDescriptor(Array.from(face.embedding));
+
+            // Multi-angle capture: collect samples using ref (not state)
+            if (isCapturingRef.current) {
+              const now = performance.now();
+              if (now - lastSampleTime > 300) {
+                samplesRef.current.push(Array.from(face.embedding));
+                lastSampleTime = now;
+                const count = samplesRef.current.length;
+                setCaptureProgress(count);
+
+                if (count >= 10) {
+                  isCapturingRef.current = false;
+                  setIsCapturing(false);
+                  const collectedSamples = [...samplesRef.current];
+                  doSaveMultiAngle(collectedSamples);
+                }
+              }
+            }
           } else {
             setFaceDescriptor(null);
           }
@@ -170,43 +215,17 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
     };
 
     detectLoop();
-
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
   };
 
-  const saveMultiAngleData = async (samples: number[][]) => {
-    setIsProcessing(true);
-    try {
-      const dataVektor = JSON.stringify(samples);
-      const res = await updateGuruFaceData(guru!.id, dataVektor);
-      
-      if (res.success) {
-        setMessage({ type: 'success', text: res.message || "Berhasil merekam sampel wajah" });
-        setTimeout(() => {
-          onClose();
-          setCaptureProgress(0);
-        }, 1500);
-      } else {
-        setMessage({ type: 'error', text: res.message });
-      }
-    } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: err.message || "Gagal menyimpan data" });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSimpan = async () => {
+  const handleSimpan = () => {
     if (!guru || !faceDescriptor) return;
     setMessage(null);
-    
+
+    // Reset and start capturing
     samplesRef.current = [];
-    lastCaptureTimeRef.current = performance.now();
-    setIsCapturingSamples(true);
     setCaptureProgress(0);
+    isCapturingRef.current = true;
+    setIsCapturing(true);
   };
 
   if (!isOpen) return null;
@@ -278,7 +297,11 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
           </div>
 
           <div className="mt-6 flex flex-col items-center text-center">
-            {faceDescriptor ? (
+            {isCapturing ? (
+              <div className="bg-amber-500/10 text-amber-400 px-4 py-2 rounded-lg text-sm font-medium animate-pulse flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Merekam sampel... {captureProgress}/10 — Gerakkan wajah perlahan
+              </div>
+            ) : faceDescriptor ? (
               <div className="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 animate-in fade-in zoom-in">
                 <CheckCircle className="w-4 h-4" /> Wajah terdeteksi dan siap didaftarkan
               </div>
@@ -307,11 +330,17 @@ export function RegisterWajahGuruModal({ isOpen, onClose, guru }: RegisterWajahG
           <button 
             type="button"
             onClick={handleSimpan}
-            disabled={!faceDescriptor || isProcessing}
+            disabled={!faceDescriptor || isProcessing || isCapturing}
             className={`px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all flex items-center gap-2 shadow-lg
-              ${!faceDescriptor || isProcessing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
+              ${!faceDescriptor || isProcessing || isCapturing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
           >
-            {isProcessing ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : "Simpan Wajah Ini"}
+            {isCapturing ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Merekam {captureProgress}/10</>
+            ) : isProcessing ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+            ) : (
+              "Rekam Wajah (10 Sampel)"
+            )}
           </button>
         </div>
       </div>
