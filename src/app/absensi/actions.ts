@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { absensi, absensiGuru, santri, guru, halaqoh, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanHumas } from "@/db/schema";
-import { eq, or, and, desc, between } from "drizzle-orm";
+import { absensi, absensiGuru, santri, guru, halaqoh, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanHumas, perizinanSantri } from "@/db/schema";
+import { eq, or, and, desc, between, lte, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { sendTemplatedMessage } from "@/lib/fonnte";
@@ -75,7 +75,21 @@ export async function recordAbsensiById(idSantriOrGuru: string, jenisAbsen: stri
   if (liburData.length > 0) {
     return { success: false, message: `Sistem absensi libur: ${liburData[0].keterangan}` };
   }
-  // -----------------------------
+  
+    // Cek apakah santri sedang dalam masa izin/sakit
+    const activeIzin = await db.select().from(perizinanSantri).where(
+      and(
+        eq(perizinanSantri.idSantri, idSantri),
+        lte(perizinanSantri.tanggalMulai, endOfDayWIB),
+        gte(perizinanSantri.tanggalSelesai, startOfDayWIB)
+      )
+    ).limit(1);
+
+    if (activeIzin.length > 0) {
+      return { success: false, message: `Santri sedang dalam masa ${activeIzin[0].kategori} (${activeIzin[0].keterangan})` };
+    }
+
+    // -----------------------------
 
   // Cek apakah sudah absen (masuk/pulang) hari ini
   const existingAbsen = await db.select().from(absensi).where(

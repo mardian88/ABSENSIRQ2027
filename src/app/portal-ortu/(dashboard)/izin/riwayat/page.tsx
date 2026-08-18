@@ -17,7 +17,7 @@ export default async function RiwayatIzinPage() {
   return (
     <div className="flex flex-col h-full bg-slate-50">
       <div className="bg-white p-4 flex items-center border-b border-slate-200 sticky top-0 z-10">
-        <Link href="/izin/dashboard" className="p-2 -ml-2 text-slate-500 hover:text-slate-800">
+        <Link href="/portal-ortu/izin" className="p-2 -ml-2 text-slate-500 hover:text-slate-800">
           <ArrowLeft className="w-6 h-6" />
         </Link>
         <h1 className="text-lg font-bold text-slate-800 ml-2">Riwayat Pengajuan</h1>
