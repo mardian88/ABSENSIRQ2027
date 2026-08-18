@@ -248,6 +248,16 @@ export default function PindaiWajah() {
               let drawX = face.box[0];
               if (facingMode === 'user') drawX = canvas.width - face.box[0] - face.box[2];
               context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
+            if (face.mesh) {
+              context.fillStyle = isMatch ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)';
+              for (let i = 0; i < face.mesh.length; i++) {
+                let px = face.mesh[i][0];
+                if (facingMode === 'user') px = canvas.width - px;
+                context.beginPath();
+                context.arc(px, face.mesh[i][1], 1.5, 0, 2 * Math.PI);
+                context.fill();
+              }
+            }
               context.fillStyle = '#94a3b8';
               context.font = "bold 16px Arial";
               context.fillText("Dekatkan wajah...", drawX, face.box[1] > 20 ? face.box[1] - 10 : 20);
@@ -290,6 +300,16 @@ export default function PindaiWajah() {
             }
             
             context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
+            if (face.mesh) {
+              context.fillStyle = isMatch ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)';
+              for (let i = 0; i < face.mesh.length; i++) {
+                let px = face.mesh[i][0];
+                if (facingMode === 'user') px = canvas.width - px;
+                context.beginPath();
+                context.arc(px, face.mesh[i][1], 1.5, 0, 2 * Math.PI);
+                context.fill();
+              }
+            }
             
             context.fillStyle = isMatch ? '#10b981' : '#f43f5e';
             context.font = "bold 20px Arial";

@@ -159,6 +159,16 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
             drawX = canvas.width - face.box[0] - face.box[2];
           }
           context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
+            if (face.mesh) {
+              context.fillStyle = 'rgba(16, 185, 129, 0.4)';
+              for (let i = 0; i < face.mesh.length; i++) {
+                let px = face.mesh[i][0];
+                if (facingMode === 'user') px = canvas.width - px;
+                context.beginPath();
+                context.arc(px, face.mesh[i][1], 1.5, 0, 2 * Math.PI);
+                context.fill();
+              }
+            }
         }
 
         if (face.embedding && activeSantriId) {
