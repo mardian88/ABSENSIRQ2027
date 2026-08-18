@@ -327,7 +327,7 @@ export default function PindaiQR() {
           
           <div 
             id="qr-reader" 
-            className={`w-full h-full bg-black [&>div]:w-full [&>div]:h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_video]:!-scale-x-100 ${inputMode === 'kamera' && !cameraError ? 'block' : 'hidden'}`}
+            className={`w-full h-full bg-black [&>div]:w-full [&>div]:h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover ${facingMode === 'user' ? '[&_video]:!-scale-x-100' : ''} ${inputMode === 'kamera' && !cameraError ? 'block' : 'hidden'}`}
           ></div>
 
           {inputMode === "kamera" && cameraError && (
