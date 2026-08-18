@@ -7,6 +7,8 @@ import { Wallet, History, CreditCard, ChevronRight, CheckCircle2, Clock, XCircle
 import { submitPendingUnifiedPayment } from "./actions";
 import { showSuccess, showError } from "@/lib/sweetalert";
 import { formatRp } from "@/lib/utils";
+import { QRCodeCanvas } from "qrcode.react";
+import { generateDynamicQRIS, STATIC_QRIS } from "@/lib/qris";
 
 export function KeuanganOrtuClient({ data }: { data: any }) {
   const [activeTab, setActiveTab] = useState<'kas' | 'topup'>('kas');
@@ -120,7 +122,17 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
   };
 
   const downloadQRIS = () => {
-    showSuccess("Didownload", "QRIS berhasil disimpan ke perangkat Anda.");
+    const canvas = document.getElementById("qris-canvas") as HTMLCanvasElement;
+    if (canvas) {
+      const url = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `QRIS_RQM_Rp${totalNominal}.png`;
+      a.click();
+      showSuccess("Berhasil", "QRIS berhasil didownload ke perangkat Anda.");
+    } else {
+      showError("Gagal", "QR Code belum siap.");
+    }
   };
 
   const combinedRiwayatKas = [...(data.riwayatKas || []), ...(data.riwayatInfaq || [])].sort((a: any, b: any) => {
@@ -403,7 +415,22 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                   {paymentMethod === 'qris' && (
                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col items-center justify-center relative">
                       <div className="w-full flex justify-center mb-4 relative overflow-hidden">
-                        <img src="/images/qris-rqm.jpg" alt="QRIS Rumah Quran" className="w-64 rounded-xl shadow-md border border-slate-200" />
+                        <div className="bg-white p-4 rounded-xl shadow-md border border-slate-200 w-max">
+                          <QRCodeCanvas 
+                            id="qris-canvas"
+                            value={generateDynamicQRIS(STATIC_QRIS, totalNominal)} 
+                            size={250} 
+                            level={"H"} 
+                            imageSettings={{
+                              src: "/logo.png",
+                              x: undefined,
+                              y: undefined,
+                              height: 40,
+                              width: 40,
+                              excavate: true,
+                            }} 
+                          />
+                        </div>
                       </div>
                       
                       <button 
