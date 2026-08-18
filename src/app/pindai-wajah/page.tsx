@@ -16,7 +16,7 @@ const humanConfig: Partial<Config> = {
   modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
   face: {
     enabled: true,
-    detector: { return: true, rotation: true, maxDetected: 1, iouThreshold: 0.1, minConfidence: 0.5 },
+    detector: { return: true, rotation: true, maxDetected: 1, iouThreshold: 0.1, minConfidence: 0.6 },
     mesh: { enabled: true },
     iris: { enabled: false },
     description: { enabled: true },
@@ -30,6 +30,13 @@ const humanConfig: Partial<Config> = {
   gesture: { enabled: false },
   filter: { enabled: false }
 };
+
+// --- Konfigurasi Akurasi ---
+const SIMILARITY_THRESHOLD = 0.62;       // Minimum similarity untuk dianggap cocok (naik dari 0.5)
+const MIN_GAP_TO_SECOND = 0.08;          // Minimal selisih antara best match dan second best
+const REQUIRED_CONSECUTIVE_FRAMES = 3;   // Jumlah frame berturut-turut harus cocok orang yang sama
+const MIN_FACE_SIZE = 80;                // Minimum ukuran wajah (pixel) agar bisa diproses
+const SCAN_COOLDOWN_MS = 5000;           // Jeda antar scan untuk orang yang sama
 
 let humanInstance: Human | null = null;
 let registeredFaces: { id: string; nama: string; embedding: number[] }[] = [];
@@ -58,10 +65,15 @@ export default function PindaiWajah() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioConfig, setAudioConfig] = useState<any>(null);
 
+  // Multi-frame verification buffer
+  const consecutiveMatchId = useRef<string | null>(null);
+  const consecutiveMatchCount = useRef<number>(0);
+
   const playAudioResult = (success: boolean, jenis: string) => {
     if (!audioConfig) {
-      if (success) playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
-      else playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
+      // Fallback: mainkan audio default lokal
+      if (success) new Audio('/notif/berhasil.wav').play().catch(() => {});
+      else new Audio('/notif/gagal.wav').play().catch(() => {});
       return;
     }
     try {
@@ -71,13 +83,13 @@ export default function PindaiWajah() {
         } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
           new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
         } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
-          playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
+          new Audio('/notif/berhasil.wav').play().catch(() => {});
         }
       } else {
         if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
           new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
         } else if (audioConfig.isAudioGagalAktif) {
-          playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
+          new Audio('/notif/gagal.wav').play().catch(() => {});
         }
       }
     } catch (e) {}
@@ -176,7 +188,7 @@ export default function PindaiWajah() {
     }
 
     const constraints: MediaStreamConstraints = {
-      video: { facingMode: facingMode, frameRate: { ideal: 60 } }
+      video: { facingMode: facingMode, frameRate: { ideal: 30 } }
     };
 
     try {
@@ -222,19 +234,50 @@ export default function PindaiWajah() {
 
         if (result.face && result.face.length > 0) {
           const face = result.face[0];
-          
+
+          // --- Validasi kualitas wajah ---
+          const faceWidth = face.box ? face.box[2] : 0;
+          const faceHeight = face.box ? face.box[3] : 0;
+          const faceScore = face.score || 0;
+
+          if (faceWidth < MIN_FACE_SIZE || faceHeight < MIN_FACE_SIZE) {
+            // Wajah terlalu kecil, skip matching tapi tetap gambar box
+            if (context && face.box) {
+              context.strokeStyle = '#94a3b8';
+              context.lineWidth = 2;
+              let drawX = face.box[0];
+              if (facingMode === 'user') drawX = canvas.width - face.box[0] - face.box[2];
+              context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
+              context.fillStyle = '#94a3b8';
+              context.font = "bold 16px Arial";
+              context.fillText("Dekatkan wajah...", drawX, face.box[1] > 20 ? face.box[1] - 10 : 20);
+            }
+            // Reset consecutive counter karena wajah tidak valid
+            consecutiveMatchId.current = null;
+            consecutiveMatchCount.current = 0;
+            requestRef.current = requestAnimationFrame(detectLoop);
+            return;
+          }
+
+          // --- Cari kecocokan terbaik dan kedua terbaik ---
           let bestMatch = { id: '', nama: 'Tidak Dikenal', similarity: 0 };
+          let secondBest = { id: '', nama: '', similarity: 0 };
           
           if (face.embedding && registeredFaces.length > 0) {
             for (const reg of registeredFaces) {
               const sim = humanInstance!.match.similarity(face.embedding, reg.embedding);
               if (sim > bestMatch.similarity) {
+                secondBest = { ...bestMatch };
                 bestMatch = { id: reg.id, nama: reg.nama, similarity: sim };
+              } else if (sim > secondBest.similarity) {
+                secondBest = { id: reg.id, nama: reg.nama, similarity: sim };
               }
             }
           }
 
-          const isMatch = bestMatch.similarity > 0.5;
+          // --- Kriteria kecocokan yang lebih ketat ---
+          const gap = bestMatch.similarity - secondBest.similarity;
+          const isMatch = bestMatch.similarity > SIMILARITY_THRESHOLD && gap > MIN_GAP_TO_SECOND;
 
           // Draw custom bounding box
           if (context && face.box) {
@@ -251,21 +294,41 @@ export default function PindaiWajah() {
             context.fillStyle = isMatch ? '#10b981' : '#f43f5e';
             context.font = "bold 20px Arial";
             context.fillText(
-              isMatch ? bestMatch.nama : "Tidak Dikenal", 
+              isMatch ? `${bestMatch.nama} (${Math.round(bestMatch.similarity * 100)}%)` : "Tidak Dikenal", 
               drawX, 
               face.box[1] > 20 ? face.box[1] - 10 : 20
             );
           }
 
           if (isMatch) {
-            // Mencegah scan berulang (debounce 5 detik per orang) dan cegah proses tumpang tindih
-            const now = Date.now();
-            if (lastScannedId.current === bestMatch.id && (now - lastScannedTime.current) < 5000) {
-              // skip
-            } else if (!isProcessing) {
-              processAttendance(bestMatch.id, bestMatch.nama);
+            // --- Multi-frame verification ---
+            if (consecutiveMatchId.current === bestMatch.id) {
+              consecutiveMatchCount.current++;
+            } else {
+              // Orang berbeda dari frame sebelumnya, reset counter
+              consecutiveMatchId.current = bestMatch.id;
+              consecutiveMatchCount.current = 1;
             }
+
+            // Hanya proses jika sudah melewati REQUIRED_CONSECUTIVE_FRAMES
+            if (consecutiveMatchCount.current >= REQUIRED_CONSECUTIVE_FRAMES) {
+              const now = Date.now();
+              if (lastScannedId.current === bestMatch.id && (now - lastScannedTime.current) < SCAN_COOLDOWN_MS) {
+                // skip (sudah baru saja di-scan)
+              } else if (!isProcessing) {
+                consecutiveMatchCount.current = 0; // Reset setelah proses
+                processAttendance(bestMatch.id, bestMatch.nama);
+              }
+            }
+          } else {
+            // Tidak cocok, reset consecutive counter
+            consecutiveMatchId.current = null;
+            consecutiveMatchCount.current = 0;
           }
+        } else {
+          // Tidak ada wajah terdeteksi, reset counter
+          consecutiveMatchId.current = null;
+          consecutiveMatchCount.current = 0;
         }
       } catch (e) {
         // Abaikan error deteksi sementara
@@ -291,14 +354,14 @@ export default function PindaiWajah() {
     try {
       const res = await recordAbsensiById(id, currentJenis, 'wajah', 'hadir');
       if (res.success) {
-        playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
+        playAudioResult(true, currentJenis);
         setScanResult({
           nama: nama,
           waktu: res.data?.waktu || formatTimeID(new Date()),
           jenis: currentJenis
         });
       } else {
-        playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
+        playAudioResult(false, currentJenis);
         setScanResult({
           nama: res.message || "Gagal Absen",
           waktu: formatTimeID(new Date()),
@@ -306,7 +369,7 @@ export default function PindaiWajah() {
         });
       }
     } catch (e: any) {
-      playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
+      playAudioResult(false, currentJenis);
       setScanResult({
         nama: "Gagal Sistem",
         waktu: formatTimeID(new Date()),
