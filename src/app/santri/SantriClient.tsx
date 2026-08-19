@@ -636,76 +636,99 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
         searchKey="namaLengkap"
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
-        toolbarActions={() => (
-          selectedIds.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto z-10 relative">
-              <span className="text-sm font-medium text-indigo-800 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 shadow-sm">
-                {selectedIds.length} Terpilih
-              </span>
+        toolbarActions={(table) => (
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto z-10 relative">
+            <select
+              value={(table.getColumn("idHalaqoh")?.getFilterValue() as string) ?? ""}
+              onChange={(e) => table.getColumn("idHalaqoh")?.setFilterValue(e.target.value)}
+              className="h-9 px-3 py-1 bg-white border border-slate-200 rounded-md text-sm outline-none focus:border-indigo-500 min-w-[150px]"
+            >
+              <option value="">Semua Halaqoh</option>
+              {halaqohList.map((h) => (
+                <option key={h.id} value={h.id}>{h.namaHalaqoh}</option>
+              ))}
+            </select>
 
-              <div className="relative group/menu inline-block">
-                <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
-                  Aksi Massal
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                
-                <div className="absolute left-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all flex flex-col overflow-hidden pb-1 z-[60]">
-                  
-                  {/* Status & Data Wajah Section */}
-                  <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">Status & Data Umum</div>
-                  <button onClick={handleJadikanAlumniBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
-                    <GraduationCap className="w-4 h-4" /> Jadikan Alumni
-                  </button>
-                  <button onClick={() => handleUpdateSaudaraBatch(true)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-emerald-50 text-emerald-700 text-sm text-left border-b border-slate-50">
-                    <Plus className="w-4 h-4" /> Set Status Saudara
-                  </button>
-                  <button onClick={() => handleUpdateSaudaraBatch(false)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
-                    <Trash2 className="w-4 h-4" /> Hapus Status Saudara
-                  </button>
-                  <button onClick={() => handleExport(false)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
-                    <Download className="w-4 h-4" /> Export Excel (Terpilih)
-                  </button>
-                  <button onClick={handleDownloadQRSelected} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
-                    <QrCode className="w-4 h-4" /> Download QR (Terpilih)
+            <select
+              value={(table.getColumn("statusSantri")?.getFilterValue() as string) ?? ""}
+              onChange={(e) => table.getColumn("statusSantri")?.setFilterValue(e.target.value)}
+              className="h-9 px-3 py-1 bg-white border border-slate-200 rounded-md text-sm outline-none focus:border-indigo-500"
+            >
+              <option value="">Semua Status</option>
+              <option value="aktif">Aktif</option>
+              <option value="nonaktif">Non-Aktif</option>
+            </select>
+
+            {selectedIds.length > 0 && (
+              <>
+                <span className="text-sm font-medium text-indigo-800 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-200 shadow-sm">
+                  {selectedIds.length} Terpilih
+                </span>
+
+                <div className="relative group/menu inline-block">
+                  <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+                    Aksi Massal
+                    <ChevronDown className="w-4 h-4" />
                   </button>
                   
-                  {/* Pengaturan Halaqoh & Sesi Section */}
-                  <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-y border-slate-100 mt-1">Halaqoh & Sesi Absensi</div>
-                  <div className="px-4 py-3 bg-white space-y-2 border-b border-slate-100">
-                    <div className="flex gap-2">
-                      <select value={batchHalaqoh} onChange={(e) => setBatchHalaqoh(e.target.value)} className="flex-1 text-sm border border-slate-200 rounded p-1.5 focus:ring-amber-500 focus:border-amber-500">
-                        <option value="">Pilih Halaqoh...</option>
-                        {halaqohList.map((h) => <option key={h.id} value={h.id}>{h.namaHalaqoh}</option>)}
-                      </select>
-                      <button onClick={handleHalaqohBatchChange} className="bg-amber-600 hover:bg-amber-700 text-white px-3 rounded text-sm font-medium transition-colors">Pindah</button>
+                  <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all flex flex-col overflow-hidden pb-1 z-[60]">
+                    
+                    {/* Status & Data Wajah Section */}
+                    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">Status & Data Umum</div>
+                    <button onClick={handleJadikanAlumniBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                      <GraduationCap className="w-4 h-4" /> Jadikan Alumni
+                    </button>
+                    <button onClick={() => handleUpdateSaudaraBatch(true)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-emerald-50 text-emerald-700 text-sm text-left border-b border-slate-50">
+                      <Plus className="w-4 h-4" /> Set Status Saudara
+                    </button>
+                    <button onClick={() => handleUpdateSaudaraBatch(false)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                      <Trash2 className="w-4 h-4" /> Hapus Status Saudara
+                    </button>
+                    <button onClick={() => handleExport(false)} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                      <Download className="w-4 h-4" /> Export Excel (Terpilih)
+                    </button>
+                    <button onClick={handleDownloadQRSelected} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                      <QrCode className="w-4 h-4" /> Download QR (Terpilih)
+                    </button>
+                    
+                    {/* Pengaturan Halaqoh & Sesi Section */}
+                    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-y border-slate-100 mt-1">Halaqoh & Sesi Absensi</div>
+                    <div className="px-4 py-3 bg-white space-y-2 border-b border-slate-100">
+                      <div className="flex gap-2">
+                        <select value={batchHalaqoh} onChange={(e) => setBatchHalaqoh(e.target.value)} className="flex-1 text-sm border border-slate-200 rounded p-1.5 focus:ring-amber-500 focus:border-amber-500">
+                          <option value="">Pilih Halaqoh...</option>
+                          {halaqohList.map((h) => <option key={h.id} value={h.id}>{h.namaHalaqoh}</option>)}
+                        </select>
+                        <button onClick={handleHalaqohBatchChange} className="bg-amber-600 hover:bg-amber-700 text-white px-3 rounded text-sm font-medium transition-colors">Pindah</button>
+                      </div>
+                      <div className="flex gap-2">
+                        <select value={batchSesi} onChange={(e) => setBatchSesi(e.target.value)} className="flex-1 text-sm border border-slate-200 rounded p-1.5 focus:ring-emerald-500 focus:border-emerald-500">
+                          <option value="">Pilih Sesi...</option>
+                          {sesiList?.map((s) => <option key={s.id} value={s.id}>{s.namaSesi}</option>)}
+                        </select>
+                        <button onClick={handleSesiBatchChange} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 rounded text-sm font-medium transition-colors">Ubah</button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <select value={batchSesi} onChange={(e) => setBatchSesi(e.target.value)} className="flex-1 text-sm border border-slate-200 rounded p-1.5 focus:ring-emerald-500 focus:border-emerald-500">
-                        <option value="">Pilih Sesi...</option>
-                        {sesiList?.map((s) => <option key={s.id} value={s.id}>{s.namaSesi}</option>)}
-                      </select>
-                      <button onClick={handleSesiBatchChange} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 rounded text-sm font-medium transition-colors">Ubah</button>
-                    </div>
+
+                    {/* Data Wajah Section */}
+                    <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">Data Vektor Wajah</div>
+                    <button onClick={() => fileFaceRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                      <Upload className="w-4 h-4" /> Import JSON Wajah
+                    </button>
+                    <button onClick={handleExportWajahBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
+                      <Download className="w-4 h-4" /> Export JSON Wajah
+                    </button>
+                    <button onClick={handleHapusWajahBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-rose-50 text-rose-600 text-sm text-left">
+                      <Trash2 className="w-4 h-4" /> Hapus Data Wajah
+                    </button>
+                    
                   </div>
-
-                  {/* Data Wajah Section */}
-                  <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">Data Vektor Wajah</div>
-                  <button onClick={() => fileFaceRef.current?.click()} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
-                    <Upload className="w-4 h-4" /> Import JSON Wajah
-                  </button>
-                  <button onClick={handleExportWajahBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
-                    <Download className="w-4 h-4" /> Export JSON Wajah
-                  </button>
-                  <button onClick={handleHapusWajahBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-rose-50 text-rose-600 text-sm text-left">
-                    <Trash2 className="w-4 h-4" /> Hapus Data Wajah
-                  </button>
-                  
                 </div>
-              </div>
-              
-              <input type="file" accept=".json" className="hidden" ref={fileFaceRef} onChange={handleImportWajahBatch} />
-            </div>
-          ) : <div />
+                
+                <input type="file" accept=".json" className="hidden" ref={fileFaceRef} onChange={handleImportWajahBatch} />
+              </>
+            )}
+          </div>
         )}
       />
 
