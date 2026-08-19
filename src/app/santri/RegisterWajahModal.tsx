@@ -142,7 +142,7 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
       const res = await simpanVektorWajah(activeSantriIdRef.current!, dataVektor);
       
       if (res.success) {
-        setMessage({ type: 'success', text: `Berhasil merekam ${samples.length} sampel wajah!` });
+        setMessage({ type: 'success', text: `Berhasil merekam ${samples.length} angle wajah!` });
         setTimeout(() => {
           setActiveSantriId(null);
           setFaceDescriptor(null);
@@ -159,6 +159,14 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
       setIsProcessing(false);
     }
   };
+
+  const CAPTURE_STEPS = [
+    "1. Tahan, menghadap LURUS ke depan...",
+    "2. Tolehkan wajah sedikit ke KIRI...",
+    "3. Tolehkan wajah sedikit ke KANAN...",
+    "4. Tundukkan wajah sedikit ke BAWAH...",
+    "5. Dongakkan wajah sedikit ke ATAS..."
+  ];
 
   // Video Playing handler to detect face
   const handleVideoPlay = async () => {
@@ -211,13 +219,14 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
           // Multi-angle capture: collect samples using ref (not state)
           if (isCapturingRef.current) {
             const now = performance.now();
-            if (now - lastSampleTime > 300) {
+            // Memberikan jeda 1.5 detik per angle agar user sempat menggerakkan wajah
+            if (now - lastSampleTime > 1500) {
               samplesRef.current.push(Array.from(face.embedding));
               lastSampleTime = now;
               const count = samplesRef.current.length;
               setCaptureProgress(count);
 
-              if (count >= 10) {
+              if (count >= 5) {
                 isCapturingRef.current = false;
                 setIsCapturing(false);
                 const collectedSamples = [...samplesRef.current];
@@ -387,8 +396,13 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
 
           <div className="mt-6 flex flex-col items-center text-center">
             {isCapturing ? (
-              <div className="bg-amber-500/10 text-amber-400 px-4 py-2 rounded-lg text-sm font-medium animate-pulse flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Merekam sampel... {captureProgress}/10 — Gerakkan wajah perlahan
+              <div className="bg-amber-500/20 border border-amber-500/30 text-amber-300 px-6 py-4 rounded-xl text-lg font-bold shadow-lg flex flex-col items-center gap-3 w-full">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-6 h-6 animate-spin" /> Perekaman: {captureProgress}/5
+                </div>
+                <div className="text-xl text-white tracking-wide">
+                  {CAPTURE_STEPS[Math.min(captureProgress, 4)]}
+                </div>
               </div>
             ) : faceDescriptor && activeSantriId ? (
               <div className="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 animate-in fade-in zoom-in">
@@ -429,11 +443,11 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
                 ${!faceDescriptor || !activeSantriId || isProcessing || isCapturing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
             >
               {isCapturing ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Merekam {captureProgress}/10</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> Merekam {captureProgress}/5</>
               ) : isProcessing ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
               ) : (
-                "Rekam Wajah (10 Sampel)"
+                "Mulai Perekaman (5 Sudut)"
               )}
             </button>
           </div>
