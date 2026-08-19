@@ -438,18 +438,7 @@ export default function PindaiWajah() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center bg-slate-900 relative overflow-hidden">
-      <KioskNav />
-
-      {/* Tombol Rekam Wajah Shortcut (Pojok Kanan Atas) */}
-      <div className="fixed top-4 right-4 z-50 pointer-events-auto">
-        <button
-          onClick={() => setIsRegisterModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold shadow-lg transition-all"
-        >
-          <Camera className="w-5 h-5" />
-          <span className="hidden sm:inline">Rekam Wajah</span>
-        </button>
-      </div>
+      <KioskNav onRekamWajah={() => setIsRegisterModalOpen(true)} />
 
       {isRegisterModalOpen && (
         <RegisterWajahModal 
