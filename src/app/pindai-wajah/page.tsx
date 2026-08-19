@@ -11,6 +11,7 @@ import { getAudioSettings } from "@/app/pengaturan/actions";
 import { showError } from "@/lib/sweetalert";
 import { KioskNav } from "@/components/KioskNav";
 import type { Human, Config } from "@vladmandic/human";
+import { RegisterWajahModal } from "../santri/RegisterWajahModal";
 
 const humanConfig: Partial<Config> = {
   modelBasePath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models/',
@@ -124,7 +125,7 @@ export default function PindaiWajah() {
 
         const dataSantri = await getFaces();
         
-                  registeredFaces = dataSantri.flatMap((santri: any) => {
+        registeredFaces = dataSantri.flatMap((santri: any) => {
             try {
               const arr = JSON.parse(santri.dataVektorWajah);
               // Handle new Multi-Angle format (array of arrays)
@@ -155,22 +156,38 @@ export default function PindaiWajah() {
     return () => { isMounted = false; };
   }, []);
 
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [santriListForRegistration, setSantriListForRegistration] = useState<any[]>([]);
+
+  useEffect(() => {
+    import("./actions").then(actions => {
+      actions.getAllActiveForRegistration().then(list => setSantriListForRegistration(list));
+    });
+  }, []);
+
   // Mulai kamera saat model siap atau arah kamera diganti
   useEffect(() => {
-    if (isModelLoaded) {
+    if (isModelLoaded && !isRegisterModalOpen) {
       setTimeout(() => startVideo(), 600);
+    } else if (isRegisterModalOpen) {
+      // CLEANUP CAMERA IF MODAL OPEN
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => track.stop());
+        videoRef.current.srcObject = null;
+      }
     }
     
     // CLEANUP CAMERA ON UNMOUNT OR CHANGE
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject;
+        const stream = videoRef.current.srcObject as MediaStream;
         if (stream && typeof stream.getTracks === 'function') {
            stream.getTracks().forEach((track) => track.stop());
         }
       }
     };
-  }, [facingMode, isModelLoaded]);
+  }, [facingMode, isModelLoaded, isRegisterModalOpen]);
 
   const toggleFacingMode = () => {
     setFacingMode(prev => prev === "environment" ? "user" : "environment");
@@ -264,7 +281,7 @@ export default function PindaiWajah() {
               if (facingMode === 'user') drawX = canvas.width - face.box[0] - face.box[2];
               context.strokeRect(drawX, face.box[1], face.box[2], face.box[3]);
             if (face.mesh) {
-              context.fillStyle = isMatch ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)';
+              context.fillStyle = '#94a3b8';
               for (let i = 0; i < face.mesh.length; i++) {
                 let px = face.mesh[i][0];
                 if (facingMode === 'user') px = canvas.width - px;
@@ -422,6 +439,26 @@ export default function PindaiWajah() {
   return (
     <div className="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center bg-slate-900 relative overflow-hidden">
       <KioskNav />
+
+      {/* Tombol Rekam Wajah Shortcut (Pojok Kanan Atas) */}
+      <div className="fixed top-4 right-4 z-50 pointer-events-auto">
+        <button
+          onClick={() => setIsRegisterModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold shadow-lg transition-all"
+        >
+          <Camera className="w-5 h-5" />
+          <span className="hidden sm:inline">Rekam Wajah</span>
+        </button>
+      </div>
+
+      {isRegisterModalOpen && (
+        <RegisterWajahModal 
+          isOpen={isRegisterModalOpen}
+          onClose={() => setIsRegisterModalOpen(false)} 
+          santri={null}
+          santriList={santriListForRegistration}
+        />
+      )}
 
       <div className="max-w-2xl w-full flex flex-col items-center mt-16 md:mt-0 z-10">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-6 text-center">Pindai Wajah</h1>

@@ -23,3 +23,13 @@ export async function getFaces() {
   return [...validSantri, ...validGuru];
 }
 
+export async function getAllActiveForRegistration() {
+  const santriList = await db.select({
+    id: santri.id,
+    namaLengkap: santri.namaLengkap,
+    nomorInduk: santri.nomorInduk,
+  }).from(santri).where(eq(santri.statusSantri, "aktif"));
+  
+  return santriList;
+}
+
