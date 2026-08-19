@@ -178,8 +178,6 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    let lastSampleTime = 0;
-
     const detectFrame = async () => {
       if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) return;
 
@@ -215,25 +213,6 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
 
         if (face.embedding && activeSantriIdRef.current) {
           setFaceDescriptor(Array.from(face.embedding));
-
-          // Multi-angle capture: collect samples using ref (not state)
-          if (isCapturingRef.current) {
-            const now = performance.now();
-            // Memberikan jeda 1.5 detik per angle agar user sempat menggerakkan wajah
-            if (now - lastSampleTime > 1500) {
-              samplesRef.current.push(Array.from(face.embedding));
-              lastSampleTime = now;
-              const count = samplesRef.current.length;
-              setCaptureProgress(count);
-
-              if (count >= 5) {
-                isCapturingRef.current = false;
-                setIsCapturing(false);
-                const collectedSamples = [...samplesRef.current];
-                doSaveMultiAngle(collectedSamples);
-              }
-            }
-          }
         }
       } else {
         setFaceDescriptor(null);
@@ -245,15 +224,25 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
     detectFrame();
   };
 
-  const handleSimpan = () => {
+  const handleAmbilSampel = () => {
     if (!activeSantriId || !faceDescriptor) return;
     setMessage(null);
 
-    // Reset and start capturing
+    samplesRef.current.push([...faceDescriptor]);
+    const count = samplesRef.current.length;
+    setCaptureProgress(count);
+
+    if (count >= 5) {
+      setIsProcessing(true);
+      const collectedSamples = [...samplesRef.current];
+      doSaveMultiAngle(collectedSamples);
+    }
+  };
+
+  const handleReset = () => {
     samplesRef.current = [];
     setCaptureProgress(0);
-    isCapturingRef.current = true;
-    setIsCapturing(true);
+    setMessage(null);
   };
 
   if (!isOpen) return null;
@@ -298,6 +287,7 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
                       setActiveSantriId(null);
                       setFaceDescriptor(null);
                       setSearchQuery("");
+                      handleReset();
                     }} 
                     className="p-1.5 text-slate-400 hover:text-rose-400 bg-slate-900 rounded-lg transition-colors"
                   >
@@ -395,28 +385,24 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
           </div>
 
           <div className="mt-6 flex flex-col items-center text-center">
-            {isCapturing ? (
+            {activeSantriId && captureProgress < 5 ? (
               <div className="bg-amber-500/20 border border-amber-500/30 text-amber-300 px-6 py-4 rounded-xl text-lg font-bold shadow-lg flex flex-col items-center gap-3 w-full">
                 <div className="flex items-center gap-3">
-                  <Loader2 className="w-6 h-6 animate-spin" /> Perekaman: {captureProgress}/5
+                  Progress: {captureProgress}/5 Sampel
                 </div>
                 <div className="text-xl text-white tracking-wide">
                   {CAPTURE_STEPS[Math.min(captureProgress, 4)]}
                 </div>
               </div>
-            ) : faceDescriptor && activeSantriId ? (
+            ) : captureProgress >= 5 ? (
               <div className="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 animate-in fade-in zoom-in">
-                <CheckCircle className="w-4 h-4" /> Wajah terdeteksi dan siap didaftarkan
+                <CheckCircle className="w-4 h-4" /> Selesai merekam 5 angle!
               </div>
-            ) : !activeSantriId ? (
+            ) : (
               <div className="bg-slate-800 text-slate-400 px-4 py-2 rounded-lg text-sm font-medium">
                 Pilih santri terlebih dahulu untuk merekam
               </div>
-            ) : isModelLoaded && !cameraError ? (
-              <div className="bg-amber-500/10 text-amber-400 px-4 py-2 rounded-lg text-sm font-medium animate-pulse">
-                Arahkan wajah {activeSantriObj?.namaLengkap} ke kamera...
-              </div>
-            ) : null}
+            )}
             
             {message && (
               <div className={`mt-4 w-full p-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
@@ -427,29 +413,39 @@ export function RegisterWajahModal({ isOpen, onClose, santri, santriList = [] }:
         </div>
 
         <div className="p-5 border-t border-slate-800 bg-slate-900/80 flex flex-col gap-2">
-          <div className="flex justify-end gap-3">
-            <button 
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-            >
-              Tutup
-            </button>
-            <button 
-              type="button"
-              onClick={handleSimpan}
-              disabled={!faceDescriptor || !activeSantriId || isProcessing || isCapturing}
-              className={`px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all flex items-center gap-2 shadow-lg
-                ${!faceDescriptor || !activeSantriId || isProcessing || isCapturing ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
-            >
-              {isCapturing ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Merekam {captureProgress}/5</>
-              ) : isProcessing ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
-              ) : (
-                "Mulai Perekaman (5 Sudut)"
-              )}
-            </button>
+          <div className="flex justify-between items-center w-full">
+            {captureProgress > 0 && captureProgress < 5 ? (
+              <button 
+                type="button"
+                onClick={handleReset}
+                className="text-slate-400 hover:text-rose-400 text-sm font-medium transition-colors underline"
+              >
+                Ulangi
+              </button>
+            ) : <div />}
+            
+            <div className="flex gap-3">
+              <button 
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 text-sm font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                Tutup
+              </button>
+              <button 
+                type="button"
+                onClick={handleAmbilSampel}
+                disabled={!faceDescriptor || !activeSantriId || isProcessing || captureProgress >= 5}
+                className={`px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all flex items-center gap-2 shadow-lg
+                  ${!faceDescriptor || !activeSantriId || isProcessing || captureProgress >= 5 ? 'bg-blue-600/50 cursor-not-allowed text-white/50 shadow-none' : 'bg-blue-600 hover:bg-blue-500 hover:-translate-y-0.5'}`}
+              >
+                {isProcessing ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+                ) : (
+                  `Ambil Sampel ${captureProgress + 1}`
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
