@@ -276,7 +276,7 @@ export async function getSantriForManualAbsen() {
   const role = session?.user?.role || "admin_cabang";
   const userCabang = session?.user?.idCabang;
 
-  let query = db
+  let querySantri = db
     .select({
       id: santri.id,
       namaLengkap: santri.namaLengkap,
@@ -287,12 +287,26 @@ export async function getSantriForManualAbsen() {
     .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id));
 
   if (role !== "superadmin" && userCabang) {
-    query = query.where(eq(santri.idCabang, userCabang)) as any;
+    querySantri = querySantri.where(eq(santri.idCabang, userCabang)) as any;
   }
 
-  return await query.orderBy(desc(santri.id));
+  const santriList = await querySantri.orderBy(desc(santri.id));
+
+  let queryGuru = db
+    .select({
+      id: guru.id,
+      namaLengkap: guru.namaLengkap,
+      nomorInduk: guru.nip,
+    })
+    .from(guru)
+    .where(eq(guru.statusAktif, true));
+  
+  const guruList = await queryGuru.orderBy(desc(guru.id));
+  
+  const mappedGuruList = guruList.map(g => ({
+    ...g,
+    halaqoh: "Guru"
+  }));
+
+  return [...santriList, ...mappedGuruList];
 }
-
-
-
-
