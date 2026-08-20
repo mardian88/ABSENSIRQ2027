@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { pendaftar, santri } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 
@@ -54,8 +54,8 @@ export async function terimaPendaftar(id: string) {
     instansiIbu: dataPendaftar.instansiIbu,
   });
 
-  // Update pendaftar status
-  await db.update(pendaftar).set({ status: 'diterima' }).where(eq(pendaftar.id, id));
+  // Delete pendaftar record
+  await db.delete(pendaftar).where(eq(pendaftar.id, id));
 
   revalidatePath("/admin-psb");
   revalidatePath("/santri");
@@ -75,7 +75,7 @@ export async function markAsRead(id: string) {
 }
 
 export async function getPsbCounts() {
-  const all = await db.select().from(pendaftar);
+  const all = await db.select().from(pendaftar).where(ne(pendaftar.status, 'diterima'));
   const unread = all.filter(p => !p.isRead).length;
   const read = all.filter(p => p.isRead).length;
   return { unread, read };
