@@ -175,33 +175,58 @@ export function PsbAdminClient({ initialData }: { initialData: any[] }) {
               </div>
 
             </div>
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
-              {selectedPendaftar.status === 'menunggu' && (
-                <>
-                  <button 
-                    onClick={() => handleTolak(selectedPendaftar.id)}
-                    disabled={isProcessing}
-                    className="px-6 py-2 bg-white border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 font-bold disabled:opacity-50"
-                  >
-                    Tolak
-                  </button>
-                  <button 
-                    onClick={() => handleTerima(selectedPendaftar.id)}
-                    disabled={isProcessing}
-                    className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 font-bold disabled:opacity-50"
-                  >
-                    Terima Pendaftar
-                  </button>
-                </>
-              )}
-              {selectedPendaftar.status !== 'menunggu' && (
-                <button 
-                  onClick={() => setSelectedPendaftar(null)}
-                  className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 font-bold"
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <a 
+                  href={`/admin-psb/cetak/formulir/${selectedPendaftar.id}`} 
+                  target="_blank" 
+                  className="px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-sm font-semibold transition-colors flex-1 md:flex-none text-center"
                 >
-                  Tutup
-                </button>
-              )}
+                  Cetak Formulir
+                </a>
+                <a 
+                  href={`/admin-psb/cetak/kwitansi/${selectedPendaftar.id}`} 
+                  target="_blank" 
+                  className="px-4 py-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg text-sm font-semibold transition-colors flex-1 md:flex-none text-center"
+                >
+                  Cetak Kwitansi
+                </a>
+                <a 
+                  href={`/admin-psb/cetak/pakta/${selectedPendaftar.id}`} 
+                  target="_blank" 
+                  className="px-4 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg text-sm font-semibold transition-colors flex-1 md:flex-none text-center"
+                >
+                  Cetak Pakta
+                </a>
+              </div>
+              <div className="flex gap-3 w-full md:w-auto justify-end">
+                {selectedPendaftar.status === 'menunggu' && (
+                  <>
+                    <button 
+                      onClick={() => handleTolak(selectedPendaftar.id)}
+                      disabled={isProcessing}
+                      className="px-6 py-2 bg-white border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 font-bold disabled:opacity-50"
+                    >
+                      Tolak
+                    </button>
+                    <button 
+                      onClick={() => handleTerima(selectedPendaftar.id)}
+                      disabled={isProcessing}
+                      className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 font-bold disabled:opacity-50"
+                    >
+                      Terima Pendaftar
+                    </button>
+                  </>
+                )}
+                {selectedPendaftar.status !== 'menunggu' && (
+                  <button 
+                    onClick={() => setSelectedPendaftar(null)}
+                    className="px-6 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 font-bold"
+                  >
+                    Tutup
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
