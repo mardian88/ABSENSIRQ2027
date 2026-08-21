@@ -173,6 +173,13 @@ export default function PindaiQR() {
     if (!skipCheck && (scanResultRef.current || isProcessingRef.current)) return;
     setIsProcessing(true);
 
+    // Tampilkan notifikasi "Memproses..." secara instan
+    setScanResult({
+      nama: "Memproses data...",
+      waktu: "Mohon tunggu...",
+      jenis: "processing"
+    });
+
     try {
       const res = await recordAbsensiByQR(decodedText, jenisAbsenRef.current);
       if (res.success && 'data' in res && res.data) {
@@ -207,7 +214,7 @@ export default function PindaiQR() {
         } else if (inputMode === "kamera") {
           animationFrameId.current = requestAnimationFrame(tick);
         }
-      }, 3000);
+      }, 1500); // Dikurangi dari 3000ms ke 1500ms agar lebih cepat siap scan berikutnya
     }
   };
 
@@ -429,7 +436,13 @@ export default function PindaiQR() {
 
           {scanResult && (
             <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-30 animate-in fade-in zoom-in duration-100 p-6 text-center">
-              {scanResult.jenis === 'error' ? (
+              {scanResult.jenis === 'processing' ? (
+                <>
+                  <div className="w-20 h-20 md:w-24 md:h-24 mb-4 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Memproses QR...</h2>
+                  <p className="text-lg md:text-xl font-bold px-4 max-w-sm text-emerald-400">Mohon tunggu sebentar</p>
+                </>
+              ) : scanResult.jenis === 'error' ? (
                 <>
                   <XCircle className="w-20 h-20 md:w-24 md:h-24 mb-4 text-amber-500" />
                   <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Peringatan</h2>
@@ -442,7 +455,9 @@ export default function PindaiQR() {
                   <p className={`text-3xl md:text-4xl font-extrabold px-4 ${scanResult.jenis === 'masuk' ? 'text-emerald-400' : 'text-amber-400'}`}>{scanResult.nama}</p>
                 </>
               )}
-              <p className="text-slate-400 mt-4 text-lg md:text-xl">Waktu: {scanResult.waktu}</p>
+              {scanResult.jenis !== 'processing' && (
+                <p className="text-slate-400 mt-4 text-lg md:text-xl">Waktu: {scanResult.waktu}</p>
+              )}
             </div>
           )}
         </div>
