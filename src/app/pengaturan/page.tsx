@@ -50,6 +50,10 @@ export default function PengaturanPage() {
       });
       setLoading(false);
     });
+
+    getAudioSettings().then(res => {
+      if (res) setAudioData(res);
+    });
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {

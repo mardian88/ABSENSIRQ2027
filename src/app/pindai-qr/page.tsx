@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { CheckCircle2, QrCode, Camera, Keyboard, Flashlight, RefreshCcw, XCircle } from "lucide-react";
-import { Html5Qrcode, CameraDevice } from "html5-qrcode";
+import jsQR from "jsqr";
 import { getAudioSettings } from "@/app/pengaturan/actions";
 import { showError } from "@/lib/sweetalert";
 import { recordAbsensiByQR } from "../absensi/actions";
@@ -17,35 +17,40 @@ export default function PindaiQR() {
   const [audioConfig, setAudioConfig] = useState<any>(null);
 
   const playAudioResult = (success: boolean, jenis: string) => {
-    if (!audioConfig) {
-      if (success) playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
-      else playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
-      return;
-    }
+    const config = audioConfig || {
+      isAudioMasukAktif: true,
+      isAudioPulangAktif: true,
+      isAudioGagalAktif: true,
+      urlAudioMasuk: "",
+      urlAudioPulang: "",
+      urlAudioGagal: ""
+    };
+
     try {
       if (success) {
-        if (jenis === 'masuk' && audioConfig.isAudioMasukAktif && audioConfig.urlAudioMasuk) {
-          new Audio(audioConfig.urlAudioMasuk).play().catch(() => {});
-        } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
-          new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
-        } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
-          playAudioResult(true, jenisAbsenRef?.current || jenisAbsen);
+        if (jenis === 'masuk' && config.isAudioMasukAktif) {
+          const url = config.urlAudioMasuk || "/notif/absen%20masuk.wav";
+          new Audio(url).play().catch((e) => console.log("Autoplay blocked:", e));
+        } else if (jenis === 'pulang' && config.isAudioPulangAktif) {
+          const url = config.urlAudioPulang || "/notif/absen%20pulang.wav";
+          new Audio(url).play().catch((e) => console.log("Autoplay blocked:", e));
         }
       } else {
-        if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
-          new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
-        } else if (audioConfig.isAudioGagalAktif) {
-          playAudioResult(false, jenisAbsenRef?.current || jenisAbsen);
+        if (config.isAudioGagalAktif) {
+          const url = config.urlAudioGagal || "/notif/gagal.wav";
+          new Audio(url).play().catch((e) => console.log("Autoplay blocked:", e));
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Audio error", e);
+    }
   };
 
   useEffect(() => { getAudioSettings().then(setAudioConfig); }, []);
 
   // Fitur Kamera vs Fisik
   const [inputMode, setInputMode] = useState<"kamera" | "fisik">("kamera");
-  const [cameras, setCameras] = useState<CameraDevice[]>([]);
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>("");
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [isTorchOn, setIsTorchOn] = useState(false);
@@ -55,20 +60,17 @@ export default function PindaiQR() {
   const jenisAbsenRef = useRef(jenisAbsen);
   const scanResultRef = useRef(scanResult);
   const isProcessingRef = useRef(isProcessing);
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const transitionLockRef = useRef(false);
+  
+  // Custom Scanner Refs
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animationFrameId = useRef<number | null>(null);
 
-  useEffect(() => {
-    jenisAbsenRef.current = jenisAbsen;
-  }, [jenisAbsen]);
-
-  useEffect(() => {
-    scanResultRef.current = scanResult;
-  }, [scanResult]);
-
-  useEffect(() => {
-    isProcessingRef.current = isProcessing;
-  }, [isProcessing]);
+  useEffect(() => { jenisAbsenRef.current = jenisAbsen; }, [jenisAbsen]);
+  useEffect(() => { scanResultRef.current = scanResult; }, [scanResult]);
+  useEffect(() => { isProcessingRef.current = isProcessing; }, [isProcessing]);
 
   // Autofocus input fisik
   useEffect(() => {
@@ -77,8 +79,96 @@ export default function PindaiQR() {
     }
   }, [inputMode]);
 
-  const handleProcessScan = async (decodedText: string) => {
-    if (scanResultRef.current || isProcessingRef.current) return;
+  const tick = () => {
+    if (!videoRef.current || !canvasRef.current || !overlayCanvasRef.current || inputMode !== "kamera") return;
+
+    if (videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA && !isProcessingRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const overlayCanvas = overlayCanvasRef.current;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const overlayCtx = overlayCanvas.getContext("2d");
+
+      if (ctx && overlayCtx) {
+        // Samakan ukuran canvas overlay dengan ukuran tampilannya di CSS (karena kita pakai class w-full h-full)
+        if (overlayCanvas.width !== video.clientWidth) {
+           overlayCanvas.width = video.clientWidth;
+           overlayCanvas.height = video.clientHeight;
+        }
+        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Mengambil sekitar 65% dari panjang sisi terpendek
+        const size = Math.min(canvas.width, canvas.height) * 0.65;
+        const x = (canvas.width - size) / 2;
+        const y = (canvas.height - size) / 2;
+        
+        const imageData = ctx.getImageData(x, y, size, size);
+        
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert", 
+        });
+
+        if (code && code.data) {
+          // === ANIMASI LOCK-ON GRAB ===
+          // Kalkulasi proporsi video scaling akibat CSS object-cover
+          const scale = Math.max(overlayCanvas.width / video.videoWidth, overlayCanvas.height / video.videoHeight);
+          const drawnWidth = video.videoWidth * scale;
+          const drawnHeight = video.videoHeight * scale;
+          const offsetX = (overlayCanvas.width - drawnWidth) / 2;
+          const offsetY = (overlayCanvas.height - drawnHeight) / 2;
+          
+          const mapCoord = (point: { x: number, y: number }) => {
+            const vidX = point.x + x;
+            const vidY = point.y + y;
+            return {
+              x: (vidX * scale) + offsetX,
+              y: (vidY * scale) + offsetY
+            };
+          };
+
+          const pt1 = mapCoord(code.location.topLeftCorner);
+          const pt2 = mapCoord(code.location.topRightCorner);
+          const pt3 = mapCoord(code.location.bottomRightCorner);
+          const pt4 = mapCoord(code.location.bottomLeftCorner);
+
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(pt1.x, pt1.y);
+          overlayCtx.lineTo(pt2.x, pt2.y);
+          overlayCtx.lineTo(pt3.x, pt3.y);
+          overlayCtx.lineTo(pt4.x, pt4.y);
+          overlayCtx.closePath();
+
+          overlayCtx.lineWidth = 5;
+          overlayCtx.strokeStyle = "#10b981"; // emerald-500
+          overlayCtx.fillStyle = "rgba(16, 185, 129, 0.4)";
+          overlayCtx.stroke();
+          overlayCtx.fill();
+
+          // Kunci status agar kamera berhenti scan tapi frame tidak freeze
+          isProcessingRef.current = true;
+          setIsProcessing(true);
+          
+          // Jeda sangat singkat (150ms) agar mata sempat melihat kotak hijau
+          setTimeout(() => {
+             overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+             handleProcessScan(code.data, true); // true = skip isProcessing check
+          }, 150);
+
+          return; 
+        }
+      }
+    }
+    
+    animationFrameId.current = requestAnimationFrame(tick);
+  };
+
+  const handleProcessScan = async (decodedText: string, skipCheck = false) => {
+    if (!skipCheck && (scanResultRef.current || isProcessingRef.current)) return;
     setIsProcessing(true);
 
     try {
@@ -112,150 +202,103 @@ export default function PindaiQR() {
         setIsProcessing(false);
         if (inputMode === "fisik" && inputRef.current) {
           inputRef.current.focus();
+        } else if (inputMode === "kamera") {
+          animationFrameId.current = requestAnimationFrame(tick);
         }
       }, 3000);
     }
   };
 
-  const startCamera = async (cameraId?: string) => {
-    if (transitionLockRef.current) {
-      // If already transitioning, wait a bit and retry
-      setTimeout(() => startCamera(cameraId), 300);
-      return;
+  const stopCamera = () => {
+    if (animationFrameId.current) {
+      cancelAnimationFrame(animationFrameId.current);
+      animationFrameId.current = null;
     }
-    transitionLockRef.current = true;
-
-    try {
-      if (html5QrCodeRef.current) {
-        if (html5QrCodeRef.current.isScanning) {
-          await html5QrCodeRef.current.stop().catch((e) => {
-            const errStr = String(e);
-            if (!errStr.includes("The play() request was interrupted") && !errStr.includes("AbortError")) {
-              console.error(e);
-            }
-          });
-        }
-      }
-      
-      html5QrCodeRef.current = new Html5Qrcode("qr-reader");
-
-      setCameraError(null);
-      setIsTorchOn(false);
-      
-      const config = {
-        fps: 60, // Super agresif: 60 frame per detik!
-        // qrbox dihapus agar sistem membaca seluruh layar penuh, tidak hanya di tengah kotak
-        disableFlip: false, // Membaca QR yang mungkin terbalik
-      };
-
-      const camConfig = cameraId 
-        ? { deviceId: { exact: cameraId } } 
-        : { facingMode: facingMode };
-
-      await html5QrCodeRef.current.start(
-        camConfig,
-        config,
-        (decodedText) => handleProcessScan(decodedText),
-        (errorMessage) => { /* ignore */ }
-      );
-    } catch (err: any) {
-      const errStr = String(err);
-      if (!errStr.includes("The play() request was interrupted") && !errStr.includes("AbortError")) {
-        console.error(err);
-        setCameraError("Kamera tidak dapat diakses atau sedang memulai.");
-      }
-    } finally {
-      transitionLockRef.current = false;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
+    setIsTorchOn(false);
   };
 
-  const stopCamera = async () => {
-    if (transitionLockRef.current) {
-       setTimeout(() => stopCamera(), 300);
-       return;
-    }
-    
-    if (html5QrCodeRef.current) {
-      transitionLockRef.current = true;
-      try {
-        if (html5QrCodeRef.current.isScanning) {
-          await html5QrCodeRef.current.stop();
-        }
-      } catch (err) {
-        const errStr = String(err);
-        if (!errStr.includes("The play() request was interrupted") && !errStr.includes("AbortError")) {
-          console.error(err);
-        }
-      } finally {
-        html5QrCodeRef.current = null;
-        transitionLockRef.current = false;
+  const startCamera = async (cameraId?: string) => {
+    stopCamera();
+    setCameraError(null);
+    try {
+      // Constraints agresif untuk sat-set: 1080p, continuous focus
+      const constraints: MediaStreamConstraints = {
+        video: cameraId
+          ? { deviceId: { exact: cameraId }, width: { ideal: 1280 }, height: { ideal: 720 }, advanced: [{ focusMode: "continuous" } as any] }
+          : { facingMode: facingMode, width: { ideal: 1280 }, height: { ideal: 720 }, advanced: [{ focusMode: "continuous" } as any] }
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.setAttribute("playsinline", "true"); // Wajib untuk iOS Safari
+        await videoRef.current.play();
+        animationFrameId.current = requestAnimationFrame(tick);
       }
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      setCameraError("Kamera tidak dapat diakses atau diblokir oleh browser.");
     }
   };
 
   // Muat daftar kamera saat pertama kali
   useEffect(() => {
-    Html5Qrcode.getCameras().then((devices) => {
-      if (devices && devices.length > 0) {
-        setCameras(devices);
-        if (!selectedCamera) {
-          setSelectedCamera(devices[0].id);
-        }
-      }
-    }).catch(err => {
-      console.log("No cameras found or permission denied.", err);
-    });
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices().then((devices) => {
+        const videoDevices = devices.filter(d => d.kind === "videoinput");
+        setCameras(videoDevices);
+      }).catch(err => {
+        console.log("No cameras found or permission denied.", err);
+      });
+    }
   }, []);
 
   // Mulai/Hentikan kamera berdasarkan Mode & Pilihan Kamera
   useEffect(() => {
     if (inputMode === "kamera") {
-      setTimeout(() => startCamera(selectedCamera || undefined), 800);
+      setTimeout(() => startCamera(selectedCamera || undefined), 500);
     } else {
       stopCamera();
     }
     
-    return () => {
-      stopCamera();
-      // Force hardware release for mobile browsers
-      try {
-        const video = document.querySelector('#qr-reader video');
-        if (video && video.srcObject) {
-          video.srcObject.getTracks().forEach(t => t.stop());
-        }
-      } catch(e) {}
-    };
+    return () => { stopCamera(); };
   }, [inputMode, selectedCamera, facingMode]);
 
   const toggleFacingMode = () => {
     setFacingMode(prev => prev === "environment" ? "user" : "environment");
-    setSelectedCamera(""); // Clear selected so it respects facingMode
+    setSelectedCamera(""); // Reset selected camera ID
   };
 
   const toggleTorch = async () => {
-    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-      try {
-        await html5QrCodeRef.current.applyVideoConstraints({
-          advanced: [{ torch: !isTorchOn } as any]
-        });
-        setIsTorchOn(!isTorchOn);
-      } catch (err) {
-        console.error("Gagal menyalakan senter", err);
-        showError("Gagal", "Senter tidak didukung pada perangkat/kamera ini.");
+    if (streamRef.current) {
+      const track = streamRef.current.getVideoTracks()[0];
+      if (track) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ torch: !isTorchOn } as any]
+          });
+          setIsTorchOn(!isTorchOn);
+        } catch (err) {
+          console.error("Gagal menyalakan senter", err);
+          showError("Gagal", "Senter tidak didukung pada perangkat/kamera ini.");
+        }
       }
     }
   };
-
 
   const handleFisikSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (fisikInput.trim() !== "") {
       handleProcessScan(fisikInput.trim());
-      setFisikInput(""); // reset setelah dikirim
+      setFisikInput("");
     }
   };
-
-
 
   return (
     <div className="p-4 md:p-8 min-h-screen flex flex-col items-center justify-center bg-slate-900 relative overflow-hidden">
@@ -307,7 +350,7 @@ export default function PindaiQR() {
               >
                 <option value="">Deteksi Otomatis ({facingMode === 'environment' ? 'Belakang' : 'Depan'})</option>
                 {cameras.map(cam => (
-                  <option key={cam.id} value={cam.id}>{cam.label || `Kamera ${cam.id}`}</option>
+                  <option key={cam.deviceId} value={cam.deviceId}>{cam.label || "Kamera"}</option>
                 ))}
               </select>
             )}
@@ -330,12 +373,17 @@ export default function PindaiQR() {
           </div>
         )}
 
+        {/* Layar Kamera */}
         <div className="relative w-full aspect-square max-w-sm md:max-w-md bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl flex items-center justify-center">
           
-          <div 
-            id="qr-reader" 
-            className={`w-full h-full bg-black [&>div]:w-full [&>div]:h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover ${facingMode === 'user' ? '[&_video]:!-scale-x-100' : ''} ${inputMode === 'kamera' && !cameraError ? 'block' : 'hidden'}`}
-          ></div>
+          <video 
+            ref={videoRef}
+            className={`w-full h-full object-cover ${facingMode === 'user' ? '-scale-x-100' : ''} ${inputMode === 'kamera' && !cameraError ? 'block' : 'hidden'}`}
+            muted
+          ></video>
+
+          <canvas ref={canvasRef} className="hidden"></canvas>
+          <canvas ref={overlayCanvasRef} className={`absolute inset-0 w-full h-full pointer-events-none z-20 ${facingMode === 'user' ? '-scale-x-100' : ''}`}></canvas>
 
           {inputMode === "kamera" && cameraError && (
             <div className="flex flex-col items-center text-amber-400 text-center p-6 absolute inset-0 z-20 bg-slate-800">
@@ -368,13 +416,17 @@ export default function PindaiQR() {
             </div>
           )}
 
-          {/* Custom overlay */}
-          {!cameraError && !scanResult && inputMode === "kamera" && (
-             <div className="absolute inset-0 border-4 border-slate-500 rounded-2xl m-8 opacity-40 pointer-events-none"></div>
+          {/* Kotak Scanner Overlay (Target Area) */}
+          {!cameraError && !scanResult && inputMode === "kamera" && !isProcessing && (
+             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+               <div className="w-[65%] aspect-square border-2 border-emerald-500 rounded-xl relative shadow-[0_0_0_9999px_rgba(15,23,42,0.6)]">
+                 {/* Garis scan animasi dihapus agar lebih clean, animasi grab tetap ada */}
+               </div>
+             </div>
           )}
 
           {scanResult && (
-            <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-10 animate-in fade-in zoom-in duration-300 p-6 text-center">
+            <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-30 animate-in fade-in zoom-in duration-300 p-6 text-center">
               {scanResult.jenis === 'error' ? (
                 <>
                   <XCircle className="w-20 h-20 md:w-24 md:h-24 mb-4 text-amber-500" />

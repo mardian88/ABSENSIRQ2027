@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,19 @@ export function AudioNotifManager({ initialData }: { initialData: any }) {
     pulang: null,
     gagal: null
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setSettings({
+        isAudioMasukAktif: initialData.isAudioMasukAktif ?? true,
+        isAudioPulangAktif: initialData.isAudioPulangAktif ?? true,
+        isAudioGagalAktif: initialData.isAudioGagalAktif ?? true,
+        urlAudioMasuk: initialData.urlAudioMasuk || "",
+        urlAudioPulang: initialData.urlAudioPulang || "",
+        urlAudioGagal: initialData.urlAudioGagal || ""
+      });
+    }
+  }, [initialData]);
 
   const handleSave = async () => {
     setLoading(true);
