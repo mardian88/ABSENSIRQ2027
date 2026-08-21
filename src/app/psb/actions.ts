@@ -81,7 +81,7 @@ const rateLimitMap = new Map<string, { count: number, timestamp: number }>();
 export async function submitPendaftaran(data: SubmitPSBInput) {
   // 1. Rate Limiting (Anti Spam)
   // Get IP address from headers
-  const headersList = headers();
+  const headersList = await headers();
   const ip = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown';
   const now = Date.now();
   
