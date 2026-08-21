@@ -1,11 +1,13 @@
 import { db } from "@/db";
-import { pendaftar } from "@/db/schema";
+import { pendaftar, pengaturanProfil } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { PrintButton } from "@/components/PrintButton";
 
 export default async function CetakKwitansiPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const [data] = await db.select().from(pendaftar).where(eq(pendaftar.id, resolvedParams.id));
+  const [profil] = await db.select().from(pengaturanProfil).limit(1);
   
   if (!data) return notFound();
 
@@ -13,9 +15,9 @@ export default async function CetakKwitansiPage({ params }: { params: Promise<{ 
     <div className="bg-white text-black min-h-screen flex justify-center p-8 print:p-0">
       <div className="flex justify-between items-center mb-6 print:hidden absolute top-4 left-4 right-4">
         <h1 className="text-xl font-bold">Preview Kwitansi</h1>
-        <button onClick={() => window.print()} className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-500 shadow-md">
+        <PrintButton className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-500 shadow-md">
           Print Kwitansi
-        </button>
+        </PrintButton>
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
@@ -35,17 +37,22 @@ export default async function CetakKwitansiPage({ params }: { params: Promise<{ 
             TANDA TERIMA<br/>PEMBAYARAN
           </h1>
           <div className="mt-4" style={{ fontFamily: "'Dancing Script', cursive" }}>
-            <p className="text-xl italic text-slate-800">Santri Baru 2026-2027</p>
-            <p className="text-xl italic text-slate-800">Rumah Qur'an Muharrik</p>
+            <p className="text-xl italic text-slate-800">{profil?.namaRumahQuran || "Rumah Qur'an"}</p>
           </div>
         </div>
 
         {/* Bottom Left Logo & Address */}
         <div className="absolute bottom-6 left-8 flex items-center gap-3">
-          <div className="w-16 h-16 rounded-full border-2 border-emerald-500 flex items-center justify-center bg-white overflow-hidden">
-             <div className="text-[10px] font-bold text-emerald-600 text-center leading-tight">
-               RUMAH QUR'AN<br/>MUHARRIK
-             </div>
+          <div className="w-16 h-16 flex items-center justify-center">
+            {profil?.urlLogo ? (
+              <img src={profil.urlLogo} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <div className="w-full h-full rounded-full border-2 border-emerald-500 flex items-center justify-center bg-white overflow-hidden">
+                <div className="text-[10px] font-bold text-emerald-600 text-center leading-tight">
+                  RUMAH QUR'AN<br/>MUHARRIK
+                </div>
+              </div>
+            )}
           </div>
           <div className="text-xs text-emerald-900 leading-tight">
             Jl. Pembangunan No.10<br/>

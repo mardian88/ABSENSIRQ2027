@@ -221,6 +221,24 @@ export async function uploadLogoHalamanSukses(formData: FormData) {
 
   return dataUrl;
 }
+
+export async function uploadImageToCloudinary(formData: FormData) {
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) {
+    throw new Error("Tidak ada file yang diunggah.");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return new Promise<string>((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      { folder: "pengaturan_logo", resource_type: "image" },
+      (error, result) => {
+        if (error || !result) reject(error);
+        else resolve(result.secure_url);
+      }
+    ).end(buffer);
+  });
+}
 // --- Pengaturan Humas (WhatsApp Fonnte) ---
 import { pengaturanHumas, templatePesan } from "@/db/schema";
 

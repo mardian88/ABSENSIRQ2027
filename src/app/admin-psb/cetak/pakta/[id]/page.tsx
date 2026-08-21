@@ -1,11 +1,13 @@
 import { db } from "@/db";
-import { pendaftar } from "@/db/schema";
+import { pendaftar, pengaturanProfil } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { PrintButton } from "@/components/PrintButton";
 
 export default async function CetakPaktaPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const [data] = await db.select().from(pendaftar).where(eq(pendaftar.id, resolvedParams.id));
+  const [profil] = await db.select().from(pengaturanProfil).limit(1);
   
   if (!data) return notFound();
 
@@ -15,9 +17,9 @@ export default async function CetakPaktaPage({ params }: { params: Promise<{ id:
     <div className="bg-white text-black min-h-screen flex flex-col items-center p-8 print:p-0">
       <div className="flex justify-between items-center mb-6 print:hidden w-full max-w-4xl">
         <h1 className="text-xl font-bold">Preview Pakta Integritas</h1>
-        <button onClick={() => window.print()} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-500 shadow-md">
+        <PrintButton className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-500 shadow-md">
           Print Pakta
-        </button>
+        </PrintButton>
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
@@ -32,10 +34,16 @@ export default async function CetakPaktaPage({ params }: { params: Promise<{ id:
         
         {/* Header / Kop Surat */}
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-24 h-24 rounded-full border-2 border-emerald-600 flex items-center justify-center overflow-hidden shrink-0">
-            <div className="text-xs font-bold text-emerald-600 text-center leading-tight">
-               RUMAH QUR'AN<br/>MUHARRIK
-            </div>
+          <div className="w-24 h-24 flex items-center justify-center shrink-0">
+            {profil?.urlLogo ? (
+              <img src={profil.urlLogo} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <div className="w-full h-full rounded-full border-2 border-emerald-600 flex items-center justify-center overflow-hidden">
+                <div className="text-xs font-bold text-emerald-600 text-center leading-tight">
+                   RUMAH QUR'AN<br/>MUHARRIK
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex-1 text-center">
             <h1 className="text-2xl font-bold text-emerald-600 mb-1">RUMAH QUR'AN MUHARRIK</h1>

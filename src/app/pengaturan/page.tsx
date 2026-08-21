@@ -142,12 +142,57 @@ export default function PengaturanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>URL Logo (Opsional)</Label>
-                  <Input 
-                    value={data.urlLogo} 
-                    onChange={e => setData({...data, urlLogo: e.target.value})} 
-                    placeholder="https://example.com/logo.png"
-                  />
+                  <Label>Logo Lembaga (URL atau Upload)</Label>
+                  <div className="flex gap-2 items-start">
+                    <div className="flex-1 space-y-2">
+                      <Input 
+                        value={data.urlLogo} 
+                        onChange={e => setData({...data, urlLogo: e.target.value})} 
+                        placeholder="https://example.com/logo.png"
+                      />
+                      {data.urlLogo && (
+                        <div className="border rounded-md p-2 w-max max-h-32 bg-slate-50">
+                          <img src={data.urlLogo} alt="Logo" className="h-24 w-auto object-contain" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="relative shrink-0">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setSaving(true);
+                            try {
+                              const formData = new FormData();
+                              formData.append("file", file);
+                              const { uploadImageToCloudinary, updatePengaturanProfil } = await import("./actions");
+                              const url = await uploadImageToCloudinary(formData);
+                              
+                              const updatedData = {...data, urlLogo: url};
+                              setData(updatedData);
+                              
+                              await updatePengaturanProfil({
+                                ...updatedData,
+                                batasWaktuPsb: updatedData.batasWaktuPsb ? new Date(updatedData.batasWaktuPsb) : null
+                              });
+                              
+                              toast.success("Logo berhasil diunggah dan disimpan");
+                            } catch (error) {
+                              toast.error("Gagal mengunggah logo");
+                            }
+                            setSaving(false);
+                          }
+                        }}
+                      />
+                      <Button type="button" variant="outline" className="px-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Upload Logo
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Password Akses Absensi (Kiosk)</Label>

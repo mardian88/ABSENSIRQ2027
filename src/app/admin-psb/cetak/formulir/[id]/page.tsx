@@ -3,6 +3,7 @@ import { pendaftar } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { formatDateID } from "@/lib/date";
+import { PrintButton } from "@/components/PrintButton";
 
 export default async function CetakFormulirPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -14,9 +15,9 @@ export default async function CetakFormulirPage({ params }: { params: Promise<{ 
     <div className="bg-white text-black max-w-4xl mx-auto p-8 text-sm print:p-0 print:w-full">
       <div className="flex justify-between items-center mb-6 print:hidden">
         <h1 className="text-2xl font-bold">Preview Formulir</h1>
-        <button onClick={() => window.print()} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-500">
+        <PrintButton className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-500">
           Print Formulir
-        </button>
+        </PrintButton>
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `

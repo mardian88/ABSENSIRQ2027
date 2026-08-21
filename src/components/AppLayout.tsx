@@ -39,10 +39,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <button onClick={() => setIsSidebarOpen(true)} className="p-1 -ml-1 text-slate-300 hover:text-white transition-colors">
               <Menu className="w-6 h-6" />
             </button>
-            <span className="font-bold text-lg">Rumah Qur'an</span>
+            <span className="font-bold text-lg">Admin</span>
           </div>
-          <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-sm">
-            A
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm">Menu</span>
           </div>
         </header>
 
