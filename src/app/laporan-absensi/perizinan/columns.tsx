@@ -12,8 +12,12 @@ export const getIzinColumns = (
     cell: ({ row }) => {
       const item = row.original;
       return (
-        <div className="align-top">
-          <div className="font-bold text-slate-800">{item.santri.namaLengkap}</div>
+        <div 
+          className="align-top cursor-pointer group"
+          onClick={() => onOpenDetailModal(item)}
+          title="Lihat detail izin"
+        >
+          <div className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{item.santri.namaLengkap}</div>
           <div className="text-xs text-slate-500 mt-0.5">NIS: {item.santri.nomorInduk}</div>
         </div>
       );
@@ -59,8 +63,11 @@ export const getIzinColumns = (
     cell: ({ row }) => {
       const item = row.original;
       return (
-        <div className="align-top max-w-xs">
-          <p className="text-sm text-slate-700 italic truncate" title={item.keterangan}>"{item.keterangan}"</p>
+        <div 
+          className="align-top max-w-xs cursor-pointer group"
+          onClick={() => onOpenDetailModal(item)}
+        >
+          <p className="text-sm text-slate-700 italic truncate group-hover:text-indigo-600 transition-colors" title="Lihat detail izin">"{item.keterangan}"</p>
         </div>
       );
     }
