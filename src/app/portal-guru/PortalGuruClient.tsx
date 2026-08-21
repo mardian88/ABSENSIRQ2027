@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { LogOut, CalendarCheck, FileSignature, Coins, ChevronRight, X, RefreshCw, ExternalLink, UserMinus, BookOpen, Search } from "lucide-react";
+import { LogOut, CalendarCheck, FileSignature, Coins, ChevronRight, X, RefreshCw, ExternalLink, UserMinus, BookOpen, Search, Download, ImageIcon } from "lucide-react";
 import { logoutGuru, updateKontrakSignature, getSantriIzinHariIni, getSantriBelumHadirGuru } from "./actions";
 import { showSuccess, showError, showConfirm } from "@/lib/sweetalert";
+import { formatDateID } from "@/lib/date";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -18,7 +19,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
   const [showToS, setShowToS] = useState(false);
   const [izinHariIni, setIzinHariIni] = useState<any[]>([]);
   const [loadingIzin, setLoadingIzin] = useState(false);
-  const [buktiModal, setBuktiModal] = useState<string | null>(null);
+  const [selectedIzin, setSelectedIzin] = useState<any | null>(null);
 
   const [belumHadirHariIni, setBelumHadirHariIni] = useState<any[]>([]);
   const [loadingBelumHadir, setLoadingBelumHadir] = useState(false);
@@ -222,7 +223,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
             ) : izinHariIni.length > 0 ? (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
                 <DataTable
-                  columns={getIzinHariIniColumns((url) => { setBuktiModal(url); })}
+                  columns={getIzinHariIniColumns((item) => { setSelectedIzin(item); })}
                   data={izinHariIni}
                   searchKey="namaLengkap"
                 />
@@ -454,21 +455,112 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
           </div>
         </div>
       )}
-      {/* Bukti Modal */}
-      {buktiModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl p-2 w-full max-w-lg relative animate-in fade-in zoom-in-95">
-            <button 
-              onClick={() => setBuktiModal(null)}
-              className="absolute top-4 right-4 bg-white/80 p-2 rounded-full text-slate-800 hover:bg-white transition-colors shadow-sm"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <img 
-              src={buktiModal} 
-              alt="Bukti Izin/Sakit" 
-              className="w-full h-auto rounded-xl max-h-[80vh] object-contain"
-            />
+      {/* Modal Detail Izin */}
+      {selectedIzin && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onClick={() => setSelectedIzin(null)}>
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-5 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-xl font-bold text-slate-800">Detail Perizinan Santri</h3>
+              <button
+                onClick={() => setSelectedIzin(null)}
+                className="text-slate-400 hover:text-rose-500 bg-slate-200/50 hover:bg-rose-100 p-2 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Nama Santri</h4>
+                  <p className="font-bold text-slate-800 text-lg">{selectedIzin.santri.namaLengkap}</p>
+                  <p className="text-sm text-slate-500">NIS: {selectedIzin.santri.nomorInduk}</p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Kategori</h4>
+                  <span className={`inline-flex px-3 py-1 rounded-md text-sm font-bold ${
+                    selectedIzin.kategori === 'Sakit' 
+                      ? 'bg-rose-100 text-rose-700' 
+                      : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {(selectedIzin.kategori as string).toUpperCase()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Rentang Waktu</h4>
+                  <p className="font-medium text-slate-700">{formatDateID(selectedIzin.tanggalMulai)}</p>
+                  {selectedIzin.tanggalSelesai > selectedIzin.tanggalMulai && (
+                    <p className="text-sm text-slate-600 mt-1">s/d {formatDateID(selectedIzin.tanggalSelesai)}</p>
+                  )}
+                  <p className="text-xs text-indigo-600 font-semibold mt-1">
+                    Durasi: {Math.round((new Date(selectedIzin.tanggalSelesai).getTime() - new Date(selectedIzin.tanggalMulai).getTime()) / (1000 * 60 * 60 * 24)) + 1} Hari
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Diajukan Pada</h4>
+                  <p className="font-medium text-slate-700">{formatDateID(selectedIzin.waktuPengajuan)}</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Keterangan / Alasan</h4>
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <p className="text-slate-700 leading-relaxed">{selectedIzin.keterangan}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Lampiran Bukti</h4>
+                {selectedIzin.buktiUrl ? (
+                  <div className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 relative group">
+                    <img 
+                      src={selectedIzin.buktiUrl} 
+                      alt={`Bukti ${selectedIzin.kategori}`} 
+                      className="w-full max-h-[300px] object-contain"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(selectedIzin.buktiUrl!);
+                            const blob = await response.blob();
+                            const objectUrl = window.URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = objectUrl;
+                            link.download = `Bukti_${selectedIzin.kategori}_${selectedIzin.santri.namaLengkap.replace(/\s+/g, '_')}.jpg`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(objectUrl);
+                          } catch (error) {
+                            toast.error('Gagal mengunduh gambar');
+                          }
+                        }}
+                        className="flex items-center gap-2 text-sm font-semibold bg-white text-slate-900 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors shadow-lg"
+                      >
+                        <Download className="w-4 h-4" /> Download Gambar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border border-dashed border-slate-300 bg-slate-50 rounded-lg p-8 flex flex-col items-center justify-center text-slate-400">
+                    <ImageIcon className="w-10 h-10 mb-2 opacity-50" />
+                    <p className="text-sm font-medium">Tidak ada foto lampiran bukti</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="p-5 border-t border-slate-200 bg-slate-50 flex justify-end">
+              <button
+                onClick={() => setSelectedIzin(null)}
+                className="px-6 py-2 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-900 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
