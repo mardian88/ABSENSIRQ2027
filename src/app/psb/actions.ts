@@ -5,6 +5,9 @@ import { pendaftar, pengaturanHumas } from "@/db/schema";
 import { v4 as uuidv4 } from "uuid";
 import { revalidatePath } from "next/cache";
 
+import { z } from "zod";
+import { headers } from "next/headers";
+
 type SubmitPSBInput = {
   namaLengkap: string;
   tempatLahir: string;
@@ -38,10 +41,82 @@ type SubmitPSBInput = {
   sumberInfo?: string;
 };
 
+const psbSchema = z.object({
+  namaLengkap: z.string().min(1).max(100),
+  tempatLahir: z.string().min(1).max(100),
+  tanggalLahir: z.string().min(1),
+  jenisKelamin: z.string().min(1).max(20),
+  alamatLengkap: z.string().min(1).max(500),
+  isAlamatDomisiliSama: z.boolean(),
+  alamatDomisili: z.string().max(500).optional().nullable(),
+  jenjangSekolah: z.string().min(1).max(50),
+  jenjangSekolahLainnya: z.string().max(100).optional().nullable(),
+  namaSekolah: z.string().min(1).max(100),
+  kelasSekolah: z.string().min(1).max(50),
+  ikutLes: z.boolean(),
+  hariLes: z.string().max(50).optional().nullable(),
+  jamLesMulai: z.string().max(20).optional().nullable(),
+  jamLesSelesai: z.string().max(20).optional().nullable(),
+  namaAyah: z.string().min(1).max(100),
+  pekerjaanAyah: z.string().min(1).max(100),
+  pekerjaanAyahLainnya: z.string().max(100).optional().nullable(),
+  instansiAyah: z.string().max(100).optional().nullable(),
+  namaIbu: z.string().min(1).max(100),
+  pekerjaanIbu: z.string().min(1).max(100),
+  pekerjaanIbuLainnya: z.string().max(100).optional().nullable(),
+  instansiIbu: z.string().max(100).optional().nullable(),
+  kontakOrtu: z.string().min(1).max(20),
+  sudahMengaji: z.boolean(),
+  bukuMengaji: z.string().max(100).optional().nullable(),
+  capaianMengaji: z.string().max(100).optional().nullable(),
+  sudahMenghafal: z.boolean(),
+  capaianHafalan: z.string().max(100).optional().nullable(),
+  sumberInfo: z.string().max(255).optional().nullable(),
+});
+
+// Simple in-memory rate limiting map
+// Format: { [ip]: { count: number, timestamp: number } }
+const rateLimitMap = new Map<string, { count: number, timestamp: number }>();
+
 export async function submitPendaftaran(data: SubmitPSBInput) {
+  // 1. Rate Limiting (Anti Spam)
+  // Get IP address from headers
+  const headersList = headers();
+  const ip = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown';
+  const now = Date.now();
+  
+  if (rateLimitMap.has(ip)) {
+    const record = rateLimitMap.get(ip)!;
+    // Window: 10 minutes (600,000 ms)
+    if (now - record.timestamp < 600000) {
+      if (record.count >= 3) {
+        return { success: false, message: "Terlalu banyak permintaan. Silakan coba lagi setelah 10 menit." };
+      }
+      record.count++;
+    } else {
+      // Reset window
+      record.count = 1;
+      record.timestamp = now;
+    }
+  } else {
+    rateLimitMap.set(ip, { count: 1, timestamp: now });
+  }
+
+  // 2. Server-side Validation (Anti Injection)
+  const validationResult = psbSchema.safeParse(data);
+  if (!validationResult.success) {
+    console.error("Zod Validation Error:", validationResult.error.errors);
+    return { success: false, message: "Data tidak valid atau mengandung karakter yang dilarang." };
+  }
+
+  const validData = validationResult.data;
+
   await db.insert(pendaftar).values({
     id: uuidv4(),
-    ...data,
+    ...validData,
+    alamatDomisili: validData.alamatDomisili || "",
+    instansiAyah: validData.instansiAyah || "",
+    instansiIbu: validData.instansiIbu || "",
     tanggalDaftar: new Date(),
   });
 

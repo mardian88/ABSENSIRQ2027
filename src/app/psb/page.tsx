@@ -96,12 +96,16 @@ export default function PSBPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await submitPendaftaran(formData);
-      setSuccess(true);
-      window.scrollTo(0,0);
+      const res = await submitPendaftaran(formData);
+      if (res.success) {
+        setSuccess(true);
+        window.scrollTo(0,0);
+      } else {
+        showError("Gagal", res.message || "Terjadi kesalahan saat mengirim pendaftaran.");
+      }
     } catch (error) {
       console.error(error);
-      showError("Gagal", "Terjadi kesalahan saat mengirim pendaftaran.");
+      showError("Gagal", "Terjadi kesalahan sistem saat mengirim pendaftaran.");
     } finally {
       setIsSubmitting(false);
     }
