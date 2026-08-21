@@ -148,57 +148,67 @@ export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: 
         )}
 
         {activeTab === 'liburan' && (
-          <form onSubmit={handleInputLiburan} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
             <div>
               <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2 mb-1">
                 <PenTool className="w-5 h-5 text-emerald-600" />
                 Input Mandiri di Rumah
               </h2>
-              <p className="text-xs text-slate-500">Gunakan fitur ini untuk mencatat mutabaah anak Anda selama masa liburan sekolah.</p>
+              <p className="text-xs text-slate-500">Gunakan fitur ini untuk mencatat mutabaah anak Anda secara mandiri.</p>
             </div>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl px-1 py-1">
-                  <DatePicker date={tanggal} setDate={setTanggal} placeholder="DD/MM/YYYY" />
+            {new Date().getDay() === 0 || new Date().getDay() === 6 ? (
+              <form onSubmit={handleInputLiburan} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl px-1 py-1">
+                    <DatePicker date={tanggal} setDate={setTanggal} placeholder="DD/MM/YYYY" />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Jenis Capaian</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 p-3 rounded-xl flex-1">
-                    <input type="radio" checked={jenis === 'mengaji'} onChange={() => setJenis('mengaji')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
-                    <span className="font-medium text-slate-700">Mengaji</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 p-3 rounded-xl flex-1">
-                    <input type="radio" checked={jenis === 'hafalan'} onChange={() => setJenis('hafalan')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
-                    <span className="font-medium text-slate-700">Hafalan</span>
-                  </label>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Jenis Capaian</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 p-3 rounded-xl flex-1">
+                      <input type="radio" checked={jenis === 'mengaji'} onChange={() => setJenis('mengaji')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+                      <span className="font-medium text-slate-700">Mengaji</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-200 p-3 rounded-xl flex-1">
+                      <input type="radio" checked={jenis === 'hafalan'} onChange={() => setJenis('hafalan')} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+                      <span className="font-medium text-slate-700">Hafalan</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Keterangan Capaian</label>
-                <textarea 
-                  value={capaian}
-                  onChange={e => setCapaian(e.target.value)}
-                  placeholder="Contoh: Muraja'ah Juz 30 / Tilawah Surah Al-Kahfi"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none min-h-[100px]"
-                  required
-                />
-              </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Keterangan Capaian</label>
+                  <textarea 
+                    value={capaian}
+                    onChange={e => setCapaian(e.target.value)}
+                    placeholder="Contoh: Muraja'ah Juz 30 / Tilawah Surah Al-Kahfi"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none min-h-[100px]"
+                    required
+                  />
+                </div>
 
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Menyimpan...' : 'Simpan Capaian'}
-              </button>
-            </div>
-          </form>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Menyimpan...' : 'Simpan Capaian'}
+                </button>
+              </form>
+            ) : (
+              <div className="bg-orange-50 border border-orange-200 p-5 rounded-xl text-center">
+                <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-orange-800 mb-1">Fitur Terkunci</h3>
+                <p className="text-sm text-orange-700">Fitur Input Mandiri hanya dibuka dan dapat diakses pada hari <b>Sabtu dan Ahad (Akhir Pekan)</b>.</p>
+              </div>
+            )}
+          </div>
         )}
 
       </main>

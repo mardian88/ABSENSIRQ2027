@@ -56,11 +56,13 @@ export async function getRiwayatMutabaahGuru() {
       catatanGuru: mutabaahSetoran.catatanGuru,
       waktuDibuat: mutabaahSetoran.waktuDibuat,
       idSantri: mutabaahSetoran.idSantri,
-      namaSantri: santri.namaLengkap
+      namaSantri: santri.namaLengkap,
+      inputOleh: mutabaahSetoran.inputOleh
     })
     .from(mutabaahSetoran)
     .innerJoin(santri, eq(mutabaahSetoran.idSantri, santri.id))
-    .where(eq(mutabaahSetoran.idGuru, guruId))
+    .innerJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
+    .where(eq(halaqoh.idGuru, guruId))
     .orderBy(desc(mutabaahSetoran.waktuDibuat))
     .limit(100);
 

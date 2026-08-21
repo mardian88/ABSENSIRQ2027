@@ -10,7 +10,12 @@ export const getMutabaahRiwayatColumns = (
     header: "SANTRI",
     cell: ({ row }) => (
       <div>
-        <p className="font-bold text-slate-800">{row.original.namaSantri}</p>
+        <p className="font-bold text-slate-800">
+          {row.original.namaSantri}
+          {row.original.inputOleh === 'ortu' && (
+            <span className="ml-2 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-100 text-amber-700 align-middle">Mandiri</span>
+          )}
+        </p>
         <p className="text-xs text-slate-500">
           {new Date(row.original.tanggal).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
