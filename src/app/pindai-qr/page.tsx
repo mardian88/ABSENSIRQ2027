@@ -149,15 +149,17 @@ export default function PindaiQR() {
           overlayCtx.stroke();
           overlayCtx.fill();
 
-          // Kunci status agar kamera berhenti scan tapi frame tidak freeze
+          // Kunci status agar kamera berhenti scan
           isProcessingRef.current = true;
           setIsProcessing(true);
           
-          // Jeda sangat singkat (150ms) agar mata sempat melihat kotak hijau
+          // Bersihkan kotak hijau setelah 100ms (0.1 detik)
           setTimeout(() => {
              overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-             handleProcessScan(code.data, true); // true = skip isProcessing check
-          }, 150);
+          }, 100);
+
+          // Eksekusi API secara INSTAN (paralel tanpa ditunda)
+          handleProcessScan(code.data, true);
 
           return; 
         }
@@ -426,7 +428,7 @@ export default function PindaiQR() {
           )}
 
           {scanResult && (
-            <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-30 animate-in fade-in zoom-in duration-300 p-6 text-center">
+            <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center z-30 animate-in fade-in zoom-in duration-100 p-6 text-center">
               {scanResult.jenis === 'error' ? (
                 <>
                   <XCircle className="w-20 h-20 md:w-24 md:h-24 mb-4 text-amber-500" />
