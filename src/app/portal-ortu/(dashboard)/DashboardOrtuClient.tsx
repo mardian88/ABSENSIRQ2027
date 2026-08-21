@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Wallet, FileText, Home, Bell, LogOut, X, ChevronDown, ChevronUp } from "lucide-react";
+import { User, Wallet, FileText, Home, Bell, LogOut, X, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { formatRp } from "@/lib/utils";
 import { useState, useTransition } from "react";
@@ -218,6 +218,16 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
             <div>
               <div className="font-bold text-slate-800">Perizinan</div>
               <div className="text-xs text-slate-500 mt-0.5">Ajukan & riwayat izin</div>
+            </div>
+          </Link>
+
+          <Link href="/portal-ortu/mutabaah" className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
+            <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 mb-1">
+              <BookOpen className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="font-bold text-slate-800">Mutaba'ah</div>
+              <div className="text-xs text-slate-500 mt-0.5">Cek catatan ibadah</div>
             </div>
           </Link>
         </div>
