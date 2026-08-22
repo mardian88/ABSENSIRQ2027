@@ -270,12 +270,12 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
             <p className="text-xs text-slate-500 text-right mt-1">Sembunyikan nama (Anonim)</p>
 
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2 mt-4">Doa & Dukungan (Opsional)</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2 mt-4">Doa & Harapannya (Opsional)</label>
               <textarea 
                 rows={3} 
                 value={doa}
                 onChange={e => setDoa(e.target.value)}
-                placeholder="Tuliskan doa untuk Wakaf ini..."
+                placeholder="Tulis Doa & Harapannya di sini..."
                 className="w-full p-3 rounded-xl border border-slate-200 outline-none focus:border-emerald-500 resize-none text-sm"
               />
             </div>
@@ -347,7 +347,7 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
 
           <div className="border-t border-slate-100 pt-6 mt-6">
             <h3 className="font-bold text-slate-800 mb-4 text-sm flex items-center justify-between">
-              Doa & Muwaqqif Terbaru
+              Tulis Doa & Harapannya di sini
               <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded text-xs">{donaturs.length} Muwaqqif</span>
             </h3>
 
