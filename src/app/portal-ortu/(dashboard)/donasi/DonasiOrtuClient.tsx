@@ -32,7 +32,7 @@ export default function DonasiOrtuClient({ initialPrograms }: { initialPrograms:
               const progress = p.targetNominal > 0 ? Math.min(100, (p.terkumpul / p.targetNominal) * 100) : 0;
               
               return (
-                <Link href={`/portal-ortu/Wakaf/${p.id}`} key={p.id} className="block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
+                <Link href={`/portal-ortu/donasi/${p.id}`} key={p.id} className="block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
                   <div className="h-40 w-full bg-slate-100 relative">
                     {p.urlGambar ? (
                       <img src={p.urlGambar} alt={p.judul} className="w-full h-full object-cover" />
