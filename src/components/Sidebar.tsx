@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, Coins, ChevronDown, ChevronRight, UserMinus, CheckCircle2, RefreshCw } from "lucide-react";
+import { 
+  Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, 
+  X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, 
+  Coins, ChevronDown, ChevronRight, UserMinus, CheckCircle2, RefreshCw, Heart 
+} from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { getPengaturanProfil } from "@/app/pengaturan/actions";
 import { getPsbCounts } from "@/app/admin-psb/actions";
@@ -73,6 +77,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         { name: "Top-Up Saldo", href: "/admin-keuangan/top-up", icon: CheckCircle2 },
         { name: "Tabungan Santri", href: "/admin-keuangan/tabungan", icon: UserCheck },
         { name: "Kebutuhan Santri", href: "/admin-keuangan/katalog", icon: BookOpen },
+        { name: "Wakaf", href: "/admin-keuangan/donasi", icon: Heart },
       ]
     },
     {
@@ -287,3 +292,4 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     </div>
   );
 }
+ 

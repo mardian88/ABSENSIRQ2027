@@ -511,3 +511,27 @@ export const pesananKebutuhan = sqliteTable('pesanan_kebutuhan', {
   idTransaksiTabungan: text('id_transaksi_tabungan') // untuk refund jika batal
 });
 
+
+export const programDonasi = sqliteTable('program_donasi', {
+  id: text('id').primaryKey(),
+  judul: text('judul').notNull(),
+  deskripsi: text('deskripsi'),
+  targetNominal: integer('target_nominal').notNull().default(0),
+  terkumpul: integer('terkumpul').notNull().default(0),
+  urlGambar: text('url_gambar'),
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
+  waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
+});
+
+export const transaksiDonasi = sqliteTable('transaksi_donasi', {
+  id: text('id').primaryKey(),
+  idProgram: text('id_program').references(() => programDonasi.id).notNull(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  nominal: integer('nominal').notNull(),
+  metode: text('metode').notNull().default('QRIS'),
+  status: text('status').notNull().default('menunggu'), // menunggu, terverifikasi, dibatalkan
+  isAnonim: integer('is_anonim', { mode: 'boolean' }).notNull().default(false),
+  doa: text('doa'),
+  waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull(),
+  waktuVerifikasi: integer('waktu_verifikasi', { mode: 'timestamp' })
+});
