@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppLayout } from "@/components/AppLayout";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Toaster position="top-center" toastOptions={{ duration: 3000, style: { background: '#334155', color: '#fff' } }} />
         <AppLayout>{children}</AppLayout>
+        <Analytics />
       </body>
     </html>
   );
