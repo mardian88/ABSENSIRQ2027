@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wallet, FileText, User, BookOpen } from "lucide-react";
+import { Home, Wallet, FileText, User, BookOpen, ShoppingBag } from "lucide-react";
 
 export function BottomNavOrtu() {
   const pathname = usePathname();
@@ -11,8 +11,9 @@ export function BottomNavOrtu() {
     { name: "Beranda", href: "/portal-ortu", icon: Home, exact: true },
     { name: "Keuangan", href: "/portal-ortu/keuangan", icon: Wallet, exact: false },
     { name: "Perizinan", href: "/portal-ortu/izin", icon: FileText, exact: false },
-    { name: "Profil", href: "/portal-ortu/profil", icon: User, exact: false },
     { name: "Mutaba'ah", href: "/portal-ortu/mutabaah", icon: BookOpen, exact: false },
+    { name: "Kebutuhan", href: "/portal-ortu/kebutuhan", icon: ShoppingBag, exact: false },
+    { name: "Profil", href: "/portal-ortu/profil", icon: User, exact: false },
   ];
 
   return (

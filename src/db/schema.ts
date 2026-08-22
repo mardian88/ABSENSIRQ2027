@@ -482,3 +482,32 @@ export const notifikasiPortal = sqliteTable('notifikasi_portal', {
   tanggal: integer('tanggal', { mode: 'timestamp' }).notNull()
 });
 
+
+// ==========================================
+// MODUL KEBUTUHAN SANTRI
+// ==========================================
+
+export const katalogKebutuhan = sqliteTable('katalog_kebutuhan', {
+  id: text('id').primaryKey(),
+  nama: text('nama').notNull(),
+  deskripsi: text('deskripsi').notNull().default(''),
+  kategori: text('kategori').notNull(), // 'gratis', 'berbayar'
+  harga: integer('harga').notNull().default(0),
+  stok: integer('stok').notNull().default(0),
+  urlGambar: text('url_gambar'),
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
+  waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
+});
+
+export const pesananKebutuhan = sqliteTable('pesanan_kebutuhan', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  idKatalog: text('id_katalog').references(() => katalogKebutuhan.id).notNull(),
+  status: text('status').notNull().default('menunggu'), // 'menunggu', 'selesai', 'dibatalkan'
+  hargaSaatPesan: integer('harga_saat_pesan').notNull().default(0),
+  waktuPesan: integer('waktu_pesan', { mode: 'timestamp' }).notNull(),
+  waktuSelesai: integer('waktu_selesai', { mode: 'timestamp' }),
+  keterangan: text('keterangan'),
+  idTransaksiTabungan: text('id_transaksi_tabungan') // untuk refund jika batal
+});
+

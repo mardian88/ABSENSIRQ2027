@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Wallet, FileText, Home, Bell, LogOut, X, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
+import { User, Wallet, FileText, Home, Bell, LogOut, X, ChevronDown, ChevronUp, BookOpen, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { formatRp } from "@/lib/utils";
 import { useState, useTransition } from "react";
@@ -200,7 +200,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
         </div>
 
         {/* Action Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link href="/portal-ortu/keuangan" className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
             <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-1">
               <Wallet className="w-7 h-7" />
@@ -228,6 +228,16 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
             <div>
               <div className="font-bold text-slate-800">Mutaba'ah</div>
               <div className="text-xs text-slate-500 mt-0.5">Cek catatan ibadah</div>
+            </div>
+          </Link>
+
+          <Link href="/portal-ortu/kebutuhan" className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
+            <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 mb-1">
+              <ShoppingBag className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="font-bold text-slate-800">Kebutuhan</div>
+              <div className="text-xs text-slate-500 mt-0.5">Pesan seragam dll</div>
             </div>
           </Link>
         </div>
