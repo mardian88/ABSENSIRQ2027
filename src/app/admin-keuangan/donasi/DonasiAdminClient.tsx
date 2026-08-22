@@ -235,7 +235,12 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
           <div className="relative max-w-sm">
             <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
-              type="text" 
+              type="search"
+              name="search_query_donasi"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-bwignore="true"
               placeholder="Cari santri atau program..." 
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}

@@ -51,6 +51,13 @@ export const showPrompt = async (title: string, inputType: 'text' | 'password' =
   const result = await Swal.fire({
     title,
     input: inputType,
+    inputAttributes: {
+      autocomplete: 'new-password',
+      autocapitalize: 'off',
+      'data-1p-ignore': 'true',
+      'data-lpignore': 'true',
+      'data-bwignore': 'true'
+    },
     showCancelButton: true,
     confirmButtonColor: '#059669',
     cancelButtonColor: '#94a3b8',
