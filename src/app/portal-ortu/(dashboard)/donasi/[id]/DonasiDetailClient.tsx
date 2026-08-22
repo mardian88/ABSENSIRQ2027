@@ -290,7 +290,7 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
             disabled={loading || nominalValue < 5000}
             className="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg disabled:opacity-50 text-lg flex items-center justify-center gap-2"
           >
-            Lanjutkan Pembayaran
+            Bismillah, Lanjutkan Wakaf
           </button>
         </div>
       </div>
