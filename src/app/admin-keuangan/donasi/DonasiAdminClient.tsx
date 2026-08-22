@@ -20,6 +20,18 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
     setTransaksis(initialTransaksi);
   }, [initialPrograms, initialTransaksi]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('donasi_admin_tab');
+    if (saved === 'program' || saved === 'verifikasi' || saved === 'riwayat') {
+      setActiveTab(saved);
+    }
+  }, []);
+
+  const changeTab = (tab: 'program' | 'verifikasi' | 'riwayat') => {
+    setActiveTab(tab);
+    localStorage.setItem('donasi_admin_tab', tab);
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -138,15 +150,15 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
     }
   };
 
-  const handleDeleteTransaksi = async (id: string) => {
-    const pwd = await showPrompt("Hapus Wakaf Permanen?", "password", "Hapus");
+  const handleDeleteTransaksi = async (t: any) => {
+    const pwd = await showPrompt(`Hapus Wakaf Permanen dari ${t.isAnonim ? 'Hamba Allah' : t.namaSantri}?`, "password", "Hapus");
     if (pwd !== null) {
       if (pwd !== "rqm") {
         showError("Gagal", "Password salah!");
         return;
       }
       setLoading(true);
-      const res = await hapusTransaksiDonasi(id);
+      const res = await hapusTransaksiDonasi(t.id);
       setLoading(false);
       if (res.success) {
         await showSuccess("Terhapus", res.message);
@@ -169,13 +181,13 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
   return (
     <div className="space-y-6">
       <div className="flex border-b border-slate-200">
-        <button onClick={() => setActiveTab('program')} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'program' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+        <button onClick={() => changeTab('program')} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'program' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
           Program Wakaf
         </button>
-        <button onClick={() => setActiveTab('verifikasi')} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'verifikasi' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+        <button onClick={() => changeTab('verifikasi')} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'verifikasi' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
           Verifikasi ({txMenunggu.length})
         </button>
-        <button onClick={() => setActiveTab('riwayat')} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'riwayat' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+        <button onClick={() => changeTab('riwayat')} className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'riwayat' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
           Riwayat
         </button>
       </div>
@@ -280,7 +292,7 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
                             <button onClick={() => handleTolak(t.id)} disabled={loading} className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg text-xs font-medium hover:bg-rose-100 disabled:opacity-50">Tolak</button>
                           </>
                         )}
-                        <button onClick={() => handleDeleteTransaksi(t.id)} disabled={loading} className="p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50" title="Hapus Permanen">
+                        <button onClick={() => handleDeleteTransaksi(t)} disabled={loading} className="p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50" title="Hapus Permanen">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
