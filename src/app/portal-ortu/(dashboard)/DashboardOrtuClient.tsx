@@ -2,7 +2,7 @@
 
 import { User, Wallet, FileText, Home, Bell, LogOut, X, ChevronDown, ChevronUp, BookOpen, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { formatRp } from "@/lib/utils";
+import { formatRp, formatWhatsAppStyle } from "@/lib/utils";
 import { useState, useTransition } from "react";
 import { logoutOrtu } from "../actions";
 import { useRouter } from "next/navigation";
@@ -131,13 +131,15 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                             {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </p>
                           {expandedNotif === item.id ? (
-                            <div className="text-sm text-slate-600 leading-relaxed mt-2 pt-2 border-t border-slate-100">
-                              {item.isi}
-                            </div>
+                            <div 
+                              className="text-sm text-slate-600 leading-relaxed mt-2 pt-2 border-t border-slate-100 whitespace-pre-wrap"
+                              dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
+                            />
                           ) : (
-                            <div className="text-xs text-slate-500 line-clamp-1">
-                              {item.isi}
-                            </div>
+                            <div 
+                              className="text-xs text-slate-500 line-clamp-1"
+                              dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
+                            />
                           )}
                         </div>
                       </button>
@@ -263,9 +265,10 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                     <p className="text-xs text-slate-400 mb-2">
                       {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
-                    <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">
-                      {item.isi}
-                    </p>
+                    <div 
+                      className="text-sm text-slate-600 leading-relaxed line-clamp-2"
+                      dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
+                    />
                     <div className="text-emerald-600 text-xs font-semibold mt-2 flex items-center gap-1">
                       Baca selengkapnya <ChevronDown className="w-3 h-3 -rotate-90" />
                     </div>
@@ -300,9 +303,10 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
               </button>
             </div>
             <div className="p-5 overflow-y-auto">
-              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                {selectedPengumuman.isi}
-              </p>
+              <div 
+                className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap"
+                dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(selectedPengumuman.isi) }}
+              />
             </div>
             <div className="p-4 border-t border-slate-100 bg-slate-50">
               <button 

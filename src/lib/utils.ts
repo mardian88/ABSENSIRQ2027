@@ -22,6 +22,33 @@ export function getMonthName(month: number) {
   return months[month - 1] || '';
 }
 
+export function formatWhatsAppStyle(text: string) {
+  if (!text) return "";
+  
+  // Escape HTML first
+  const escapeHtml = (unsafe: string) => {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+  };
+  
+  let html = escapeHtml(text);
+  
+  // *bold* -> <strong>bold</strong>
+  html = html.replace(/\*([^\*]+)\*/g, "<strong>$1</strong>");
+  
+  // -italic- -> <em>italic</em>
+  html = html.replace(/\-([^\-]+)\-/g, "<em>$1</em>");
+  
+  // _underline_ -> <u>underline</u>
+  html = html.replace(/\_([^\_]+)\_/g, "<u>$1</u>");
+  
+  return html;
+}
+
 export function formatTanggal(dateStr: string | Date | number | null | undefined): string {
   if (!dateStr) return "-";
   const d = new Date(dateStr);

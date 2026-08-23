@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getPengumumanPortal, tambahPengumuman, updatePengumuman, hapusPengumuman } from "./actions";
 import { Loader2, Plus, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { formatWhatsAppStyle } from "@/lib/utils";
 
 export function PengumumanManager() {
   const [data, setData] = useState<any[]>([]);
@@ -148,7 +149,7 @@ export function PengumumanManager() {
                     )}
                   </div>
                   <p className="text-sm text-slate-500 mt-1">{new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                  <p className="text-slate-700 mt-2 whitespace-pre-wrap text-sm">{item.isi}</p>
+                  <p className="text-slate-700 mt-2 whitespace-pre-wrap text-sm" dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}></p>
                 </div>
                 <div className="flex space-x-2">
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
