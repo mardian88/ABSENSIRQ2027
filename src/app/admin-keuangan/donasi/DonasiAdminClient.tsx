@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Edit, Trash2, CheckCircle, XCircle, Search, Archive, Heart, Clock, RotateCcw } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle, XCircle, Search, Archive, Heart, Clock, RotateCcw, Power } from "lucide-react";
 import { formatRp } from "@/lib/utils";
 import { showConfirm, showSuccess, showError, showPrompt } from "@/lib/sweetalert";
 import { useRouter } from "next/navigation";
-import { tambahProgram, editProgram, hapusProgram, verifikasiDonasi, tolakDonasi, hapusTransaksiDonasi, resetProgramDonasi, uploadImageToCloudinaryDonasi } from "./actions";
+import { tambahProgram, editProgram, hapusProgram, verifikasiDonasi, tolakDonasi, hapusTransaksiDonasi, resetProgramDonasi, toggleProgramAktif, uploadImageToCloudinaryDonasi } from "./actions";
 
 export default function DonasiAdminClient({ initialPrograms, initialTransaksi }: { initialPrograms: any[], initialTransaksi: any[] }) {
   const router = useRouter();
@@ -141,6 +141,20 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
     }
   };
 
+  const handleToggleAktif = async (p: any) => {
+    if (await showConfirm(p.isAktif ? "Nonaktifkan Program?" : "Aktifkan Program?", p.isAktif ? "Program ini tidak akan bisa menerima donasi lagi." : "Program ini akan bisa menerima donasi kembali.")) {
+      setLoading(true);
+      const res = await toggleProgramAktif(p.id, p.isAktif);
+      setLoading(false);
+      if (res.success) {
+        await showSuccess("Berhasil", res.message);
+        router.refresh();
+      } else {
+        showError("Gagal", res.message);
+      }
+    }
+  };
+
   const handleVerifikasi = async (id: string) => {
     if (await showConfirm("Verifikasi Wakaf?", "Tandai Wakaf ini sebagai selesai/terima uang?")) {
       setLoading(true);
@@ -229,6 +243,7 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
                     <div className="flex justify-between items-start gap-2">
                       <h3 className="font-bold text-slate-800 line-clamp-2">{item.judul}</h3>
                       <div className="flex gap-1 shrink-0">
+                        <button onClick={() => handleToggleAktif(item)} className={`p-1.5 rounded-lg ${item.isAktif ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'}`} title={item.isAktif ? 'Nonaktifkan' : 'Aktifkan'}><Power className="w-4 h-4" /></button>
                         <button onClick={() => handleResetProgram(item.id)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg" title="Reset Donasi"><RotateCcw className="w-4 h-4" /></button>
                         <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit"><Edit className="w-4 h-4" /></button>
                         <button onClick={() => handleDeleteProgram(item.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg" title="Hapus"><Trash2 className="w-4 h-4" /></button>

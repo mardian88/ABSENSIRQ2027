@@ -219,3 +219,16 @@ export async function resetProgramDonasi(id: string) {
     return { success: false, message: err.message };
   }
 }
+
+export async function toggleProgramAktif(id: string, currentStatus: boolean) {
+  const adminId = await getAdminId();
+  if (!adminId) return { success: false, message: "Akses ditolak" };
+
+  try {
+    await db.update(programDonasi).set({ isAktif: !currentStatus }).where(eq(programDonasi.id, id));
+    revalidatePath("/admin-keuangan/donasi");
+    return { success: true, message: `Program berhasil di${!currentStatus ? 'aktifkan' : 'non-aktifkan'}` };
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
