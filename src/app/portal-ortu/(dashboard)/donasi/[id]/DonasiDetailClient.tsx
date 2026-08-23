@@ -108,7 +108,7 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
 
   const selesaikanDonasi = () => {
     showSuccess("Alhamdulillah", "Terima kasih atas Wakaf Anda. Pembayaran sedang menunggu verifikasi admin.");
-    router.push('/portal-ortu/Wakaf');
+    router.push('/portal-ortu/donasi');
     router.refresh();
   };
 
