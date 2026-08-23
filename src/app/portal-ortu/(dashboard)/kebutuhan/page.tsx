@@ -3,8 +3,8 @@ import { getKatalogOrtu, getRiwayatPesananOrtu } from "./actions";
 import KebutuhanOrtuClient from "./KebutuhanOrtuClient";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { keuanganTabungan } from "@/db/schema";
-import { eq, sum } from "drizzle-orm";
+import { santri } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export const metadata = {
   title: "Kebutuhan Santri | Portal Wali Santri",
@@ -14,14 +14,11 @@ export default async function KebutuhanOrtuPage() {
   const c = await cookies();
   const santriId = c.get("ortu_session")?.value || "";
 
-  // Hitung saldo tabungan untuk keperluan "berbayar"
+  // Ambil saldo tabungan langsung dari tabel santri
   let totalSaldo = 0;
   if (santriId) {
-    const tabunganList = await db.select().from(keuanganTabungan).where(eq(keuanganTabungan.idSantri, santriId));
-    tabunganList.forEach(t => {
-      if (t.jenis === 'setor' || t.jenis === 'topup') totalSaldo += t.nominal;
-      else if (t.jenis === 'tarik' || t.jenis === 'belanja') totalSaldo -= t.nominal;
-    });
+    const santriData = await db.select({ saldo: santri.saldoTabungan }).from(santri).where(eq(santri.id, santriId));
+    totalSaldo = santriData[0]?.saldo || 0;
   }
 
   const [katalogRes, riwayatRes] = await Promise.all([

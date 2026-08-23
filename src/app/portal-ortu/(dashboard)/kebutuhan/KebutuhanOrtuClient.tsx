@@ -48,7 +48,11 @@ export default function KebutuhanOrtuClient({ katalog, riwayatPesanan, saldo }: 
         <div className="bg-emerald-700 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div className="relative z-10">
             <h1 className="text-2xl font-bold mb-1">Kebutuhan Santri</h1>
-            <p className="text-emerald-100 text-sm">Pesan kebutuhan harian atau seragam langsung dari sini.</p>
+            <p className="text-emerald-100 text-sm mb-4">Pesan kebutuhan harian atau seragam langsung dari sini.</p>
+            <div className="inline-flex items-center gap-2 bg-emerald-800/50 rounded-lg px-3 py-2 border border-emerald-600/50">
+              <span className="text-xs text-emerald-100">Saldo Tabungan:</span>
+              <span className="font-bold">{formatRp(saldo)}</span>
+            </div>
           </div>
           <div className="absolute top-0 right-0 p-4 opacity-20">
             <Archive className="w-24 h-24" />
