@@ -12,6 +12,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
   const router = useRouter();
   const [showNotif, setShowNotif] = useState(false);
   const [expandedNotif, setExpandedNotif] = useState<string | null>(null);
+  const [selectedPengumuman, setSelectedPengumuman] = useState<any>(null);
   const [isPending, startTransition] = useTransition();
 
   // Optimistic unread count (we can just rely on the prop + local read state if we want, but since Next.js revalidates, we can just use the prop directly)
@@ -252,15 +253,22 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
           <div className="space-y-4">
             {pengumuman && pengumuman.length > 0 ? (
               pengumuman.map((item: any) => (
-                <div key={item.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4">
+                <div 
+                  key={item.id} 
+                  onClick={() => setSelectedPengumuman(item)}
+                  className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 cursor-pointer hover:border-emerald-200 hover:shadow-md transition-all active:scale-[0.98]"
+                >
                   <div className="flex-1">
                     <h4 className="font-bold text-slate-800 mb-1">{item.judul}</h4>
-                    <p className="text-xs text-slate-400 mb-3">
+                    <p className="text-xs text-slate-400 mb-2">
                       {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
-                    <p className="text-sm text-slate-600 leading-relaxed">
+                    <p className="text-sm text-slate-600 leading-relaxed line-clamp-2">
                       {item.isi}
                     </p>
+                    <div className="text-emerald-600 text-xs font-semibold mt-2 flex items-center gap-1">
+                      Baca selengkapnya <ChevronDown className="w-3 h-3 -rotate-90" />
+                    </div>
                   </div>
                 </div>
               ))
@@ -272,6 +280,41 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
           </div>
         </div>
       </div>
+
+      {/* Pengumuman Modal */}
+      {selectedPengumuman && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50">
+              <div>
+                <h3 className="font-bold text-slate-800 text-lg pr-4">{selectedPengumuman.judul}</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {new Date(selectedPengumuman.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedPengumuman(null)}
+                className="p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 rounded-full transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto">
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                {selectedPengumuman.isi}
+              </p>
+            </div>
+            <div className="p-4 border-t border-slate-100 bg-slate-50">
+              <button 
+                onClick={() => setSelectedPengumuman(null)}
+                className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 text-sm"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

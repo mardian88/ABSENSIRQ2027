@@ -17,11 +17,16 @@ export default async function PortalOrtuDashboard() {
   // Fetch financial data for the dashboard cards
   const keuangan = await getKeuanganData();
 
-  // Fetch active announcements
-  const pengumuman = await db.select()
+  // Fetch active announcements (filter out those older than 7 days)
+  const allPengumuman = await db.select()
     .from(pengumumanPortal)
     .where(eq(pengumumanPortal.isAktif, true))
     .orderBy(desc(pengumumanPortal.tanggal));
+    
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const pengumuman = allPengumuman.filter(p => p.tanggal >= sevenDaysAgo);
     
   // Fetch specific notifications for this santri
   const notifikasi = await db.select()

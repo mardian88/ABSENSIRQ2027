@@ -463,6 +463,201 @@ export async function seedDefaultTemplates() {
       jenisPesan: tmpl.jenisPesan,
       isiPesan: tmpl.isiPesan,
       isAktif: tmpl.isAktif
+  return await db.select().from(fonnteTokens).orderBy(desc(fonnteTokens.isActive));
+}
+
+export async function saveFonnteToken(data: { id?: string, name: string, token: string, isActive: boolean }) {
+  if (data.id) {
+    if (data.isActive) {
+      // Deactivate all others first
+      await db.update(fonnteTokens).set({ isActive: false, isExhausted: false });
+    }
+    await db.update(fonnteTokens).set({
+      name: data.name,
+      token: data.token,
+      isActive: data.isActive,
+      updatedAt: new Date()
+    }).where(eq(fonnteTokens.id, data.id));
+  } else {
+    if (data.isActive) {
+      await db.update(fonnteTokens).set({ isActive: false, isExhausted: false });
+    }
+    await db.insert(fonnteTokens).values({
+      id: uuidv4(),
+      name: data.name,
+      token: data.token,
+      isActive: data.isActive,
+      isExhausted: false,
+      updatedAt: new Date()
+    });
+  }
+  revalidatePath("/pengaturan");
+  return true;
+}
+
+export async function deleteFonnteToken(id: string) {
+  await db.delete(fonnteTokens).where(eq(fonnteTokens.id, id));
+  revalidatePath("/pengaturan");
+  return true;
+}
+
+export async function checkFonnteQuota(token: string) {
+  try {
+    const res = await fetch("https://api.fonnte.com/device", {
+      method: "POST",
+      headers: { Authorization: token }
+    });
+    const data = await res.json();
+    return data;
+  } catch (err: any) {
+    return { status: false, reason: err.message };
+  }
+}
+
+// --- Template Pesan CRUD ---
+export async function getTemplatePesanList() {
+  return await db.select().from(templatePesan);
+}
+
+export async function saveTemplatePesan(data: { id?: string, jenisPesan: string, isiPesan: string, isAktif: boolean }) {
+  if (data.id) {
+    await db.update(templatePesan).set({
+      jenisPesan: data.jenisPesan,
+      isiPesan: data.isiPesan,
+      isAktif: data.isAktif
+    }).where(eq(templatePesan.id, data.id));
+  } else {
+    await db.insert(templatePesan).values({
+      id: uuidv4(),
+      jenisPesan: data.jenisPesan,
+      isiPesan: data.isiPesan,
+      isAktif: data.isAktif
+    });
+  }
+  revalidatePath("/pengaturan");
+  return true;
+}
+
+export async function deleteTemplatePesan(id: string) {
+  await db.delete(templatePesan).where(eq(templatePesan.id, id));
+  revalidatePath("/pengaturan");
+  return true;
+}
+
+export async function toggleTemplatePesan(id: string, isAktif: boolean) {
+  await db.update(templatePesan).set({ isAktif }).where(eq(templatePesan.id, id));
+  revalidatePath("/pengaturan");
+  return true;
+}
+export async function seedDefaultTemplates() {
+  const templatesToSeed = [
+    // ABSEN MASUK
+    {
+      jenisPesan: "absen_masuk",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, ananda [NAMA_SANTRI] telah hadir di Rumah Qur'an pada pukul [WAKTU]. Semoga Allah jadikan setiap langkahnya menuju majelis ilmu sebagai pemberat timbangan amal kebaikan. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_masuk",
+      isiPesan: "Assalamu'alaikum wr. wb. Kami menginformasikan bahwa ananda [NAMA_SANTRI] sudah tiba di halaqah pada jam [WAKTU]. Semoga Allah SWT senantiasa memberikan kemudahan dan kefahaman dalam menuntut ilmu. Aamiin.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_masuk",
+      isiPesan: "Assalamu'alaikum. Puji syukur, ananda [NAMA_SANTRI] telah masuk kelas ([WAKTU]). 'Barangsiapa menempuh jalan untuk menuntut ilmu, Allah akan mudahkan baginya jalan menuju surga' (HR. Muslim).",
+      isAktif: true
+    },
+
+    // ABSEN PULANG
+    {
+      jenisPesan: "absen_pulang",
+      isiPesan: "Assalamu'alaikum. Alhamdulillah kegiatan belajar hari ini telah usai. Ananda [NAMA_SANTRI] telah pulang pada pukul [WAKTU]. Semoga ilmu yang didapat hari ini berkah dan bermanfaat.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_pulang",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Ananda [NAMA_SANTRI] telah menyelesaikan halaqah dan absen pulang jam [WAKTU]. Semoga lelahnya menjadi Lillah dan kelak menjadi ahlul qur'an yang membanggakan keluarga. Aamiin.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_pulang",
+      isiPesan: "Assalamu'alaikum wr. wb. Kami infokan bahwa ananda [NAMA_SANTRI] sudah bersiap pulang pukul [WAKTU]. Terima kasih atas dukungan Ayah/Bunda. Semoga Allah senantiasa merahmati keluarga di rumah.",
+      isAktif: true
+    },
+
+    // ABSEN TELAT
+    {
+      jenisPesan: "absen_telat",
+      isiPesan: "Assalamu'alaikum. Ananda [NAMA_SANTRI] hari ini hadir terlambat pada pukul [WAKTU]. Mohon kerjasamanya agar esok hari bisa hadir lebih tepat waktu, agar keberkahan awal majelis tidak terlewat. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "absen_telat",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Kami menginfokan ananda [NAMA_SANTRI] datang terlambat di kelas pada pukul [WAKTU]. Kedisiplinan adalah kunci kesuksesan seorang penuntut ilmu. Mohon dukungannya di rumah. Terima kasih.",
+      isAktif: true
+    },
+
+    // ALPA ORTU
+    {
+      jenisPesan: "alpa_ortu",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Hari ini ananda [NAMA_SANTRI] belum tercatat kehadirannya (Alpa) di halaqah. Jika ananda berhalangan hadir, mohon berkenan memberikan konfirmasi izin. Semoga Allah senantiasa melindungi kita semua.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "alpa_ortu",
+      isiPesan: "Assalamu'alaikum. Kami merindukan kehadiran ananda [NAMA_SANTRI] di majelis hari ini. Sampai saat ini ananda berstatus Alpa. Apabila ada udzur syar'i, mohon diinformasikan kepada ustaz/ustazah. Jazakumullah khairan.",
+      isAktif: true
+    },
+
+    // IZIN ORTU
+    {
+      jenisPesan: "izin_ortu",
+      isiPesan: "Assalamu'alaikum. Pengajuan izin (Keterangan: [KETERANGAN]) untuk ananda [NAMA_SANTRI] pada tanggal [TANGGAL] telah kami catat. Semoga urusannya dimudahkan Allah dan yang sakit segera diangkat penyakitnya. Aamiin.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "izin_ortu",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Kami telah merekap izin ananda [NAMA_SANTRI] (Alasan: [KETERANGAN]). Semoga Allah SWT senantiasa memberikan kelapangan. Kami tunggu kehadirannya kembali di halaqah dengan semangat baru.",
+      isAktif: true
+    },
+
+    // RAPOR BULANAN
+    {
+      jenisPesan: "rapor_bulanan",
+      isiPesan: "Assalamu'alaikum Warahmatullahi Wabarakatuh,\nBapak/Ibu Wali dari [NAMA_SANTRI],\n\nBerikut kami sampaikan Rapor Kedisiplinan Bulan Ini:\n✅ Hadir: [TOTAL_HADIR] kali\n🤒 Sakit: [TOTAL_SAKIT] hari\n✉️ Izin: [TOTAL_IZIN] hari\n❌ Alpa: [TOTAL_ALPA] kali\n\n🏅 Total Poin Santri: [TOTAL_POIN]\n\nSemoga Ananda semakin disiplin dan istiqomah dalam menuntut ilmu.\nJazakumullah Khairan.",
+      isAktif: true
+    },
+
+    // KEUANGAN
+    {
+      jenisPesan: "topup_tabungan_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pengajuan Top-up Tabungan ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Saldo tabungan saat ini: [SALDO_AKHIR]. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "infaq_kas_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pembayaran Infaq & Kas ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Jazakumullah khairan atas partisipasinya.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "infaq_saja_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pembayaran Infaq ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Semoga pahalanya mengalir tiada henti. Jazakumullah khairan.",
+      isAktif: true
+    },
+    {
+      jenisPesan: "kas_saja_approve",
+      isiPesan: "Assalamu'alaikum Ayah/Bunda. Alhamdulillah, pembayaran Uang Kas ananda [NAMA_SANTRI] sebesar [NOMINAL] telah berhasil kami verifikasi. Jazakumullah khairan.",
+      isAktif: true
+    }
+  ];
+
+  let addedCount = 0;
+  for (const tmpl of templatesToSeed) {
+    await db.insert(templatePesan).values({
+      id: uuidv4(),
+      jenisPesan: tmpl.jenisPesan,
+      isiPesan: tmpl.isiPesan,
+      isAktif: tmpl.isAktif
     });
     addedCount++;
   }
@@ -471,20 +666,29 @@ export async function seedDefaultTemplates() {
   return addedCount;
 }
 
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+
+async function getAdminId() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  return session?.user?.id || null;
+}
 
 export async function getPengumumanPortal() {
   return await db.select().from(pengumumanPortal).orderBy(desc(pengumumanPortal.tanggal));
 }
 
 export async function tambahPengumuman(judul: string, isi: string, isAktif: boolean) {
-  const admin = await requireAdmin();
+  const adminId = await getAdminId();
+  if (!adminId) throw new Error("Akses ditolak");
+
   await db.insert(pengumumanPortal).values({
     id: uuidv4(),
     judul,
     isi,
     tanggal: new Date(),
     isAktif,
-    idAdmin: admin.id
+    idAdmin: adminId
   });
 
   if (isAktif) {
@@ -507,7 +711,9 @@ export async function tambahPengumuman(judul: string, isi: string, isAktif: bool
 }
 
 export async function updatePengumuman(id: string, judul: string, isi: string, isAktif: boolean) {
-  await requireAdmin();
+  const adminId = await getAdminId();
+  if (!adminId) throw new Error("Akses ditolak");
+
   await db.update(pengumumanPortal).set({ judul, isi, isAktif }).where(eq(pengumumanPortal.id, id));
 
   // Note: We only send notification on creation for now, to avoid spamming if just fixing typos.
@@ -518,7 +724,9 @@ export async function updatePengumuman(id: string, judul: string, isi: string, i
 }
 
 export async function hapusPengumuman(id: string) {
-  await requireAdmin();
+  const adminId = await getAdminId();
+  if (!adminId) throw new Error("Akses ditolak");
+
   await db.delete(pengumumanPortal).where(eq(pengumumanPortal.id, id));
   revalidatePath('/pengaturan');
   revalidatePath('/portal-ortu');
