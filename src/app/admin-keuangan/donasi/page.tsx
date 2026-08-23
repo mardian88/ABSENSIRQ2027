@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { db } from "@/db";
 import { programDonasi, transaksiDonasi, santri } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -37,4 +38,5 @@ export default async function DonasiAdminPage() {
     </div>
   );
 }
+
 

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getOrtuSession } from "../../actions";
 import { redirect } from "next/navigation";
 import { FileText, PlusCircle } from "lucide-react";
@@ -40,3 +41,4 @@ export default async function IzinDashboardPage() {
     </div>
   );
 }
+

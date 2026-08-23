@@ -152,45 +152,47 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-20">
-      {/* Header Profile / Saldo */}
-      <div className="bg-emerald-600 rounded-b-3xl p-6 shadow-md text-white relative z-20">
-        <h1 className="text-xl font-bold mb-6">Keuangan & Tabungan</h1>
-        
-        <div className="bg-emerald-500/50 backdrop-blur-md border border-emerald-400 p-6 rounded-2xl shadow-inner relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-20">
-            <Wallet className="w-24 h-24" />
-          </div>
-          <div className="relative z-10">
-            <p className="text-emerald-100 font-medium mb-1">Total Saldo Tabungan</p>
-            <h2 className="text-4xl font-bold tracking-tight">{formatRp(data.saldo)}</h2>
-            
-            <div className="mt-6 flex gap-3">
-              <button 
-                onClick={handleOpenUnified}
-                className="flex-1 bg-white text-emerald-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors shadow-sm"
-              >
-                <Plus className="w-5 h-5" /> Infaq Bulanan, Kas & Tabungan
-              </button>
+      <div className="sticky top-0 z-30 bg-slate-50 pb-2 shadow-sm rounded-b-3xl">
+        {/* Header Profile / Saldo */}
+        <div className="bg-emerald-600 rounded-b-3xl p-6 shadow-md text-white relative z-20">
+          <h1 className="text-xl font-bold mb-6">Keuangan & Tabungan</h1>
+          
+          <div className="bg-emerald-500/50 backdrop-blur-md border border-emerald-400 p-6 rounded-2xl shadow-inner relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-20">
+              <Wallet className="w-24 h-24" />
+            </div>
+            <div className="relative z-10">
+              <p className="text-emerald-100 font-medium mb-1">Total Saldo Tabungan</p>
+              <h2 className="text-4xl font-bold tracking-tight">{formatRp(data.saldo)}</h2>
+              
+              <div className="mt-6 flex gap-3">
+                <button 
+                  onClick={handleOpenUnified}
+                  className="flex-1 bg-white text-emerald-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors shadow-sm"
+                >
+                  <Plus className="w-5 h-5" /> Infaq Bulanan, Kas & Tabungan
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="mt-8 px-6">
-        <div className="flex bg-slate-200/50 p-1 rounded-xl">
-          <button 
-            onClick={() => setActiveTab('kas')}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'kas' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
-          >
-            Infaq & Kas
-          </button>
-          <button 
-            onClick={() => setActiveTab('topup')}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'topup' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
-          >
-            Riwayat Top-up Tabungan
-          </button>
+        {/* Tabs */}
+        <div className="mt-4 px-6">
+          <div className="flex bg-slate-200/50 p-1 rounded-xl">
+            <button 
+              onClick={() => setActiveTab('kas')}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'kas' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+            >
+              Infaq & Kas
+            </button>
+            <button 
+              onClick={() => setActiveTab('topup')}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'topup' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+            >
+              Riwayat Top-up Tabungan
+            </button>
+          </div>
         </div>
       </div>
 
@@ -266,7 +268,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
       {/* Payment Gateway Modal */}
       {isGatewayOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center p-0 sm:p-4">
-          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 flex flex-col max-h-[90vh]">
+          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 flex flex-col max-h-[85svh]">
             
             <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-900 text-white shrink-0">
               <div>
@@ -285,7 +287,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 pb-24 overflow-y-auto">
               {!paymentMethod ? (
                 // Pilih Item & Metode Pembayaran
                 <div className="space-y-6">

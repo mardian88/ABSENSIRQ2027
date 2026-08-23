@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { 
   getDashboardStats, 
   getWeeklyTrend, 
@@ -29,3 +30,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+

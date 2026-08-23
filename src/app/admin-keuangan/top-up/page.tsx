@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getTopupList } from "./actions";
 import { TopupClient } from "./TopupClient";
 
@@ -24,3 +25,4 @@ export default async function TopupPage() {
     </div>
   );
 }
+

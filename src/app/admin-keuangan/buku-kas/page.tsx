@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { BukuKasClient } from "./BukuKasClient";
 
 export default function BukuKasPage() {
@@ -12,3 +13,4 @@ export default function BukuKasPage() {
     </div>
   );
 }
+

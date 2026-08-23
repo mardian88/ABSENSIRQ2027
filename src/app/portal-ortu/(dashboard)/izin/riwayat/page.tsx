@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getOrtuSession, getRiwayatIzin } from "../../../actions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -36,3 +37,4 @@ export default async function RiwayatIzinPage() {
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getKatalogAdmin, getPesananMasuk } from "./actions";
 import KatalogAdminClient from "./KatalogAdminClient";
 
@@ -16,3 +17,4 @@ export default async function KatalogAdminPage() {
 
   return <KatalogAdminClient initialKatalog={katalog} initialPesanan={pesanan} />;
 }
+

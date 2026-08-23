@@ -6,17 +6,19 @@ import Link from "next/link";
 
 export default function DonasiOrtuClient({ initialPrograms }: { initialPrograms: any[] }) {
   return (
-    <div className="pb-24">
+    <div className="pb-24 bg-slate-50 min-h-screen">
       {/* Header */}
-      <div className="bg-emerald-600 px-6 pt-12 pb-6 text-white rounded-b-3xl shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-emerald-500 rounded-full opacity-50 blur-2xl"></div>
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold mb-1">Wakaf Santri</h1>
-          <p className="text-emerald-100 text-sm">Salurkan kebaikan, bangun masa depan bersama.</p>
+      <div className="sticky top-0 z-30 bg-slate-50 pb-4 shadow-sm rounded-b-3xl mb-6">
+        <div className="bg-emerald-600 px-6 pt-8 pb-6 text-white rounded-b-3xl shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-emerald-500 rounded-full opacity-50 blur-2xl"></div>
+          <div className="relative z-10">
+            <h1 className="text-2xl font-bold mb-1">Wakaf Santri</h1>
+            <p className="text-emerald-100 text-sm">Salurkan kebaikan, bangun masa depan bersama.</p>
+          </div>
         </div>
       </div>
 
-      <div className="px-4 mt-6">
+      <div className="px-4">
         <h2 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
           <Heart className="w-5 h-5 text-rose-500 fill-rose-500" /> Program Kebaikan
         </h2>

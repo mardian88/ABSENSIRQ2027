@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getMonitoringData } from "./actions";
 import { MonitoringClient } from "./MonitoringClient";
 import { BarChart3 } from "lucide-react";
@@ -30,3 +31,4 @@ export default async function MonitoringPage() {
     </div>
   );
 }
+

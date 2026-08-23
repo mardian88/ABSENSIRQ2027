@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getProgramDonasiAktif } from "./actions";
 import DonasiOrtuClient from "./DonasiOrtuClient";
 
@@ -7,4 +8,5 @@ export default async function DonasiPage() {
 
   return <DonasiOrtuClient initialPrograms={programs} />;
 }
+
 

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { TabunganClient } from "./TabunganClient";
 
 export default function TabunganPage() {
@@ -12,3 +13,4 @@ export default function TabunganPage() {
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getKeuanganData } from "./actions";
 import { KeuanganOrtuClient } from "./KeuanganClient";
 
@@ -6,3 +7,4 @@ export default async function KeuanganOrtuPage() {
 
   return <KeuanganOrtuClient data={data} />;
 }
+

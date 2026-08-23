@@ -43,34 +43,39 @@ export default function KebutuhanOrtuClient({ katalog, riwayatPesanan, saldo }: 
   const filteredKatalog = filterKategori === 'semua' ? katalog : katalog.filter(k => k.kategori === filterKategori);
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="bg-emerald-700 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold mb-1">Kebutuhan Santri</h1>
-          <p className="text-emerald-100 text-sm">Pesan kebutuhan harian atau seragam langsung dari sini.</p>
+  return (
+    <div className="pb-20 bg-slate-50 min-h-screen">
+      <div className="sticky top-0 z-30 bg-slate-50 pt-4 pb-4 px-4 sm:px-0 shadow-sm border-b border-slate-100 mb-6 flex flex-col gap-4">
+        <div className="bg-emerald-700 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+          <div className="relative z-10">
+            <h1 className="text-2xl font-bold mb-1">Kebutuhan Santri</h1>
+            <p className="text-emerald-100 text-sm">Pesan kebutuhan harian atau seragam langsung dari sini.</p>
+          </div>
+          <div className="absolute top-0 right-0 p-4 opacity-20">
+            <Archive className="w-24 h-24" />
+          </div>
         </div>
-        <div className="absolute top-0 right-0 p-4 opacity-20">
-          <Archive className="w-24 h-24" />
+
+        <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm overflow-x-auto">
+          <button onClick={() => setActiveTab('katalog')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'katalog' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+            Katalog Barang
+          </button>
+          <button onClick={() => setActiveTab('pesanan')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'pesanan' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+            Pesanan Saya
+          </button>
         </div>
-      </div>
 
-      <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm overflow-x-auto mx-4 sm:mx-0">
-        <button onClick={() => setActiveTab('katalog')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'katalog' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
-          Katalog Barang
-        </button>
-        <button onClick={() => setActiveTab('pesanan')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'pesanan' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
-          Pesanan Saya
-        </button>
-      </div>
-
-      {activeTab === 'katalog' && (
-        <div className="space-y-4 px-4 sm:px-0">
-          <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        {activeTab === 'katalog' && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
             <button onClick={() => setFilterKategori('semua')} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${filterKategori === 'semua' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200'}`}>Semua</button>
             <button onClick={() => setFilterKategori('gratis')} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${filterKategori === 'gratis' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200'}`}>Gratis</button>
             <button onClick={() => setFilterKategori('berbayar')} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border ${filterKategori === 'berbayar' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-200'}`}>Berbayar</button>
           </div>
+        )}
+      </div>
 
+      {activeTab === 'katalog' && (
+        <div className="space-y-4 px-4 sm:px-0">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredKatalog.map(item => (
               <div key={item.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 flex flex-col sm:flex-row gap-4">

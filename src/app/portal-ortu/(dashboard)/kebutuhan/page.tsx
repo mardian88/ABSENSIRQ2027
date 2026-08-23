@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getKatalogOrtu, getRiwayatPesananOrtu } from "./actions";
 import KebutuhanOrtuClient from "./KebutuhanOrtuClient";
 import { cookies } from "next/headers";
@@ -40,3 +41,4 @@ export default async function KebutuhanOrtuPage() {
 
   return <KebutuhanOrtuClient katalog={katalog} riwayatPesanan={riwayat} saldo={totalSaldo} />;
 }
+

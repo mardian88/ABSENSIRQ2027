@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { FormIzinClient } from "./FormIzinClient";
 import { cekStatusLiburIzin } from "../../../actions";
 import { Lock, ArrowLeft } from "lucide-react";
@@ -34,3 +35,4 @@ export default async function FormIzinPage() {
 
   return <FormIzinClient />;
 }
+

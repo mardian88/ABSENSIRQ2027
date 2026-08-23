@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getDetailProgramDonasi } from "../actions";
 import DonasiDetailClient from "./DonasiDetailClient";
 import { redirect } from "next/navigation";
