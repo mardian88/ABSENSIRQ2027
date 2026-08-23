@@ -59,12 +59,8 @@ export async function buatPesanan(idKatalog: string) {
 
     // 2. Jika berbayar, cek saldo dan potong saldo
     if (barang.kategori === 'berbayar') {
-      const tabunganList = await db.select().from(keuanganTabungan).where(eq(keuanganTabungan.idSantri, santriId));
-      let totalSaldo = 0;
-      tabunganList.forEach(t => {
-        if (t.jenis === 'setor' || t.jenis === 'topup') totalSaldo += t.nominal;
-        else if (t.jenis === 'tarik' || t.jenis === 'belanja') totalSaldo -= t.nominal;
-      });
+      const s = await db.select({ saldo: santri.saldoTabungan }).from(santri).where(eq(santri.id, santriId));
+      const totalSaldo = s[0]?.saldo || 0;
 
       if (totalSaldo < barang.harga) {
         return { success: false, message: `Saldo tabungan tidak mencukupi. Saldo Anda: Rp ${totalSaldo.toLocaleString('id-ID')}` };
@@ -81,6 +77,11 @@ export async function buatPesanan(idKatalog: string) {
         tanggal: new Date(),
         idAdmin: null // Otomatis dari portal
       });
+
+      // Update kolom saldoTabungan di tabel santri
+      await db.update(santri)
+        .set({ saldoTabungan: totalSaldo - barang.harga })
+        .where(eq(santri.id, santriId));
     }
 
     // 3. Kurangi stok barang

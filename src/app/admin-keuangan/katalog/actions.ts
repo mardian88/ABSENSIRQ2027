@@ -221,6 +221,11 @@ export async function batalkanPesanan(idPesanan: string, alasan: string) {
         tanggal: new Date(),
         idAdmin: adminId
       });
+
+      // Update kolom saldoTabungan di tabel santri
+      const s = await db.select({ saldo: santri.saldoTabungan }).from(santri).where(eq(santri.id, p.idSantri));
+      const currentSaldo = s[0]?.saldo || 0;
+      await db.update(santri).set({ saldoTabungan: currentSaldo + p.hargaSaatPesan }).where(eq(santri.id, p.idSantri));
     }
 
     await db.update(pesananKebutuhan)
@@ -256,17 +261,22 @@ export async function hapusPesanan(idPesanan: string) {
           .where(eq(katalogKebutuhan.id, p.idKatalog));
       }
 
-      if (p.idTransaksiTabungan) {
-        await db.insert(keuanganTabungan).values({
-          id: uuidv4(),
-          idSantri: p.idSantri,
-          jenis: 'setor',
-          nominal: p.hargaSaatPesan,
-          keterangan: 'Refund Hapus Pesanan',
-          tanggal: new Date(),
-          idAdmin: adminId
-        });
-      }
+        if (p.idTransaksiTabungan) {
+          await db.insert(keuanganTabungan).values({
+            id: uuidv4(),
+            idSantri: p.idSantri,
+            jenis: 'setor',
+            nominal: p.hargaSaatPesan,
+            keterangan: 'Refund Hapus Pesanan',
+            tanggal: new Date(),
+            idAdmin: adminId
+          });
+
+          // Update kolom saldoTabungan di tabel santri
+          const s = await db.select({ saldo: santri.saldoTabungan }).from(santri).where(eq(santri.id, p.idSantri));
+          const currentSaldo = s[0]?.saldo || 0;
+          await db.update(santri).set({ saldoTabungan: currentSaldo + p.hargaSaatPesan }).where(eq(santri.id, p.idSantri));
+        }
     }
 
     await db.delete(pesananKebutuhan).where(eq(pesananKebutuhan.id, idPesanan));
