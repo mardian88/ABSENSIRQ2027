@@ -252,29 +252,31 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
             <Bell className="w-5 h-5 text-slate-400" />
           </div>
           
-          <div className="space-y-4">
+          <div>
             {pengumuman && pengumuman.length > 0 ? (
-              pengumuman.map((item: any) => (
-                <div 
-                  key={item.id} 
-                  onClick={() => setSelectedPengumuman(item)}
-                  className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 cursor-pointer hover:border-emerald-200 hover:shadow-md transition-all active:scale-[0.98]"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-bold text-slate-800 mb-1">{item.judul}</h4>
-                    <p className="text-xs text-slate-400 mb-2">
-                      {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
-                    <div 
-                      className="text-sm text-slate-600 leading-relaxed line-clamp-2"
-                      dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
-                    />
-                    <div className="text-emerald-600 text-xs font-semibold mt-2 flex items-center gap-1">
-                      Baca selengkapnya <ChevronDown className="w-3 h-3 -rotate-90" />
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                {pengumuman.map((item: any) => (
+                  <div 
+                    key={item.id} 
+                    onClick={() => setSelectedPengumuman(item)}
+                    className="p-4 flex gap-3 cursor-pointer hover:bg-slate-50 transition-colors active:bg-slate-100"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-bold text-slate-800 text-sm mb-0.5">{item.judul}</h4>
+                      <p className="text-[10px] text-slate-400 mb-1.5">
+                        {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                      <div 
+                        className="text-xs text-slate-500 leading-relaxed line-clamp-1"
+                        dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-center shrink-0">
+                      <ChevronDown className="w-4 h-4 text-slate-300 -rotate-90" />
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <div className="text-center p-8 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-sm">
                 Belum ada pengumuman
