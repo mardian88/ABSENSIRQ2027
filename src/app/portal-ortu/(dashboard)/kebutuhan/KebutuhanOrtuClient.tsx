@@ -43,7 +43,6 @@ export default function KebutuhanOrtuClient({ katalog, riwayatPesanan, saldo }: 
   const filteredKatalog = filterKategori === 'semua' ? katalog : katalog.filter(k => k.kategori === filterKategori);
 
   return (
-  return (
     <div className="pb-20 bg-slate-50 min-h-screen">
       <div className="sticky top-0 z-30 bg-slate-50 pt-4 pb-4 px-4 sm:px-0 shadow-sm border-b border-slate-100 mb-6 flex flex-col gap-4">
         <div className="bg-emerald-700 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
