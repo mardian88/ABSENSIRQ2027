@@ -362,7 +362,7 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
                     </div>
                     <div>
                       <p className="font-bold text-slate-800 text-sm">{d.isAnonim ? 'Hamba Allah' : d.namaSantri}</p>
-                      <p className="text-xs font-bold text-emerald-600 mb-1">Berdonasi {formatRp(d.nominal)}</p>
+                      <p className="text-xs font-bold text-emerald-600 mb-1">Berdonasi {formatRp(d.nominal - (d.nominal % 1000))}</p>
                       {d.doa && <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded-lg italic">"{d.doa}"</p>}
                     </div>
                   </div>

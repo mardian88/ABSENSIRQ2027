@@ -135,7 +135,8 @@ export async function verifikasiDonasi(idTransaksi: string) {
     const pArr = await db.select().from(programDonasi).where(eq(programDonasi.id, t.idProgram));
     if (pArr.length > 0) {
       const p = pArr[0];
-      const newTerkumpul = p.terkumpul + t.nominal;
+      const cleanNominal = t.nominal - (t.nominal % 1000);
+      const newTerkumpul = p.terkumpul + cleanNominal;
       let newAktif = p.isAktif;
       
       // Auto non-aktif jika target terpenuhi
