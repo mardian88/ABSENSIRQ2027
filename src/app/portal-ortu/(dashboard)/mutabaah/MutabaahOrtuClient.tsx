@@ -57,23 +57,27 @@ export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: 
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-5xl mx-auto w-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Mutabaah Santri</h1>
-        <p className="text-slate-500">Pantau capaian mengaji dan hafalan</p>
+    <div className="pb-20 bg-slate-50 min-h-screen">
+      <div className="sticky top-0 z-30 bg-slate-50 pt-6 px-6 pb-4 shadow-sm border-b border-slate-100 mb-6 flex flex-col gap-4">
+        <div className="max-w-5xl mx-auto w-full flex flex-col gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">Mutabaah Santri</h1>
+            <p className="text-slate-500">Pantau capaian mengaji dan hafalan</p>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm overflow-x-auto">
+            <button onClick={()=>setActiveTab('riwayat')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'riwayat' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <CalendarCheck className="w-4 h-4" /> Riwayat Mutabaah
+            </button>
+            <button onClick={()=>setActiveTab('liburan')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'liburan' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <PenTool className="w-4 h-4" /> Input Mandiri (Liburan)
+            </button>
+          </div>
+        </div>
       </div>
 
-      <main className="space-y-6">
-        
-        {/* Navigation Tabs */}
-        <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm overflow-x-auto">
-          <button onClick={()=>setActiveTab('riwayat')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'riwayat' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <CalendarCheck className="w-4 h-4" /> Riwayat Mutabaah
-          </button>
-          <button onClick={()=>setActiveTab('liburan')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'liburan' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <PenTool className="w-4 h-4" /> Input Mandiri (Liburan)
-          </button>
-        </div>
+      <main className="space-y-6 max-w-5xl mx-auto w-full px-6">
 
         {activeTab === 'riwayat' && (
           <div className="space-y-4">

@@ -6,7 +6,7 @@ export default async function DonasiPage() {
   const res = await getProgramDonasiAktif();
   const programs = res.success ? res.data : [];
 
-  return <DonasiOrtuClient initialPrograms={programs} />;
+  return <DonasiOrtuClient initialPrograms={programs || []} />;
 }
 
 

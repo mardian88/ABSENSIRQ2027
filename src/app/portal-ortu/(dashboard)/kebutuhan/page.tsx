@@ -12,14 +12,7 @@ export const metadata = {
 
 export default async function KebutuhanOrtuPage() {
   const c = await cookies();
-  const sessionData = c.get("ortu_session")?.value;
-  let santriId = "";
-  if (sessionData) {
-    try {
-      const data = JSON.parse(sessionData);
-      santriId = data.id;
-    } catch {}
-  }
+  const santriId = c.get("ortu_session")?.value || "";
 
   // Hitung saldo tabungan untuk keperluan "berbayar"
   let totalSaldo = 0;
