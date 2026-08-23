@@ -463,92 +463,15 @@ export async function seedDefaultTemplates() {
       jenisPesan: tmpl.jenisPesan,
       isiPesan: tmpl.isiPesan,
       isAktif: tmpl.isAktif
-  return await db.select().from(fonnteTokens).orderBy(desc(fonnteTokens.isActive));
-}
-
-export async function saveFonnteToken(data: { id?: string, name: string, token: string, isActive: boolean }) {
-  if (data.id) {
-    if (data.isActive) {
-      // Deactivate all others first
-      await db.update(fonnteTokens).set({ isActive: false, isExhausted: false });
-    }
-    await db.update(fonnteTokens).set({
-      name: data.name,
-      token: data.token,
-      isActive: data.isActive,
-      updatedAt: new Date()
-    }).where(eq(fonnteTokens.id, data.id));
-  } else {
-    if (data.isActive) {
-      await db.update(fonnteTokens).set({ isActive: false, isExhausted: false });
-    }
-    await db.insert(fonnteTokens).values({
-      id: uuidv4(),
-      name: data.name,
-      token: data.token,
-      isActive: data.isActive,
-      isExhausted: false,
-      updatedAt: new Date()
     });
+    addedCount++;
   }
+
   revalidatePath("/pengaturan");
-  return true;
+  return addedCount;
 }
 
-export async function deleteFonnteToken(id: string) {
-  await db.delete(fonnteTokens).where(eq(fonnteTokens.id, id));
-  revalidatePath("/pengaturan");
-  return true;
-}
 
-export async function checkFonnteQuota(token: string) {
-  try {
-    const res = await fetch("https://api.fonnte.com/device", {
-      method: "POST",
-      headers: { Authorization: token }
-    });
-    const data = await res.json();
-    return data;
-  } catch (err: any) {
-    return { status: false, reason: err.message };
-  }
-}
-
-// --- Template Pesan CRUD ---
-export async function getTemplatePesanList() {
-  return await db.select().from(templatePesan);
-}
-
-export async function saveTemplatePesan(data: { id?: string, jenisPesan: string, isiPesan: string, isAktif: boolean }) {
-  if (data.id) {
-    await db.update(templatePesan).set({
-      jenisPesan: data.jenisPesan,
-      isiPesan: data.isiPesan,
-      isAktif: data.isAktif
-    }).where(eq(templatePesan.id, data.id));
-  } else {
-    await db.insert(templatePesan).values({
-      id: uuidv4(),
-      jenisPesan: data.jenisPesan,
-      isiPesan: data.isiPesan,
-      isAktif: data.isAktif
-    });
-  }
-  revalidatePath("/pengaturan");
-  return true;
-}
-
-export async function deleteTemplatePesan(id: string) {
-  await db.delete(templatePesan).where(eq(templatePesan.id, id));
-  revalidatePath("/pengaturan");
-  return true;
-}
-
-export async function toggleTemplatePesan(id: string, isAktif: boolean) {
-  await db.update(templatePesan).set({ isAktif }).where(eq(templatePesan.id, id));
-  revalidatePath("/pengaturan");
-  return true;
-}
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
