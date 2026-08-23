@@ -60,8 +60,8 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
     }
 
     setLoading(true);
-    // Add unique code (random 10-99)
-    const code = Math.floor(Math.random() * 90) + 10;
+    // Add unique code (random 10-300)
+    const code = Math.floor(Math.random() * (300 - 10 + 1)) + 10;
     setUniqueCode(code);
     
     const finalNominal = nominalValue + code;
@@ -114,48 +114,48 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
 
   if (step === 'payment') {
     return (
-      <div className="pb-24">
+      <div className="pb-20 bg-slate-50 min-h-screen">
         {/* Header */}
-        <div className="bg-slate-900 px-4 pt-6 pb-6 text-white flex items-center gap-3 relative z-10 sticky top-0">
+        <div className="bg-slate-900 px-4 py-4 text-white flex items-center gap-3 sticky top-0 z-10 shadow-md">
           <h1 className="font-bold text-lg flex-1">Pembayaran Wakaf</h1>
         </div>
 
-        <div className="p-4 space-y-6 animate-in slide-in-from-right-4">
-          <div className="flex items-center justify-between mb-2 bg-rose-50 px-4 py-2 rounded-xl border border-rose-100">
-            <span className="text-sm font-medium text-rose-800">Sisa Waktu Pembayaran</span>
-            <div className="text-rose-600 font-bold flex items-center gap-2">
-              <Clock className="w-5 h-5" /> {formatTime(timeLeft)}
+        <div className="p-4 space-y-4 animate-in slide-in-from-right-4">
+          <div className="flex items-center justify-between bg-rose-50 px-3 py-2 rounded-lg border border-rose-100">
+            <span className="text-[11px] font-medium text-rose-800">Sisa Waktu Pembayaran</span>
+            <div className="text-rose-600 font-bold flex items-center gap-1.5 text-xs">
+              <Clock className="w-3.5 h-3.5" /> {formatTime(timeLeft)}
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center shadow-sm">
-            <p className="text-sm text-slate-500 mb-1">Total Wakaf</p>
+          <div className="bg-white p-4 rounded-xl border border-slate-200 text-center shadow-sm">
+            <p className="text-[11px] text-slate-500 mb-0.5">Total Wakaf</p>
             <p className="text-3xl font-black text-emerald-600">{formatRp(nominalValue)}</p>
-            <p className="text-[10px] text-slate-400 mt-2 bg-slate-50 px-3 py-1.5 rounded-lg inline-block">Termasuk angka unik: <span className="font-bold text-slate-700">{uniqueCode}</span></p>
+            <p className="text-[10px] text-slate-400 mt-1 bg-slate-50 px-3 py-1 rounded-lg inline-block">Termasuk angka unik: <span className="font-bold text-slate-700">{uniqueCode}</span></p>
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col items-center justify-center relative shadow-inner">
-            <h3 className="font-bold text-slate-700 mb-4">Scan QRIS</h3>
-            <div className="w-full flex justify-center mb-4 relative overflow-hidden">
-              <div className="bg-white p-4 rounded-xl shadow-md border border-slate-200 w-max">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center relative shadow-sm">
+            <h3 className="text-sm font-bold text-slate-700 mb-3">Scan QRIS</h3>
+            <div className="w-full flex justify-center mb-3 relative overflow-hidden">
+              <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 w-max">
                 {STATIC_QRIS ? (
                   <QRCodeCanvas 
                     id="qris-canvas"
                     value={generateDynamicQRIS(STATIC_QRIS, nominalValue)} 
-                    size={220} 
+                    size={200} 
                     level={"H"} 
                     imageSettings={{
                       src: "/logo.png",
                       x: undefined,
                       y: undefined,
-                      height: 40,
-                      width: 40,
+                      height: 32,
+                      width: 32,
                       excavate: true,
                     }} 
                   />
                 ) : (
-                  <div className="w-[220px] h-[220px] bg-slate-100 flex items-center justify-center text-slate-400 text-sm text-center p-4">
-                    QRIS belum dikonfigurasi oleh Admin.
+                  <div className="w-[200px] h-[200px] bg-slate-100 flex items-center justify-center text-slate-400 text-xs text-center p-4">
+                    QRIS belum dikonfigurasi.
                   </div>
                 )}
               </div>
@@ -164,23 +164,23 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
             {STATIC_QRIS && (
               <button 
                 onClick={downloadQRIS}
-                className="flex items-center gap-2 text-indigo-600 font-bold bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-xl transition-colors mb-2"
+                className="flex items-center gap-2 text-indigo-600 font-bold bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-lg transition-colors mb-2 text-sm"
               >
                 <Download className="w-4 h-4" /> Download QRIS
               </button>
             )}
 
-            <p className="text-xs text-slate-500 mt-2 text-center max-w-[250px]">Scan QR code ini menggunakan aplikasi M-Banking atau e-Wallet kesayangan Anda.</p>
+            <p className="text-[10px] text-slate-500 mt-1 text-center max-w-[200px] leading-tight">Scan QR code menggunakan aplikasi M-Banking atau e-Wallet kesayangan Anda.</p>
           </div>
 
-          <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-indigo-800 text-sm flex gap-3 mt-6">
-            <AlertCircle className="w-5 h-5 shrink-0" />
+          <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-indigo-800 text-[11px] flex gap-2 leading-tight">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <p>Setelah melakukan transfer/scan QRIS, silakan klik tombol di bawah agar Wakaf diverifikasi oleh Admin.</p>
           </div>
 
           <button 
             onClick={selesaikanDonasi}
-            className="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-600/20 mt-4 text-lg"
+            className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 text-sm"
           >
             Selesai & Konfirmasi
           </button>
