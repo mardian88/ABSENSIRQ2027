@@ -154,23 +154,23 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
     <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-20">
       <div className="sticky top-0 z-30 bg-slate-50 pb-2 shadow-sm rounded-b-3xl">
         {/* Header Profile / Saldo */}
-        <div className="bg-emerald-600 rounded-b-3xl p-6 shadow-md text-white relative z-20">
-          <h1 className="text-xl font-bold mb-6">Keuangan & Tabungan</h1>
+        <div className="bg-emerald-600 rounded-b-3xl p-5 shadow-md text-white relative z-20">
+          <h1 className="text-xl font-bold mb-4">Keuangan & Tabungan</h1>
           
-          <div className="bg-emerald-500/50 backdrop-blur-md border border-emerald-400 p-6 rounded-2xl shadow-inner relative overflow-hidden">
+          <div className="bg-emerald-500/50 backdrop-blur-md border border-emerald-400 p-5 rounded-2xl shadow-inner relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-20">
-              <Wallet className="w-24 h-24" />
+              <Wallet className="w-20 h-20" />
             </div>
             <div className="relative z-10">
-              <p className="text-emerald-100 font-medium mb-1">Total Saldo Tabungan</p>
-              <h2 className="text-4xl font-bold tracking-tight">{formatRp(data.saldo)}</h2>
+              <p className="text-emerald-100 font-medium mb-1 text-sm">Total Saldo Tabungan</p>
+              <h2 className="text-3xl font-bold tracking-tight">{formatRp(data.saldo)}</h2>
               
-              <div className="mt-6 flex gap-3">
+              <div className="mt-4 flex gap-3">
                 <button 
                   onClick={handleOpenUnified}
-                  className="flex-1 bg-white text-emerald-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors shadow-sm"
+                  className="flex-1 bg-white text-emerald-700 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors shadow-sm text-sm"
                 >
-                  <Plus className="w-5 h-5" /> Infaq Bulanan, Kas & Tabungan
+                  <Plus className="w-4 h-4" /> Infaq Bulanan, Kas & Tabungan
                 </button>
               </div>
             </div>

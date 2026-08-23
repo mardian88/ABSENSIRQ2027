@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { formatRp } from "@/lib/utils";
 import { buatPesanan } from "./actions";
-import { Clock, CheckCircle, XCircle, Archive, AlertCircle } from "lucide-react";
+import { Clock, CheckCircle, XCircle, Archive, AlertCircle, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
 
@@ -11,7 +11,14 @@ export default function KebutuhanOrtuClient({ katalog, riwayatPesanan, saldo }: 
   const [activeTab, setActiveTab] = useState<'katalog' | 'pesanan'>('katalog');
   const [filterKategori, setFilterKategori] = useState<'semua' | 'gratis' | 'berbayar'>('semua');
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [isRefreshing, startTransition] = useTransition();
   const router = useRouter();
+
+  const handleRefresh = () => {
+    startTransition(() => {
+      router.refresh();
+    });
+  };
 
   const handlePesan = async (item: any) => {
     if (item.kategori === 'berbayar' && saldo < item.harga) {
@@ -44,18 +51,26 @@ export default function KebutuhanOrtuClient({ katalog, riwayatPesanan, saldo }: 
 
   return (
     <div className="pb-20 bg-slate-50 min-h-screen">
-      <div className="sticky top-0 z-30 bg-slate-50 pt-4 pb-4 px-4 sm:px-0 shadow-sm border-b border-slate-100 mb-6 flex flex-col gap-4">
-        <div className="bg-emerald-700 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+      <div className="sticky top-0 z-30 bg-slate-50 pt-3 pb-3 px-4 sm:px-0 shadow-sm border-b border-slate-200 mb-5 flex flex-col gap-3">
+        <div className="bg-emerald-700 text-white p-4 md:p-5 rounded-2xl shadow-md relative overflow-hidden">
           <div className="relative z-10">
-            <h1 className="text-2xl font-bold mb-1">Kebutuhan Santri</h1>
-            <p className="text-emerald-100 text-sm mb-4">Pesan kebutuhan harian atau seragam langsung dari sini.</p>
+            <h1 className="text-xl md:text-2xl font-bold mb-1">Kebutuhan Santri</h1>
+            <p className="text-emerald-100 text-xs md:text-sm mb-3">Pesan kebutuhan harian atau seragam langsung dari sini.</p>
             <div className="inline-flex items-center gap-2 bg-emerald-800/50 rounded-lg px-3 py-2 border border-emerald-600/50">
               <span className="text-xs text-emerald-100">Saldo Tabungan:</span>
-              <span className="font-bold">{formatRp(saldo)}</span>
+              <span className="font-bold text-sm">{formatRp(saldo)}</span>
+              <button 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="ml-1 p-1 hover:bg-emerald-600/50 rounded-md transition-colors disabled:opacity-50"
+                title="Refresh Saldo"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-emerald-100 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
-          <div className="absolute top-0 right-0 p-4 opacity-20">
-            <Archive className="w-24 h-24" />
+          <div className="absolute -top-4 -right-4 p-4 opacity-10">
+            <Archive className="w-24 h-24 md:w-32 md:h-32" />
           </div>
         </div>
 

@@ -8,11 +8,11 @@ export default function DonasiOrtuClient({ initialPrograms }: { initialPrograms:
   return (
     <div className="pb-24 bg-slate-50 min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-slate-50 pb-4 shadow-sm rounded-b-3xl mb-6">
-        <div className="bg-emerald-600 px-6 pt-8 pb-6 text-white rounded-b-3xl shadow-lg relative overflow-hidden">
+      <div className="sticky top-0 z-30 bg-slate-50 pb-3 shadow-sm rounded-b-3xl mb-5">
+        <div className="bg-emerald-600 px-5 py-5 text-white rounded-b-3xl shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-emerald-500 rounded-full opacity-50 blur-2xl"></div>
           <div className="relative z-10">
-            <h1 className="text-2xl font-bold mb-1">Wakaf Santri</h1>
+            <h1 className="text-xl font-bold mb-1">Wakaf Santri</h1>
             <p className="text-emerald-100 text-sm">Salurkan kebaikan, bangun masa depan bersama.</p>
           </div>
         </div>

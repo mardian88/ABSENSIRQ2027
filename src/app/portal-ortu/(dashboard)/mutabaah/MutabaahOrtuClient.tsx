@@ -58,26 +58,26 @@ export function MutabaahOrtuClient({ profil, riwayat }: { profil: any, riwayat: 
 
   return (
     <div className="pb-20 bg-slate-50 min-h-screen">
-      <div className="sticky top-0 z-30 bg-slate-50 pt-6 px-6 pb-4 shadow-sm border-b border-slate-100 mb-6 flex flex-col gap-4">
-        <div className="max-w-5xl mx-auto w-full flex flex-col gap-4">
+      <div className="sticky top-0 z-30 bg-slate-50 pt-4 px-4 pb-3 shadow-sm border-b border-slate-100 mb-5 flex flex-col gap-3">
+        <div className="max-w-5xl mx-auto w-full flex flex-col gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Mutabaah Santri</h1>
-            <p className="text-slate-500">Pantau capaian mengaji dan hafalan</p>
+            <h1 className="text-xl font-bold text-slate-800">Mutabaah Santri</h1>
+            <p className="text-slate-500 text-sm">Pantau capaian mengaji dan hafalan</p>
           </div>
 
           {/* Navigation Tabs */}
           <div className="flex gap-2 p-1 bg-white rounded-xl shadow-sm overflow-x-auto">
-            <button onClick={()=>setActiveTab('riwayat')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'riwayat' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
-              <CalendarCheck className="w-4 h-4" /> Riwayat Mutabaah
+            <button onClick={()=>setActiveTab('riwayat')} className={`flex-1 py-1.5 px-3 rounded-lg font-medium text-xs whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'riwayat' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <CalendarCheck className="w-3.5 h-3.5" /> Riwayat Mutabaah
             </button>
-            <button onClick={()=>setActiveTab('liburan')} className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'liburan' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
-              <PenTool className="w-4 h-4" /> Input Mandiri (Liburan)
+            <button onClick={()=>setActiveTab('liburan')} className={`flex-1 py-1.5 px-3 rounded-lg font-medium text-xs whitespace-nowrap transition-colors flex items-center justify-center gap-2 ${activeTab === 'liburan' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+              <PenTool className="w-3.5 h-3.5" /> Input Mandiri (Liburan)
             </button>
           </div>
         </div>
       </div>
 
-      <main className="space-y-6 max-w-5xl mx-auto w-full px-6">
+      <main className="space-y-5 max-w-5xl mx-auto w-full px-4">
 
         {activeTab === 'riwayat' && (
           <div className="space-y-4">
