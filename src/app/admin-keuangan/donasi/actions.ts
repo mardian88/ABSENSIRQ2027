@@ -185,8 +185,9 @@ export async function hapusTransaksiDonasi(idTransaksi: string) {
     if (t.status === 'terverifikasi') {
       const pArr = await db.select().from(programDonasi).where(eq(programDonasi.id, t.idProgram));
       if (pArr.length > 0) {
+        const cleanNominal = t.nominal - (t.nominal % 1000);
         await db.update(programDonasi)
-          .set({ terkumpul: pArr[0].terkumpul - t.nominal })
+          .set({ terkumpul: pArr[0].terkumpul - cleanNominal })
           .where(eq(programDonasi.id, t.idProgram));
       }
     }
@@ -194,6 +195,26 @@ export async function hapusTransaksiDonasi(idTransaksi: string) {
     await db.delete(transaksiDonasi).where(eq(transaksiDonasi.id, idTransaksi));
     revalidatePath("/admin-keuangan/donasi");
     return { success: true, message: "Transaksi donasi berhasil dihapus permanen" };
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function resetProgramDonasi(id: string) {
+  const adminId = await getAdminId();
+  if (!adminId) return { success: false, message: "Akses ditolak" };
+
+  try {
+    // Delete all transactions for this program
+    await db.delete(transaksiDonasi).where(eq(transaksiDonasi.idProgram, id));
+    
+    // Reset terkumpul to 0
+    await db.update(programDonasi)
+      .set({ terkumpul: 0 })
+      .where(eq(programDonasi.id, id));
+      
+    revalidatePath("/admin-keuangan/donasi");
+    return { success: true, message: "Program donasi berhasil di-reset (Semua riwayat dan nominal kembali ke 0)" };
   } catch (err: any) {
     return { success: false, message: err.message };
   }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Edit, Trash2, CheckCircle, XCircle, Search, Archive, Heart, Clock } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle, XCircle, Search, Archive, Heart, Clock, RotateCcw } from "lucide-react";
 import { formatRp } from "@/lib/utils";
 import { showConfirm, showSuccess, showError, showPrompt } from "@/lib/sweetalert";
 import { useRouter } from "next/navigation";
-import { tambahProgram, editProgram, hapusProgram, verifikasiDonasi, tolakDonasi, hapusTransaksiDonasi, uploadImageToCloudinaryDonasi } from "./actions";
+import { tambahProgram, editProgram, hapusProgram, verifikasiDonasi, tolakDonasi, hapusTransaksiDonasi, resetProgramDonasi, uploadImageToCloudinaryDonasi } from "./actions";
 
 export default function DonasiAdminClient({ initialPrograms, initialTransaksi }: { initialPrograms: any[], initialTransaksi: any[] }) {
   const router = useRouter();
@@ -122,6 +122,25 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
     }
   };
 
+  const handleResetProgram = async (id: string) => {
+    const pwd = await showPrompt("Reset nominal dan riwayat ke 0? Ini akan menghapus permanen data komentar & donatur untuk program ini.", "password", "Reset");
+    if (pwd !== null) {
+      if (pwd !== "rqm") {
+        showError("Gagal", "Password salah!");
+        return;
+      }
+      setLoading(true);
+      const res = await resetProgramDonasi(id);
+      setLoading(false);
+      if (res.success) {
+        await showSuccess("Berhasil Reset", res.message);
+        router.refresh();
+      } else {
+        showError("Gagal", res.message);
+      }
+    }
+  };
+
   const handleVerifikasi = async (id: string) => {
     if (await showConfirm("Verifikasi Wakaf?", "Tandai Wakaf ini sebagai selesai/terima uang?")) {
       setLoading(true);
@@ -210,8 +229,9 @@ export default function DonasiAdminClient({ initialPrograms, initialTransaksi }:
                     <div className="flex justify-between items-start gap-2">
                       <h3 className="font-bold text-slate-800 line-clamp-2">{item.judul}</h3>
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => handleDeleteProgram(item.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleResetProgram(item.id)} className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg" title="Reset Donasi"><RotateCcw className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(item)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => handleDeleteProgram(item.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg" title="Hapus"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </div>
                     <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.deskripsi}</p>
