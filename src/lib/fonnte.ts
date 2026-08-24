@@ -55,7 +55,7 @@ export async function sendFonnteMessage(phone: string, message: string) {
       console.log("[FONNTE] Response:", result);
       
       if (result.status === true) {
-        return { success: true, message: result.detail || "Berhasil dikirim" };
+        return { success: true, message: result.detail || "Berhasil dikirim", fonnteId: result.id && result.id[0] ? result.id[0].toString() : null };
       } else {
         // Gagal, periksa apakah karena limit/kuota
         const reason = (result.reason || result.detail || "").toLowerCase();
@@ -105,7 +105,7 @@ export async function sendTemplatedMessage(
 ) {
   if (!phone) {
     console.log("[FONNTE] No phone number provided, skipping.");
-    return;
+    return { success: false, message: "Nomor WhatsApp tidak tersedia" };
   }
 
   try {
@@ -119,7 +119,7 @@ export async function sendTemplatedMessage(
 
     if (templates.length === 0) {
       console.log(`[FONNTE] No active template found for ${jenisPesan}`);
-      return;
+      return { success: false, message: "Template pesan tidak ditemukan" };
     }
 
     // 2. Randomize: pick one template randomly
@@ -136,9 +136,11 @@ export async function sendTemplatedMessage(
     finalMessage = finalMessage.replace(/\[NIS\]/g, payload.nis || "-");
 
     // 4. Send message
-    await sendFonnteMessage(phone, finalMessage);
+    return await sendFonnteMessage(phone, finalMessage);
     
   } catch (error) {
     console.error("[FONNTE TEMPLATE ERROR]", error);
+    return { success: false, message: "Terjadi kesalahan internal" };
   }
 }
+

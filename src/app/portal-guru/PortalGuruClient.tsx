@@ -11,6 +11,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { getIzinHariIniColumns, getBelumHadirHariIniColumns } from "./columns";
 import { formatWhatsAppStyle } from "@/lib/utils";
 import { markNotifikasiGuruRead } from "./actions";
+import { sendPesanBelumHadir } from "../laporan-absensi/belum-hadir/actions";
 import { Bell, ChevronDown, ChevronUp } from "lucide-react";
 
 export function PortalGuruClient({ initialData }: { initialData: any }) {
@@ -32,6 +33,28 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
   const [selectedPengumuman, setSelectedPengumuman] = useState<any>(null);
 
   const unreadCount = notifikasi?.filter((n: any) => !n.isRead).length || 0;
+
+  
+  const handleKirimPesan = async (idSantri: string, statusPesan: string | null) => {
+    if (statusPesan) {
+      toast.error("Pesan sudah dikirim hari ini.");
+      return;
+    }
+    
+    const toastId = toast.loading("Mengirim pesan...");
+    try {
+      const res = await sendPesanBelumHadir(idSantri);
+      if (res.success) {
+        toast.success("Pesan berhasil dikirim!", { id: toastId });
+        fetchBelumHadirHariIni();
+      } else {
+        toast.error(res.message || "Gagal mengirim pesan", { id: toastId });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Terjadi kesalahan sistem", { id: toastId });
+    }
+  };
 
   const handleReadNotif = async (id: string, isRead: boolean) => {
     setExpandedNotif(expandedNotif === id ? null : id);
@@ -400,7 +423,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
             ) : belumHadirHariIni.length > 0 ? (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
                 <DataTable
-                  columns={getBelumHadirHariIniColumns()}
+                  columns={getBelumHadirHariIniColumns(handleKirimPesan)}
                   data={belumHadirHariIni}
                   searchKey="namaLengkap"
                 />

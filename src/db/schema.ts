@@ -178,6 +178,17 @@ export const logReminder = sqliteTable('log_reminder', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 });
 
+export const logPesanManual = sqliteTable('log_pesan_manual', {
+  id: text('id').primaryKey(),
+  fonnteId: text('fonnte_id'),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  jenis: text('jenis').notNull().default('belum_hadir'),
+  tanggal: text('tanggal').notNull(), // Format YYYY-MM-DD
+  status: text('status').notNull().default('pending'), // 'pending', 'sent', 'read', 'failed'
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull()
+});
+
 export const templatePesan = sqliteTable('template_pesan', {
   id: text('id').primaryKey(),
   jenisPesan: text('jenis_pesan').notNull(), // e.g. 'absen_masuk', 'absen_pulang'

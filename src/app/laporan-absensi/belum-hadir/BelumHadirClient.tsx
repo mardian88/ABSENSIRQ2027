@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getSantriBelumHadir } from "./actions";
+import { getSantriBelumHadir, sendPesanBelumHadir } from "./actions";
 import { Loader2, Filter, RefreshCw, UserMinus, UserCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -13,6 +13,7 @@ type SantriData = {
   namaLengkap: string;
   halaqoh: string | null;
   sesi: string | null;
+  statusPesan?: string | null;
 };
 
 type SesiOption = {
@@ -45,6 +46,27 @@ export function BelumHadirClient({
       toast.error("Gagal memuat data belum hadir");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleKirimPesan = async (idSantri: string, statusPesan: string | null) => {
+    if (statusPesan) {
+      toast.error("Pesan sudah dikirim hari ini.");
+      return;
+    }
+    
+    const toastId = toast.loading("Mengirim pesan...");
+    try {
+      const res = await sendPesanBelumHadir(idSantri);
+      if (res.success) {
+        toast.success("Pesan berhasil dikirim!", { id: toastId });
+        fetchBelumHadir(selectedSesi);
+      } else {
+        toast.error(res.message || "Gagal mengirim pesan", { id: toastId });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Terjadi kesalahan sistem", { id: toastId });
     }
   };
 
@@ -110,7 +132,7 @@ export function BelumHadirClient({
           </div>
         ) : (
           <DataTable
-            columns={getBelumHadirColumns()}
+            columns={getBelumHadirColumns(handleKirimPesan)}
             data={data}
             searchKey="namaLengkap"
           />
