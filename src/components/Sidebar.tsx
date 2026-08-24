@@ -55,6 +55,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         { name: "Laporan Hadir", href: "/laporan-absensi", icon: ClipboardList, exact: true },
         { name: "History Belum Hadir", href: "/laporan-absensi/belum-hadir", icon: UserMinus },
         { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText, exact: true },
+        { name: "Laporan Alpa", href: "/laporan-absensi/alpa", icon: FileText, exact: true },
         { name: "Laporan Kafalah", href: "/admin-penggajian", icon: Coins },
         { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
       ]

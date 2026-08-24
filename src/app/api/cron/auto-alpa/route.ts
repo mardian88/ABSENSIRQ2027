@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { pengaturanAbsensiGlobal, pengaturanHariAktif, hariLibur, santri, absensi } from "@/db/schema";
-import { eq, and, gte, lt } from "drizzle-orm";
+import { pengaturanAbsensiGlobal, pengaturanHariAktif, hariLibur, santri, absensi, perizinanSantri, absensiGuru, guru, halaqoh, pengaturanHumas } from "@/db/schema";
+import { eq, and, gte, lt, lte } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendTemplatedMessage } from "@/lib/fonnte";
-import { halaqoh, pengaturanHumas } from "@/db/schema";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -56,22 +55,58 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, message: `Hari ${namaHariIntl} bukan hari aktif. Auto-Alpa dibatalkan.` });
     }
 
-    // 5. Cek semua santri aktif
-    const daftarSantri = await db.select().from(santri).where(eq(santri.statusSantri, 'aktif'));
-    
     // Boundary waktu untuk hari ini (WIB)
-    // Mulai dari 00:00:00 hari ini
     const startOfDayWIB = new Date(`${todayWIBString}T00:00:00.000+07:00`);
-    // Sampai 23:59:59 hari ini
     const endOfDayWIB = new Date(`${todayWIBString}T23:59:59.999+07:00`);
 
-    // Ambil Pengaturan Humas untuk info Admin
-    const [humas] = await db.select().from(pengaturanHumas).limit(1);
+    // -------------------------------------------------------------
+    // Auto-Pulang Guru
+    // -------------------------------------------------------------
+    let jumlahGuruPulang = 0;
+    const daftarGuru = await db.select().from(guru).where(eq(guru.statusGuru, 'aktif'));
 
+    for (const g of daftarGuru) {
+      const [absenMasuk] = await db.select().from(absensiGuru).where(
+        and(
+          eq(absensiGuru.idGuru, g.id),
+          eq(absensiGuru.jenisAbsen, 'masuk'),
+          gte(absensiGuru.waktuScan, startOfDayWIB),
+          lt(absensiGuru.waktuScan, endOfDayWIB)
+        )
+      ).limit(1);
+
+      if (absenMasuk) {
+        const [absenPulang] = await db.select().from(absensiGuru).where(
+          and(
+            eq(absensiGuru.idGuru, g.id),
+            eq(absensiGuru.jenisAbsen, 'pulang'),
+            gte(absensiGuru.waktuScan, startOfDayWIB),
+            lt(absensiGuru.waktuScan, endOfDayWIB)
+          )
+        ).limit(1);
+
+        if (!absenPulang) {
+          await db.insert(absensiGuru).values({
+            id: uuidv4(),
+            idGuru: g.id,
+            waktuScan: now,
+            metodeScan: 'sistem (otomatis)',
+            statusKehadiran: 'pulang',
+            jenisAbsen: 'pulang'
+          });
+          jumlahGuruPulang++;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Auto-Alpa Santri
+    // -------------------------------------------------------------
+    const daftarSantri = await db.select().from(santri).where(eq(santri.statusSantri, 'aktif'));
+    const [humas] = await db.select().from(pengaturanHumas).limit(1);
     let jumlahAlpa = 0;
 
     for (const s of daftarSantri) {
-      // Cek apakah santri ini sudah absen MASUK (baik itu hadir, izin, sakit, dsb) hari ini
       const [sudahAbsen] = await db.select().from(absensi).where(
         and(
           eq(absensi.idSantri, s.id),
@@ -81,20 +116,24 @@ export async function GET(request: Request) {
         )
       ).limit(1);
 
-      if (!sudahAbsen) {
-        // Jika belum ada record absen masuk sama sekali, berikan ALPA
+      const [sudahIzin] = await db.select().from(perizinanSantri).where(
+        and(
+          eq(perizinanSantri.idSantri, s.id),
+          gte(perizinanSantri.tanggalSelesai, startOfDayWIB),
+          lte(perizinanSantri.tanggalMulai, endOfDayWIB)
+        )
+      ).limit(1);
+
+      if (!sudahAbsen && !sudahIzin) {
         await db.insert(absensi).values({
           id: uuidv4(),
           idSantri: s.id,
-          waktuScan: now, // Pakai waktu eksekusi cron (idealnya 23:59)
+          waktuScan: now,
           metodeScan: 'sistem',
           statusKehadiran: 'alpa',
           jenisAbsen: 'masuk'
         });
         
-        // -------------------------------------------------------------
-        // Fonnte API Messaging for Alpa Otomatis
-        // -------------------------------------------------------------
         const [halaqohData] = s.idHalaqoh 
           ? await db.select().from(halaqoh).where(eq(halaqoh.id, s.idHalaqoh)) 
           : [null];
@@ -108,13 +147,8 @@ export async function GET(request: Request) {
           keterangan: "Tanpa Keterangan (Alpa)"
         };
 
-        // 1. Pesan Alpa ke Orang Tua
-        await sendTemplatedMessage(s.kontakOrtu, "alpa_ortu", payload);
-
-        // 2. Info Alpa ke Admin
-        if (humas && humas.nomorAdmin && humas.isAktif) {
-          await sendTemplatedMessage(humas.nomorAdmin, "alpa_admin", payload);
-        }
+        if (s.kontakOrtu) await sendTemplatedMessage(s.kontakOrtu, "alpa_ortu", payload);
+        if (humas && humas.nomorAdmin && humas.isAktif) await sendTemplatedMessage(humas.nomorAdmin, "alpa_admin", payload);
 
         jumlahAlpa++;
       }
@@ -125,7 +159,8 @@ export async function GET(request: Request) {
       message: `Auto-Alpa berhasil dieksekusi untuk tanggal ${todayWIBString}.`,
       data: {
         totalSantri: daftarSantri.length,
-        jumlahDiberiAlpa: jumlahAlpa
+        jumlahDiberiAlpa: jumlahAlpa,
+        jumlahGuruPulang
       }
     });
 

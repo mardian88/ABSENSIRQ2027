@@ -1,25 +1,14 @@
 "use server";
 
 import { db } from "@/db";
-import { perizinanSantri, santri, absensi } from "@/db/schema";
+import { absensi, santri } from "@/db/schema";
 import { desc, eq, gte, and, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { v2 as cloudinary } from "cloudinary";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-export type PerizinanData = {
+export type AlpaData = {
   id: string;
-  kategori: string;
-  keterangan: string;
-  tanggalMulai: Date;
-  tanggalSelesai: Date;
-  buktiUrl: string | null;
-  waktuPengajuan: Date;
+  waktuScan: Date;
+  statusKehadiran: string;
   santri: {
     id: string;
     namaLengkap: string;
@@ -27,7 +16,7 @@ export type PerizinanData = {
   };
 };
 
-export async function getDaftarPerizinan(period: string = "semua"): Promise<PerizinanData[]> {
+export async function getLaporanAlpa(period: string = "semua"): Promise<AlpaData[]> {
   const now = new Date();
   let startDate: Date | undefined;
   let endDate: Date | undefined;
@@ -68,51 +57,39 @@ export async function getDaftarPerizinan(period: string = "semua"): Promise<Peri
       break;
   }
 
-  let query = db
+  const conditions = [eq(absensi.statusKehadiran, 'alpa')];
+  
+  if (startDate && endDate) {
+    conditions.push(gte(absensi.waktuScan, startDate));
+    conditions.push(lte(absensi.waktuScan, endDate));
+  }
+
+  const query = db
     .select({
-      id: perizinanSantri.id,
-      kategori: perizinanSantri.kategori,
-      keterangan: perizinanSantri.keterangan,
-      tanggalMulai: perizinanSantri.tanggalMulai,
-      tanggalSelesai: perizinanSantri.tanggalSelesai,
-      buktiUrl: perizinanSantri.buktiUrl,
-      waktuPengajuan: perizinanSantri.waktuPengajuan,
+      id: absensi.id,
+      waktuScan: absensi.waktuScan,
+      statusKehadiran: absensi.statusKehadiran,
       santri: {
         id: santri.id,
         namaLengkap: santri.namaLengkap,
         nomorInduk: santri.nomorInduk,
       }
     })
-    .from(perizinanSantri)
-    .innerJoin(santri, eq(perizinanSantri.idSantri, santri.id));
+    .from(absensi)
+    .innerJoin(santri, eq(absensi.idSantri, santri.id))
+    .where(and(...conditions));
 
-  if (startDate && endDate) {
-    query = query.where(
-      and(
-        gte(perizinanSantri.waktuPengajuan, startDate),
-        lte(perizinanSantri.waktuPengajuan, endDate)
-      )
-    ) as any;
-  }
-
-  const data = await query.orderBy(desc(perizinanSantri.waktuPengajuan));
+  const data = await query.orderBy(desc(absensi.waktuScan));
   return data;
 }
 
-export async function resetLaporanIzin(password: string): Promise<{success: boolean, message: string}> {
+export async function resetLaporanAlpa(password: string): Promise<{success: boolean, message: string}> {
   if (password !== 'rqm2828') return { success: false, message: 'Password salah!' };
   try {
-    try {
-      await cloudinary.api.delete_resources_by_prefix("izin_santri/");
-    } catch (cErr) {
-      console.error("Gagal menghapus gambar di Cloudinary:", cErr);
-    }
-
-    await db.delete(perizinanSantri);
-    revalidatePath('/laporan-absensi/perizinan');
-    return { success: true, message: 'Berhasil mereset laporan izin beserta gambarnya' };
+    await db.delete(absensi).where(eq(absensi.statusKehadiran, 'alpa'));
+    revalidatePath('/laporan-absensi/alpa');
+    return { success: true, message: 'Berhasil mereset laporan alpa' };
   } catch (error) {
-    console.error(error);
     return { success: false, message: 'Terjadi kesalahan sistem' };
   }
 }

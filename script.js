@@ -1,14 +1,6 @@
-const { createClient } = require('@libsql/client');
-require('dotenv').config({ path: '.env' });
+const fs = require('fs');
 
-const client = createClient({
-  url: process.env.DATABASE_URL,
-  authToken: process.env.DATABASE_AUTH_TOKEN
-});
-
-async function run() {
-  const result = await client.execute("DELETE FROM log_pesan_manual WHERE status = 'gagal'");
-  console.log(`Deleted ${result.rowsAffected} failed logs`);
-  client.close();
-}
-run();
+let content = fs.readFileSync('src/app/laporan-absensi/perizinan/actions.ts', 'utf8');
+content = content.replace(/export type AlpaData =[\s\S]*$/, '');
+fs.writeFileSync('src/app/laporan-absensi/perizinan/actions.ts', content, 'utf8');
+console.log('Done');
