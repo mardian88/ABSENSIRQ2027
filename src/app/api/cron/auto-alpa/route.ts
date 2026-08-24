@@ -63,7 +63,7 @@ export async function GET(request: Request) {
     // Auto-Pulang Guru
     // -------------------------------------------------------------
     let jumlahGuruPulang = 0;
-    const daftarGuru = await db.select().from(guru).where(eq(guru.status, 'aktif'));
+    const daftarGuru = await db.select().from(guru).where(eq(guru.statusAktif, true));
 
     for (const g of daftarGuru) {
       const [absenMasuk] = await db.select().from(absensiGuru).where(
