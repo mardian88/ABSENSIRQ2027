@@ -1,4 +1,3 @@
-import LayoutDashboard from "@/components/LayoutDashboard";
 import LaporanAlpaClient from "./LaporanAlpaClient";
 
 export const metadata = {
@@ -6,9 +5,5 @@ export const metadata = {
 };
 
 export default function LaporanAlpaPage() {
-  return (
-    <LayoutDashboard>
-      <LaporanAlpaClient />
-    </LayoutDashboard>
-  );
+  return <LaporanAlpaClient />;
 }

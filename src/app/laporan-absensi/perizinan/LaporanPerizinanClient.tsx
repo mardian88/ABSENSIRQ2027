@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { getDaftarPerizinan, PerizinanData, resetLaporanIzin } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
@@ -294,3 +295,4 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     </div>
   );
 }
+
