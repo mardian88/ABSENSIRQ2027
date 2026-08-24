@@ -547,7 +547,7 @@ export const pengumumanGuru = sqliteTable('pengumuman_guru', {
 
 export const notifikasiGuru = sqliteTable('notifikasi_guru', {
   id: text('id').primaryKey(),
-  idGuru: text('id_guru').references(() => user.id).notNull(),
+  idGuru: text('id_guru').references(() => guru.id).notNull(),
   judul: text('judul').notNull(),
   isi: text('isi').notNull(),
   jenis: text('jenis').notNull(), // 'pengumuman'
