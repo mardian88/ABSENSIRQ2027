@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { getLaporanAlpa, AlpaData, resetLaporanAlpa } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
-import { Download, Search, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Download, Search, Loader2, RefreshCw, Trash2, Filter } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -34,7 +34,7 @@ export default function LaporanAlpaClient() {
   };
 
   // initial load
-  useMemo(() => {
+  useEffect(() => {
     fetchAlpaData("semua");
   }, []);
 
