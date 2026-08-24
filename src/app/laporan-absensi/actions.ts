@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { absensi, santri, halaqoh, guru, absensiGuru } from "@/db/schema";
-import { eq, desc, and, gte, notInArray, sql } from "drizzle-orm";
+import { eq, desc, and, gte, lte, notInArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -23,7 +23,7 @@ export type LaporanData = {
   }
 };
 
-export async function getLaporanAbsensi(filterPeriod: string) {
+export async function getLaporanAbsensi(filterPeriod: string, startDate?: string, endDate?: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const role = session?.user?.role || "admin_cabang";
   const userCabang = session?.user?.idCabang;
@@ -36,6 +36,7 @@ export async function getLaporanAbsensi(filterPeriod: string) {
   const startOfTodayWIB = new Date(`${wibDateString}T00:00:00.000+07:00`);
   
   let startWaktu: Date | null = null;
+  let endWaktu: Date | null = null;
   
   if (filterPeriod === "hari_ini") {
     startWaktu = startOfTodayWIB;
@@ -50,6 +51,9 @@ export async function getLaporanAbsensi(filterPeriod: string) {
     startWaktu = new Date(startOfTodayWIB.getFullYear(), startOfTodayWIB.getMonth() - 6, 1);
   } else if (filterPeriod === "tahun_ini") {
     startWaktu = new Date(startOfTodayWIB.getFullYear(), 0, 1);
+  } else if (filterPeriod === "kustom" && startDate && endDate) {
+    startWaktu = new Date(`${startDate}T00:00:00.000+07:00`);
+    endWaktu = new Date(`${endDate}T23:59:59.999+07:00`);
   }
 
   let querySantri = db
@@ -75,11 +79,10 @@ export async function getLaporanAbsensi(filterPeriod: string) {
 
   // Time filtering & Role filtering combined for Santri
   if (startWaktu) {
-    if (role !== "superadmin" && userCabang) {
-       querySantri = querySantri.where(and(eq(santri.idCabang, userCabang), gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
-    } else {
-       querySantri = querySantri.where(and(gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
-    }
+    let baseCond = [gte(absensi.waktuScan, startWaktu), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses)];
+    if (endWaktu) baseCond.push(lte(absensi.waktuScan, endWaktu));
+    if (role !== "superadmin" && userCabang) baseCond.push(eq(santri.idCabang, userCabang));
+    querySantri = querySantri.where(and(...baseCond)) as any;
   } else {
     if (role !== "superadmin" && userCabang) {
       querySantri = querySantri.where(and(eq(santri.idCabang, userCabang), eq(absensi.isArchived, 0), notInArray(absensi.statusKehadiran, excludedStatuses))) as any;
@@ -117,7 +120,9 @@ export async function getLaporanAbsensi(filterPeriod: string) {
     .innerJoin(guru, eq(absensiGuru.idGuru, guru.id));
     
   if (startWaktu) {
-    queryGuru = queryGuru.where(and(gte(absensiGuru.waktuScan, startWaktu), eq(absensiGuru.isArchived, 0), notInArray(absensiGuru.statusKehadiran, excludedStatuses))) as any;
+    let baseCond = [gte(absensiGuru.waktuScan, startWaktu), eq(absensiGuru.isArchived, 0), notInArray(absensiGuru.statusKehadiran, excludedStatuses)];
+    if (endWaktu) baseCond.push(lte(absensiGuru.waktuScan, endWaktu));
+    queryGuru = queryGuru.where(and(...baseCond)) as any;
   } else {
     queryGuru = queryGuru.where(and(eq(absensiGuru.isArchived, 0), notInArray(absensiGuru.statusKehadiran, excludedStatuses))) as any;
   }

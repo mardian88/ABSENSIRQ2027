@@ -8,14 +8,19 @@ import {
 import { getDashboardPoin } from "./poin-actions";
 import { DashboardClient } from "./DashboardClient";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: any }) {
+  // Extract date range from search params if any
+  const start = searchParams?.start || null;
+  const end = searchParams?.end || null;
+  const filterParams = { start, end };
+
   // Fetch initial data on the server side
   const [stats, trend, distribution, recentScans, poinStats] = await Promise.all([
-    getDashboardStats(),
-    getWeeklyTrend(),
-    getMethodDistribution(),
-    getRecentScans(),
-    getDashboardPoin()
+    getDashboardStats(filterParams),
+    getWeeklyTrend(filterParams),
+    getMethodDistribution(filterParams),
+    getRecentScans(filterParams),
+    getDashboardPoin() // Poin maybe doesn't need date filter, or can add if needed
   ]);
 
   return (
@@ -26,6 +31,8 @@ export default async function DashboardPage() {
         initialDistribution={distribution}
         initialRecentScans={recentScans}
         initialPoinStats={poinStats}
+        initialStart={start}
+        initialEnd={end}
       />
     </div>
   );
