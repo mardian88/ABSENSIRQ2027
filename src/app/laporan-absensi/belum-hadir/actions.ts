@@ -98,16 +98,15 @@ export async function sendPesanBelumHadir(idSantri: string) {
     id: santri.id,
     namaLengkap: santri.namaLengkap,
     nomorInduk: santri.nomorInduk,
-    nomorWhatsapp: keluarga.nomorWhatsapp,
+    kontakOrtu: santri.kontakOrtu,
     halaqoh: halaqoh.namaHalaqoh,
   })
   .from(santri)
-  .leftJoin(keluarga, eq(santri.idKeluarga, keluarga.id))
   .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
   .where(eq(santri.id, idSantri));
 
   if (!s) return { success: false, message: "Santri tidak ditemukan" };
-  if (!s.nomorWhatsapp) return { success: false, message: "Nomor WhatsApp tidak tersedia" };
+  if (!s.kontakOrtu) return { success: false, message: "Nomor WhatsApp tidak tersedia" };
 
   const now = new Date();
   const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });

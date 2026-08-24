@@ -1,17 +1,13 @@
-const fs = require('fs');
+const { createClient } = require('@libsql/client');
+require('dotenv').config({ path: '.env' });
 
-let content = fs.readFileSync('src/app/portal-guru/columns.tsx', 'utf8');
+const client = createClient({
+  url: process.env.DATABASE_URL,
+  authToken: process.env.DATABASE_AUTH_TOKEN
+});
 
-// Find getBelumHadirHariIniColumns array and remove halaqoh
-const halaqohCol =   {
-    accessorKey: "halaqoh",
-    header: "HALAQAH",
-    cell: ({ row }) => (
-      <span className="text-slate-600 align-middle">{row.original.halaqoh || "-"}</span>
-    )
-  },
-;
-
-content = content.replace(halaqohCol, '');
-fs.writeFileSync('src/app/portal-guru/columns.tsx', content, 'utf8');
-console.log('Removed halaqoh from portal-guru/columns.tsx');
+async function run() {
+  const result = await client.execute("SELECT id, nama_lengkap, kontak_ortu FROM santri WHERE nomor_induk = '02661806'");
+  console.log(result.rows);
+}
+run();
