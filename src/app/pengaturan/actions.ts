@@ -10,7 +10,7 @@ cloudinary.config({
 
 
 import { db } from "@/db";
-import { pengaturanProfil, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanAbsensiGlobal, pengumumanPortal, notifikasiPortal, santri } from "@/db/schema";
+import { pengaturanProfil, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanAbsensiGlobal, pengumumanPortal, notifikasiPortal, santri, pengumumanGuru, notifikasiGuru, guru } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
@@ -614,4 +614,59 @@ export async function updateAudioSettings(formData: FormData) {
     console.error(error);
     return { success: false, message: "Gagal menyimpan pengaturan audio" };
   }
+}
+
+export async function getPengumumanGuru() {
+  return await db.select().from(pengumumanGuru).orderBy(desc(pengumumanGuru.tanggal));
+}
+
+export async function tambahPengumumanGuru(judul: string, isi: string, isAktif: boolean) {
+  const adminId = await getAdminId();
+  if (!adminId) throw new Error("Akses ditolak");
+
+  await db.insert(pengumumanGuru).values({
+    id: uuidv4(),
+    judul,
+    isi,
+    tanggal: new Date(),
+    isAktif,
+    idAdmin: adminId
+  });
+
+  if (isAktif) {
+    const guruList = await db.select({ id: guru.id }).from(guru);
+    for (const g of guruList) {
+      await db.insert(notifikasiGuru).values({
+        id: uuidv4(),
+        idGuru: g.id,
+        judul: judul,
+        isi: isi,
+        jenis: 'pengumuman',
+        isRead: false,
+        tanggal: new Date()
+      });
+    }
+  }
+
+  revalidatePath('/pengaturan');
+  revalidatePath('/portal-guru');
+}
+
+export async function updatePengumumanGuru(id: string, judul: string, isi: string, isAktif: boolean) {
+  const adminId = await getAdminId();
+  if (!adminId) throw new Error("Akses ditolak");
+
+  await db.update(pengumumanGuru).set({ judul, isi, isAktif }).where(eq(pengumumanGuru.id, id));
+  
+  revalidatePath('/pengaturan');
+  revalidatePath('/portal-guru');
+}
+
+export async function hapusPengumumanGuru(id: string) {
+  const adminId = await getAdminId();
+  if (!adminId) throw new Error("Akses ditolak");
+
+  await db.delete(pengumumanGuru).where(eq(pengumumanGuru.id, id));
+  revalidatePath('/pengaturan');
+  revalidatePath('/portal-guru');
 }

@@ -9,9 +9,12 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { getIzinHariIniColumns, getBelumHadirHariIniColumns } from "./columns";
+import { formatWhatsAppStyle } from "@/lib/utils";
+import { markNotifikasiGuruRead } from "./actions";
+import { Bell, ChevronDown, ChevronUp } from "lucide-react";
 
 export function PortalGuruClient({ initialData }: { initialData: any }) {
-  const { profil, absensi, kontrak } = initialData;
+  const { profil, absensi, kontrak, pengumuman, notifikasi } = initialData;
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, kontrak
@@ -23,6 +26,19 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
 
   const [belumHadirHariIni, setBelumHadirHariIni] = useState<any[]>([]);
   const [loadingBelumHadir, setLoadingBelumHadir] = useState(false);
+
+  const [showNotif, setShowNotif] = useState(false);
+  const [expandedNotif, setExpandedNotif] = useState<string | null>(null);
+  const [selectedPengumuman, setSelectedPengumuman] = useState<any>(null);
+
+  const unreadCount = notifikasi?.filter((n: any) => !n.isRead).length || 0;
+
+  const handleReadNotif = async (id: string, isRead: boolean) => {
+    setExpandedNotif(expandedNotif === id ? null : id);
+    if (!isRead) {
+      await markNotifikasiGuruRead(id);
+    }
+  };
 
   const fetchIzinHariIni = async () => {
     setLoadingIzin(true);
@@ -138,17 +154,99 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-emerald-700 text-white shadow-md sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="font-bold text-lg md:text-xl">Portal Karyawan & Guru</h1>
-            <p className="text-emerald-100 text-xs md:text-sm truncate">Halo, {profil.namaLengkap}</p>
+        <header className="bg-emerald-700 text-white shadow-md sticky top-0 z-40">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center relative">
+            <div>
+              <h1 className="font-bold text-lg md:text-xl">Portal Karyawan & Guru</h1>
+              <p className="text-emerald-100 text-xs md:text-sm truncate">Halo, {profil.namaLengkap}</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Notifikasi Lonceng */}
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotif(!showNotif)}
+                  className="p-2 relative bg-emerald-800/50 hover:bg-emerald-800 rounded-lg text-emerald-100 transition-colors"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute 0 top-0 right-0 translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-emerald-700">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+                
+                {showNotif && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                    <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                      <h3 className="font-bold text-slate-800">Notifikasi</h3>
+                      <button onClick={() => setShowNotif(false)} className="text-slate-400 hover:text-slate-600">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifikasi && notifikasi.length > 0 ? (
+                        <div className="divide-y divide-slate-100">
+                          {notifikasi.map((item: any) => (
+                            <div 
+                              key={item.id} 
+                              className={`p-4 transition-colors ${!item.isRead ? 'bg-emerald-50/50' : 'hover:bg-slate-50'}`}
+                            >
+                              <button 
+                                onClick={() => handleReadNotif(item.id, item.isRead)}
+                                className="w-full text-left"
+                              >
+                                <div className="flex gap-3">
+                                  <div className="mt-1 shrink-0">
+                                    <div className={`w-2 h-2 rounded-full ${!item.isRead ? 'bg-emerald-500' : 'bg-transparent'}`} />
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start mb-1">
+                                      <h4 className={`text-sm ${!item.isRead ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>
+                                        {item.judul}
+                                      </h4>
+                                      {expandedNotif === item.id ? (
+                                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                                      ) : (
+                                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mb-1">
+                                      {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    {expandedNotif === item.id ? (
+                                      <div 
+                                        className="text-sm text-slate-600 leading-relaxed mt-2 pt-2 border-t border-slate-100 whitespace-pre-wrap"
+                                        dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
+                                      />
+                                    ) : (
+                                      <div 
+                                        className="text-xs text-slate-500 line-clamp-1"
+                                        dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-slate-400 text-sm">
+                          Belum ada notifikasi
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button onClick={handleLogout} className="p-2 bg-emerald-800/50 hover:bg-emerald-800 rounded-lg text-emerald-100 transition-colors">
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-          <button onClick={handleLogout} className="p-2 bg-emerald-800/50 hover:bg-emerald-800 rounded-lg text-emerald-100 transition-colors">
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
+        </header>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto p-4 py-6 space-y-6">
@@ -167,8 +265,50 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
         </div>
 
         {activeTab === 'dashboard' && (
-          <div className="space-y-4">
-            <h2 className="font-bold text-slate-800 text-lg">Absensi 30 Hari Terakhir</h2>
+          <div className="space-y-6">
+            {/* PENGUMUMAN SECTION */}
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-800">Pengumuman Terbaru</h3>
+                <Bell className="w-5 h-5 text-slate-400" />
+              </div>
+              
+              <div>
+                {pengumuman && pengumuman.length > 0 ? (
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                    {pengumuman.map((item: any) => (
+                      <div 
+                        key={item.id} 
+                        onClick={() => setSelectedPengumuman(item)}
+                        className="p-4 flex gap-3 cursor-pointer hover:bg-slate-50 transition-colors active:bg-slate-100"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-bold text-slate-800 text-sm mb-0.5">{item.judul}</h4>
+                          <p className="text-[10px] text-slate-400 mb-1.5">
+                            {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                          </p>
+                          <div 
+                            className="text-xs text-slate-500 leading-relaxed line-clamp-1"
+                            dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-center shrink-0">
+                          <ChevronDown className="w-4 h-4 text-slate-300 -rotate-90" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-8 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-sm">
+                    Belum ada pengumuman
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* RIWAYAT ABSENSI */}
+            <div className="space-y-4">
+              <h2 className="font-bold text-slate-800 text-lg">Absensi 30 Hari Terakhir</h2>
             {absensi.length > 0 ? (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 {absensi.map((absen: any, idx: number) => (
@@ -557,6 +697,42 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
               <button
                 onClick={() => setSelectedIzin(null)}
                 className="px-6 py-2 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-900 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pengumuman Modal */}
+      {selectedPengumuman && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50">
+              <div>
+                <h3 className="font-bold text-slate-800 text-lg pr-4">{selectedPengumuman.judul}</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {new Date(selectedPengumuman.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedPengumuman(null)}
+                className="p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 rounded-full transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto">
+              <div 
+                className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap"
+                dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(selectedPengumuman.isi) }}
+              />
+            </div>
+            <div className="p-4 border-t border-slate-100 bg-slate-50">
+              <button 
+                onClick={() => setSelectedPengumuman(null)}
+                className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 text-sm"
               >
                 Tutup
               </button>

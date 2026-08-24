@@ -535,3 +535,22 @@ export const transaksiDonasi = sqliteTable('transaksi_donasi', {
   waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull(),
   waktuVerifikasi: integer('waktu_verifikasi', { mode: 'timestamp' })
 });
+
+export const pengumumanGuru = sqliteTable('pengumuman_guru', {
+  id: text('id').primaryKey(),
+  judul: text('judul').notNull(),
+  isi: text('isi').notNull(),
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
+  tanggal: integer('tanggal', { mode: 'timestamp' }).notNull(),
+  idAdmin: text('id_admin').references(() => user.id)
+});
+
+export const notifikasiGuru = sqliteTable('notifikasi_guru', {
+  id: text('id').primaryKey(),
+  idGuru: text('id_guru').references(() => user.id).notNull(),
+  judul: text('judul').notNull(),
+  isi: text('isi').notNull(),
+  jenis: text('jenis').notNull(), // 'pengumuman'
+  isRead: integer('is_read', { mode: 'boolean' }).default(false),
+  tanggal: integer('tanggal', { mode: 'timestamp' }).notNull()
+});

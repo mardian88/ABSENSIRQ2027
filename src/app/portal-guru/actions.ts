@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, halaqoh, absensi } from "@/db/schema";
+import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, halaqoh, absensi, pengumumanGuru, notifikasiGuru } from "@/db/schema";
 import { eq, and, desc, between, lte, gte, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -71,10 +71,28 @@ export async function getGuruDashboardData() {
     eq(kontrakGuru.idGuru, idGuru)
   ).orderBy(desc(kontrakGuru.createdAt));
 
+  // Pengumuman & Notifikasi
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const allPengumuman = await db.select()
+    .from(pengumumanGuru)
+    .where(eq(pengumumanGuru.isAktif, true))
+    .orderBy(desc(pengumumanGuru.tanggal));
+
+  const pengumumanData = allPengumuman.filter(p => p.tanggal >= sevenDaysAgo);
+
+  const notifikasiData = await db.select()
+    .from(notifikasiGuru)
+    .where(eq(notifikasiGuru.idGuru, idGuru))
+    .orderBy(desc(notifikasiGuru.tanggal));
+
   return {
     profil: session,
     absensi: absensiData,
-    kontrak: kontrakList
+    kontrak: kontrakList,
+    pengumuman: pengumumanData,
+    notifikasi: notifikasiData
   };
 }
 
@@ -194,3 +212,9 @@ export async function getSantriBelumHadirGuru() {
   }
 }
 
+
+export async function markNotifikasiGuruRead(id: string) {
+  await db.update(notifikasiGuru).set({ isRead: true }).where(eq(notifikasiGuru.id, id));
+  revalidatePath('/portal-guru');
+  return true;
+}

@@ -19,6 +19,7 @@ import { PesanOtomatisManager } from "./PesanOtomatisManager";
 import { KeuanganManager } from "./KeuanganManager";
 import { SaudaraManager } from "./SaudaraManager";
 import { PengumumanManager } from "./PengumumanManager";
+import { PengumumanGuruManager } from "./PengumumanGuruManager";
 import { AudioNotifManager } from "./AudioNotifManager";
 import { getAudioSettings } from "./actions";
 
@@ -264,6 +265,7 @@ export default function PengaturanPage() {
           </CardContent>
         </Card>
         <PengumumanManager />
+        <PengumumanGuruManager />
       </>)}
 
       {activeTab === "absensi" && (
