@@ -103,12 +103,10 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                   {notifikasi.map((item: any) => (
                     <div 
                       key={item.id} 
-                      className={`border rounded-xl transition-colors ${!item.isRead ? 'bg-blue-50/50 border-blue-100' : 'bg-white border-slate-100'}`}
+                      className={`border rounded-xl transition-colors cursor-pointer ${!item.isRead ? 'bg-blue-50/50 border-blue-100' : 'bg-white border-slate-100'}`}
+                      onClick={() => handleReadNotif(item.id, item.isRead)}
                     >
-                      <button 
-                        onClick={() => handleReadNotif(item.id, item.isRead)}
-                        className="w-full text-left p-4 flex gap-3 items-start"
-                      >
+                      <div className="w-full text-left p-4 flex gap-3 items-start">
                         <div className="pt-1">
                           {!item.isRead ? (
                             <div className="w-2 h-2 rounded-full bg-blue-500 mt-1"></div>
@@ -127,7 +125,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                               <ChevronDown className="w-4 h-4 text-slate-400" />
                             )}
                           </div>
-                          <p className="text-[10px] text-slate-400 mb-1">
+                          <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1">
                             {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </p>
                           {expandedNotif === item.id ? (
@@ -142,7 +140,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                             />
                           )}
                         </div>
-                      </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -263,7 +261,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                   >
                     <div className="flex-1">
                       <h4 className="font-bold text-slate-800 text-sm mb-0.5">{item.judul}</h4>
-                      <p className="text-[10px] text-slate-400 mb-1.5">
+                      <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1.5">
                         {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </p>
                       <div 
@@ -293,7 +291,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
             <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50">
               <div>
                 <h3 className="font-bold text-slate-800 text-lg pr-4">{selectedPengumuman.judul}</h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <p suppressHydrationWarning className="text-xs text-slate-500 mt-1">
                   {new Date(selectedPengumuman.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </p>
               </div>
@@ -324,3 +322,4 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
     </div>
   );
 }
+

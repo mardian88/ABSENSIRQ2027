@@ -170,7 +170,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute 0 top-0 right-0 translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-emerald-700">
+                    <span className="absolute top-0 right-0 translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-emerald-700">
                       {unreadCount}
                     </span>
                   )}
@@ -190,12 +190,10 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                           {notifikasi.map((item: any) => (
                             <div 
                               key={item.id} 
-                              className={`p-4 transition-colors ${!item.isRead ? 'bg-emerald-50/50' : 'hover:bg-slate-50'}`}
+                              className={`p-4 transition-colors cursor-pointer ${!item.isRead ? 'bg-emerald-50/50' : 'hover:bg-slate-50'}`}
+                              onClick={() => handleReadNotif(item.id, item.isRead)}
                             >
-                              <button 
-                                onClick={() => handleReadNotif(item.id, item.isRead)}
-                                className="w-full text-left"
-                              >
+                              <div className="w-full text-left">
                                 <div className="flex gap-3">
                                   <div className="mt-1 shrink-0">
                                     <div className={`w-2 h-2 rounded-full ${!item.isRead ? 'bg-emerald-500' : 'bg-transparent'}`} />
@@ -211,7 +209,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                                         <ChevronDown className="w-4 h-4 text-slate-400" />
                                       )}
                                     </div>
-                                    <p className="text-[10px] text-slate-400 mb-1">
+                                    <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1">
                                       {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                     {expandedNotif === item.id ? (
@@ -227,7 +225,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                                     )}
                                   </div>
                                 </div>
-                              </button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -284,7 +282,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                       >
                         <div className="flex-1">
                           <h4 className="font-bold text-slate-800 text-sm mb-0.5">{item.judul}</h4>
-                          <p className="text-[10px] text-slate-400 mb-1.5">
+                          <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1.5">
                             {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                           </p>
                           <div 
@@ -314,8 +312,8 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                 {absensi.map((absen: any, idx: number) => (
                   <div key={absen.id} className={`p-4 flex items-center justify-between ${idx !== absensi.length - 1 ? 'border-b border-slate-100' : ''}`}>
                     <div>
-                      <p className="font-bold text-slate-700">{new Date(absen.waktuScan).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                      <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
+                      <p suppressHydrationWarning className="font-bold text-slate-700">{new Date(absen.waktuScan).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p suppressHydrationWarning className="text-sm text-slate-500 flex items-center gap-2 mt-1">
                         <span className="font-medium text-slate-700">{new Date(absen.waktuScan).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                         <span className="capitalize text-slate-600">{absen.jenisAbsen}</span>
@@ -713,7 +711,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
             <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50">
               <div>
                 <h3 className="font-bold text-slate-800 text-lg pr-4">{selectedPengumuman.judul}</h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <p suppressHydrationWarning className="text-xs text-slate-500 mt-1">
                   {new Date(selectedPengumuman.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </p>
               </div>
@@ -744,3 +742,5 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
     </div>
   );
 }
+
+
