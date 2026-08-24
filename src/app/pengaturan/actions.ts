@@ -670,3 +670,5 @@ export async function hapusPengumumanGuru(id: string) {
   revalidatePath('/pengaturan');
   revalidatePath('/portal-guru');
 }
+
+
