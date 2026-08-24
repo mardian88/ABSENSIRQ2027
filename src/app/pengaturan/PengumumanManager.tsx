@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getPengumumanPortal, tambahPengumuman, updatePengumuman, hapusPengumuman } from "./actions";
 import { Loader2, Plus, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
 import { formatWhatsAppStyle } from "@/lib/utils";
 
 export function PengumumanManager() {
@@ -56,13 +57,26 @@ export function PengumumanManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Yakin ingin menghapus pengumuman ini?")) {
+    if (await showConfirm("Hapus Pengumuman?", "Pengumuman ini akan dihapus secara permanen.", "Ya, Hapus")) {
       try {
         await hapusPengumuman(id);
         toast.success("Pengumuman dihapus");
         loadData();
       } catch (err: any) {
         toast.error("Gagal menghapus pengumuman");
+      }
+    }
+  };
+
+  const handleToggleAktif = async (item: any) => {
+    const actionText = item.isAktif ? "menonaktifkan" : "mengaktifkan";
+    if (await showConfirm(`${item.isAktif ? 'Nonaktifkan' : 'Aktifkan'} Pengumuman?`, `Yakin ingin ${actionText} pengumuman ini?`, "Ya, Lanjutkan", item.isAktif)) {
+      try {
+        await updatePengumuman(item.id, item.judul, item.isi, !item.isAktif);
+        toast.success(`Pengumuman berhasil di${actionText}`);
+        loadData();
+      } catch (err: any) {
+        toast.error(`Gagal ${actionText} pengumuman`);
       }
     }
   };
@@ -152,6 +166,9 @@ export function PengumumanManager() {
                   <p className="text-slate-700 mt-2 whitespace-pre-wrap text-sm" dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}></p>
                 </div>
                 <div className="flex space-x-2">
+                  <Button variant="ghost" size="sm" onClick={() => handleToggleAktif(item)} title={item.isAktif ? "Nonaktifkan" : "Aktifkan"}>
+                    {item.isAktif ? <XCircle className="w-4 h-4 text-amber-500" /> : <CheckCircle className="w-4 h-4 text-emerald-500" />}
+                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                     <Edit className="w-4 h-4 text-slate-600" />
                   </Button>
@@ -167,3 +184,4 @@ export function PengumumanManager() {
     </Card>
   );
 }
+
