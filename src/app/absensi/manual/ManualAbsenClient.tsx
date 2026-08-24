@@ -29,25 +29,17 @@ export function ManualAbsenClient({ initialData }: { initialData: SantriData[] }
   const [audioConfig, setAudioConfig] = useState<any>(null);
 
   const playAudioResult = (success: boolean, jenis: string) => {
-    if (!audioConfig) {
-      if (success) playAudioResult(true, jenis);
-      else playAudioResult(false, jenis);
-      return;
-    }
+    if (!audioConfig) return;
     try {
       if (success) {
         if (jenis === 'masuk' && audioConfig.isAudioMasukAktif && audioConfig.urlAudioMasuk) {
           new Audio(audioConfig.urlAudioMasuk).play().catch(() => {});
         } else if (jenis === 'pulang' && audioConfig.isAudioPulangAktif && audioConfig.urlAudioPulang) {
           new Audio(audioConfig.urlAudioPulang).play().catch(() => {});
-        } else if ((jenis === 'masuk' && audioConfig.isAudioMasukAktif) || (jenis === 'pulang' && audioConfig.isAudioPulangAktif)) {
-          playAudioResult(true, jenis);
         }
       } else {
         if (audioConfig.isAudioGagalAktif && audioConfig.urlAudioGagal) {
           new Audio(audioConfig.urlAudioGagal).play().catch(() => {});
-        } else if (audioConfig.isAudioGagalAktif) {
-          playAudioResult(false, jenis);
         }
       }
     } catch (e) {}
@@ -105,7 +97,7 @@ export function ManualAbsenClient({ initialData }: { initialData: SantriData[] }
     try {
       const res = await recordAbsensiById(idSantri, jenisAbsen, 'manual', 'hadir');
       if (res.success) {
-         playAudioResult(true, jenis);
+         playAudioResult(true, jenisAbsen);
          
          const waktuAbsen = res.data?.waktu || formatTimeID(new Date());
          
@@ -328,3 +320,5 @@ export function ManualAbsenClient({ initialData }: { initialData: SantriData[] }
     </div>
   );
 }
+
+
