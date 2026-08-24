@@ -338,6 +338,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                 <p className="text-slate-500">Belum ada riwayat absensi dalam 30 hari terakhir.</p>
               </div>
             )}
+            </div>
           </div>
         )}
 
