@@ -121,7 +121,9 @@ export async function sendPesanBelumHadir(idSantri: string) {
     )
   );
 
-  if (existingLog) return { success: false, message: "Pesan sudah dikirim hari ini" };
+  if (existingLog && existingLog.status !== 'gagal' && existingLog.status !== 'failed' && existingLog.status !== 'disconnect') {
+    return { success: false, message: "Pesan sudah dikirim hari ini" };
+  }
 
   const timeFormatter = new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
   const timeStr = timeFormatter.format(now);
@@ -134,33 +136,48 @@ export async function sendPesanBelumHadir(idSantri: string) {
     nis: s.nomorInduk || "-"
   };
 
-  const result = await sendTemplatedMessage(s.nomorWhatsapp, "belum_datang", payload);
+  const result = await sendTemplatedMessage(s.kontakOrtu, "reminder_absen", payload);
   
   if (result && result.success) {
     let fonnteId = (result as any).fonnteId || null;
-    // Fonnte returns result.message as JSON string if we modified it? Wait, let's just save 'sent' or 'pending'
-    await db.insert(logPesanManual).values({
-      id: uuidv4(),
-      idSantri: idSantri,
-      fonnteId: fonnteId,
-      jenis: 'belum_hadir',
-      tanggal: wibDateString,
-      status: 'terkirim', // The user uses 'terkirim' in UI
-      createdAt: now,
-      updatedAt: now
-    });
+    
+    if (existingLog) {
+      await db.update(logPesanManual).set({
+        fonnteId: fonnteId,
+        status: 'terkirim',
+        updatedAt: now
+      }).where(eq(logPesanManual.id, existingLog.id));
+    } else {
+      await db.insert(logPesanManual).values({
+        id: uuidv4(),
+        idSantri: idSantri,
+        fonnteId: fonnteId,
+        jenis: 'belum_hadir',
+        tanggal: wibDateString,
+        status: 'terkirim',
+        createdAt: now,
+        updatedAt: now
+      });
+    }
     return { success: true, message: "Pesan berhasil dikirim" };
   } else {
     // If failed
-    await db.insert(logPesanManual).values({
-      id: uuidv4(),
-      idSantri: idSantri,
-      jenis: 'belum_hadir',
-      tanggal: wibDateString,
-      status: 'gagal',
-      createdAt: now,
-      updatedAt: now
-    });
+    if (existingLog) {
+      await db.update(logPesanManual).set({
+        status: 'gagal',
+        updatedAt: now
+      }).where(eq(logPesanManual.id, existingLog.id));
+    } else {
+      await db.insert(logPesanManual).values({
+        id: uuidv4(),
+        idSantri: idSantri,
+        jenis: 'belum_hadir',
+        tanggal: wibDateString,
+        status: 'gagal',
+        createdAt: now,
+        updatedAt: now
+      });
+    }
     return { success: false, message: result?.message || "Gagal mengirim pesan" };
   }
 }

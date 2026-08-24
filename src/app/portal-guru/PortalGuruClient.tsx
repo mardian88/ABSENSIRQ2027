@@ -36,7 +36,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
 
   
   const handleKirimPesan = async (idSantri: string, statusPesan: string | null) => {
-    if (statusPesan) {
+    if (statusPesan && statusPesan !== 'gagal' && statusPesan !== 'failed' && statusPesan !== 'disconnect') {
       toast.error("Pesan sudah dikirim hari ini.");
       return;
     }

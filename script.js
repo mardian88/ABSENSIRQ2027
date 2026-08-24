@@ -7,7 +7,8 @@ const client = createClient({
 });
 
 async function run() {
-  const result = await client.execute("SELECT id, nama_lengkap, kontak_ortu FROM santri WHERE nomor_induk = '02661806'");
-  console.log(result.rows);
+  const result = await client.execute("DELETE FROM log_pesan_manual WHERE status = 'gagal'");
+  console.log(`Deleted ${result.rowsAffected} failed logs`);
+  client.close();
 }
 run();
