@@ -144,6 +144,9 @@ export async function submitIzin(formData: FormData) {
         gte(perizinanSantri.tanggalSelesai, startDate),
         lte(perizinanSantri.tanggalMulai, endDate)
       )
+    );
+  
+  if (existingIzin.length > 0) {
     return { success: false, message: "Anda sudah mengajukan izin hari ini. Silakan coba lagi besok untuk menghindari data ganda." };
   }
 
@@ -168,12 +171,6 @@ export async function submitIzin(formData: FormData) {
     }
   }
 
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(startDate.getDate() + (jumlahHari - 1));
-  // endDate sudah dihitung di atas
-  // now sudah ada di atas
-
   // Insert to perizinan_santri
   await db.insert(perizinanSantri).values({
     id: uuidv4(),
@@ -183,7 +180,7 @@ export async function submitIzin(formData: FormData) {
     tanggalMulai: startDate,
     tanggalSelesai: endDate,
     buktiUrl,
-    waktuPengajuan: now
+    waktuPengajuan: rawNow
   });
 
   // Loop through days from start to end and insert to absensi
