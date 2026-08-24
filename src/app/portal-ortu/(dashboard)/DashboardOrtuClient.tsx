@@ -3,6 +3,7 @@
 import { User, Wallet, FileText, Home, Bell, LogOut, X, ChevronDown, ChevronUp, BookOpen, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { formatRp, formatWhatsAppStyle } from "@/lib/utils";
+import { formatDateID, formatTimeID, formatDateTimeID } from "@/lib/date";
 import { useState, useTransition } from "react";
 import { logoutOrtu } from "../actions";
 import { useRouter } from "next/navigation";
@@ -126,7 +127,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                             )}
                           </div>
                           <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1">
-                            {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {formatDateTimeID(item.tanggal)}
                           </p>
                           {expandedNotif === item.id ? (
                             <div 
@@ -262,7 +263,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                     <div className="flex-1">
                       <h4 className="font-bold text-slate-800 text-sm mb-0.5">{item.judul}</h4>
                       <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1.5">
-                        {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        {formatDateID(item.tanggal)}
                       </p>
                       <div 
                         className="text-xs text-slate-500 leading-relaxed line-clamp-1"
@@ -292,7 +293,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
               <div>
                 <h3 className="font-bold text-slate-800 text-lg pr-4">{selectedPengumuman.judul}</h3>
                 <p suppressHydrationWarning className="text-xs text-slate-500 mt-1">
-                  {new Date(selectedPengumuman.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  {formatDateID(selectedPengumuman.tanggal)}
                 </p>
               </div>
               <button 
@@ -322,4 +323,6 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
     </div>
   );
 }
+
+
 

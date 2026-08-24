@@ -210,7 +210,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                                       )}
                                     </div>
                                     <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1">
-                                      {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                      {formatDateTimeID(item.tanggal)}
                                     </p>
                                     {expandedNotif === item.id ? (
                                       <div 
@@ -283,7 +283,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                         <div className="flex-1">
                           <h4 className="font-bold text-slate-800 text-sm mb-0.5">{item.judul}</h4>
                           <p suppressHydrationWarning className="text-[10px] text-slate-400 mb-1.5">
-                            {new Date(item.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            {formatDateID(item.tanggal)}
                           </p>
                           <div 
                             className="text-xs text-slate-500 leading-relaxed line-clamp-1"
@@ -312,9 +312,9 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                 {absensi.map((absen: any, idx: number) => (
                   <div key={absen.id} className={`p-4 flex items-center justify-between ${idx !== absensi.length - 1 ? 'border-b border-slate-100' : ''}`}>
                     <div>
-                      <p suppressHydrationWarning className="font-bold text-slate-700">{new Date(absen.waktuScan).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                      <p suppressHydrationWarning className="font-bold text-slate-700">{formatDateID(absen.waktuScan)}</p>
                       <p suppressHydrationWarning className="text-sm text-slate-500 flex items-center gap-2 mt-1">
-                        <span className="font-medium text-slate-700">{new Date(absen.waktuScan).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span suppressHydrationWarning className="font-medium text-slate-700">{formatTimeID(absen.waktuScan)}</span>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                         <span className="capitalize text-slate-600">{absen.jenisAbsen}</span>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
@@ -436,7 +436,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                         {k.jenisKontrak === 'permanen' ? (
                           <p className="text-sm font-medium text-blue-600">Periode: Selamanya (Permanen)</p>
                         ) : (
-                          <p className="text-sm text-slate-500">Periode: {k.tanggalMulai ? new Date(k.tanggalMulai).toLocaleDateString('id-ID') : '-'} s.d. {k.tanggalSelesai ? new Date(k.tanggalSelesai).toLocaleDateString('id-ID') : '-'}</p>
+                          <p suppressHydrationWarning className="text-sm text-slate-500">Periode: {k.tanggalMulai ? formatDateID(k.tanggalMulai) : '-'} s.d. {k.tanggalSelesai ? formatDateID(k.tanggalSelesai) : '-'}</p>
                         )}
                       </div>
                       <div className="text-right">
@@ -492,8 +492,8 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
                 <h4 className="font-bold text-center text-slate-800 mb-4 text-base">PERJANJIAN KERJA SAMA KEPENGURUSAN</h4>
                 <p>Dengan ini saya menyatakan kesediaan untuk menerima tugas dan amanah sebagai <strong>{signingKontrak.jabatan}</strong>.</p>
                 <p>Status Kontrak: <strong className="capitalize">{signingKontrak.jenisKontrak}</strong></p>
-                <p>Periode: <strong>{signingKontrak.jenisKontrak === 'permanen' ? 'Selamanya (Permanen)' : `${signingKontrak.tanggalMulai ? new Date(signingKontrak.tanggalMulai).toLocaleDateString('id-ID') : '-'} s.d. ${signingKontrak.tanggalSelesai ? new Date(signingKontrak.tanggalSelesai).toLocaleDateString('id-ID') : '-'}`}</strong></p>
-                <p>Satuan Kafalah / Bonus Kehadiran: <strong>Rp {signingKontrak.satuanKafalah.toLocaleString('id-ID')} / kehadiran</strong></p>
+                <p>Periode: <strong suppressHydrationWarning>{signingKontrak.jenisKontrak === 'permanen' ? 'Selamanya (Permanen)' : `${signingKontrak.tanggalMulai ? formatDateID(signingKontrak.tanggalMulai) : '-'} s.d. ${signingKontrak.tanggalSelesai ? formatDateID(signingKontrak.tanggalSelesai) : '-'}`}</strong></p>
+                <p>Satuan Kafalah / Bonus Kehadiran: <strong suppressHydrationWarning>Rp {signingKontrak.satuanKafalah.toLocaleString('id-ID')} / kehadiran</strong></p>
                 <p className="mt-4 italic text-sm">
                   Saya telah membaca, memahami, dan menyetujui <button type="button" onClick={() => setShowToS(true)} className="text-emerald-600 font-bold underline hover:text-emerald-700 outline-none">seluruh ketentuan dan tanggung jawab dari yayasan (SOP)</button>.
                 </p>
@@ -712,7 +712,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
               <div>
                 <h3 className="font-bold text-slate-800 text-lg pr-4">{selectedPengumuman.judul}</h3>
                 <p suppressHydrationWarning className="text-xs text-slate-500 mt-1">
-                  {new Date(selectedPengumuman.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  {formatDateID(selectedPengumuman.tanggal)}
                 </p>
               </div>
               <button 
@@ -742,5 +742,7 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
     </div>
   );
 }
+
+
 
 
