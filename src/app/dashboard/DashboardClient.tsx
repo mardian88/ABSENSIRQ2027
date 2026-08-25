@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, UserCheck, AlertCircle, RefreshCw, Clock, Calendar as CalendarIcon, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
+import { Users, UserCheck, AlertCircle, RefreshCw, Clock, Calendar as CalendarIcon, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Download, Minus } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell
@@ -121,8 +121,31 @@ export function DashboardClient({
       ? `${searchParams.get('start')} - ${searchParams.get('end')}` 
       : "Hari Ini");
 
-  // Format data for modern charts
   const totalDist = distribution.reduce((sum: number, item: any) => sum + item.value, 0);
+
+  // Helper function to render trend badge
+  const renderTrendBadge = (diff: number, suffix = "") => {
+    if (isAllTime || !stats.trendData) return null;
+    if (diff > 0) {
+      return (
+        <span className="text-emerald-600 text-xs font-semibold bg-emerald-50 px-2 py-1 rounded-md flex items-center">
+          <TrendingUp className="w-3 h-3 mr-1" /> +{diff}{suffix}
+        </span>
+      );
+    } else if (diff < 0) {
+      return (
+        <span className="text-rose-600 text-xs font-semibold bg-rose-50 px-2 py-1 rounded-md flex items-center">
+          <TrendingDown className="w-3 h-3 mr-1" /> {diff}{suffix}
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-slate-500 text-xs font-semibold bg-slate-100 px-2 py-1 rounded-md flex items-center">
+          <Minus className="w-3 h-3 mr-1" /> 0{suffix}
+        </span>
+      );
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12 font-sans">
@@ -184,14 +207,12 @@ export function DashboardClient({
         <div className="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] transition-all hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.08)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-slate-500 text-sm font-medium tracking-wide">Tingkat Kehadiran</h3>
-            <span className="text-emerald-600 text-xs font-semibold bg-emerald-50 px-2 py-1 rounded-md flex items-center">
-              <TrendingUp className="w-3 h-3 mr-1" /> +High
-            </span>
+            {stats.trendData && renderTrendBadge(stats.trendData.persenDiff, '%')}
           </div>
           <p className="text-3xl font-bold text-slate-900 mb-4">{stats.persentaseHadir}%</p>
           <div className="space-y-1">
             <p className="text-sm text-slate-700 flex items-center">
-              Performa absensi <ArrowUpRight className="w-3 h-3 ml-1 text-slate-400" />
+              Performa absensi {stats.trendData && !isAllTime ? stats.trendData.label : ""}
             </p>
             <p className="text-xs text-slate-500">Dari total {stats.totalSantri} Santri terdaftar</p>
           </div>
@@ -201,16 +222,14 @@ export function DashboardClient({
         <div className="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] transition-all hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.08)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-slate-500 text-sm font-medium tracking-wide">Total Hadir</h3>
-            <span className="text-blue-600 text-xs font-semibold bg-blue-50 px-2 py-1 rounded-md flex items-center">
-              <Users className="w-3 h-3 mr-1" /> Active
-            </span>
+            {stats.trendData && renderTrendBadge(stats.trendData.hadirDiff)}
           </div>
           <p className="text-3xl font-bold text-slate-900 mb-4">{stats.totalHadir}</p>
           <div className="space-y-1">
             <p className="text-sm text-slate-700 flex items-center">
-              Santri aktif di periode ini <ArrowUpRight className="w-3 h-3 ml-1 text-slate-400" />
+              Santri aktif {stats.trendData && !isAllTime ? stats.trendData.label : ""}
             </p>
-            <p className="text-xs text-slate-500">Memenuhi target kehadiran</p>
+            <p className="text-xs text-slate-500">Jumlah kehadiran pada periode ini</p>
           </div>
         </div>
 
@@ -218,14 +237,12 @@ export function DashboardClient({
         <div className="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] transition-all hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.08)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-slate-500 text-sm font-medium tracking-wide">Izin / Sakit</h3>
-            <span className="text-amber-600 text-xs font-semibold bg-amber-50 px-2 py-1 rounded-md flex items-center">
-              <TrendingDown className="w-3 h-3 mr-1" /> Stable
-            </span>
+            {stats.trendData && renderTrendBadge(stats.trendData.izinDiff)}
           </div>
           <p className="text-3xl font-bold text-slate-900 mb-4">{stats.totalIzinSakit}</p>
           <div className="space-y-1">
             <p className="text-sm text-slate-700 flex items-center">
-              Pengajuan izin resmi <ArrowDownRight className="w-3 h-3 ml-1 text-slate-400" />
+              Pengajuan resmi {stats.trendData && !isAllTime ? stats.trendData.label : ""}
             </p>
             <p className="text-xs text-slate-500">Data rekapitulasi perizinan</p>
           </div>
@@ -235,16 +252,14 @@ export function DashboardClient({
         <div className="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] transition-all hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.08)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-slate-500 text-sm font-medium tracking-wide">Belum Hadir / Alpa</h3>
-            <span className="text-rose-600 text-xs font-semibold bg-rose-50 px-2 py-1 rounded-md flex items-center">
-              <AlertCircle className="w-3 h-3 mr-1" /> Alert
-            </span>
+            {stats.trendData && renderTrendBadge(stats.trendData.alpaDiff)}
           </div>
           <p className="text-3xl font-bold text-slate-900 mb-4">{stats.totalAlpa}</p>
           <div className="space-y-1">
             <p className="text-sm text-slate-700 flex items-center">
-              Perlu tindak lanjut segera <ArrowUpRight className="w-3 h-3 ml-1 text-slate-400" />
+              Tanpa keterangan {stats.trendData && !isAllTime ? stats.trendData.label : ""}
             </p>
-            <p className="text-xs text-slate-500">Santri tanpa keterangan absen</p>
+            <p className="text-xs text-slate-500">Santri yang butuh tindak lanjut</p>
           </div>
         </div>
       </div>
@@ -257,7 +272,7 @@ export function DashboardClient({
           <div className="flex justify-between items-center mb-8">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Performa Kehadiran</h2>
-              <p className="text-sm text-slate-500">Tren absensi 7 hari terakhir</p>
+              <p className="text-sm text-slate-500">Tren absensi 7 hari terakhir dari periode ini</p>
             </div>
             <Button variant="outline" size="sm" className="h-8 text-xs px-3 rounded-lg border-slate-200">
               <Download className="w-3 h-3 mr-2" />
@@ -308,7 +323,7 @@ export function DashboardClient({
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">Distribusi Metode</h2>
-              <p className="text-sm text-slate-500">Rincian penggunaan metode absen</p>
+              <p className="text-sm text-slate-500">Rincian metode pada periode ini</p>
             </div>
             <Button variant="outline" size="sm" className="h-8 text-xs px-3 rounded-lg border-slate-200">
               <Download className="w-3 h-3 mr-2" />
@@ -380,7 +395,7 @@ export function DashboardClient({
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">History Absensi</h2>
-              <p className="text-sm text-slate-500">10 transaksi terakhir</p>
+              <p className="text-sm text-slate-500">Menampilkan 10 transaksi terakhir</p>
             </div>
             <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full">
               <span className="relative flex h-2 w-2">
@@ -401,7 +416,6 @@ export function DashboardClient({
 
         {/* Top 3 Santri Teladan */}
         <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden relative">
-          {/* Decorative element */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
           
           <div className="p-6 h-full flex flex-col relative z-10">

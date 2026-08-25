@@ -8,7 +8,8 @@ import {
 import { getDashboardPoin } from "./poin-actions";
 import { DashboardClient } from "./DashboardClient";
 
-export default async function DashboardPage({ searchParams }: { searchParams: any }) {
+export default async function DashboardPage(props: { searchParams: Promise<any> }) {
+  const searchParams = await props.searchParams;
   // Extract date range from search params if any
   const start = searchParams?.start || null;
   const end = searchParams?.end || null;

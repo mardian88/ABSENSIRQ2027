@@ -32,7 +32,7 @@ function getDateBounds(startStr?: string | null, endStr?: string | null) {
 }
 
 export async function getDashboardStats(params?: { start?: string | null, end?: string | null }) {
-  const { start, end } = getDateBounds(params?.start, params?.end);
+  const { start, end, isAllTime } = getDateBounds(params?.start, params?.end);
 
   // 1. Get Total Santri Aktif
   const allSantri = await db.select({ id: santri.id }).from(santri).where(eq(santri.statusSantri, 'aktif'));
@@ -45,7 +45,6 @@ export async function getDashboardStats(params?: { start?: string | null, end?: 
       lte(absensi.waktuScan, end)
     ));
 
-  // Unique santri who scanned in this period
   const hadirSet = new Set<string>();
   const izinSakitSet = new Set<string>();
 
@@ -60,13 +59,57 @@ export async function getDashboardStats(params?: { start?: string | null, end?: 
   const totalHadir = hadirSet.size;
   const totalIzinSakit = izinSakitSet.size;
   const totalAlpa = Math.max(0, totalSantri - totalHadir - totalIzinSakit);
+  const persentaseHadir = totalSantri > 0 ? Math.round((totalHadir / totalSantri) * 100) : 0;
+
+  // 3. Get Previous Period for Trend (Only if not all-time)
+  let trendData = {
+    hadirDiff: 0,
+    izinDiff: 0,
+    alpaDiff: 0,
+    persenDiff: 0,
+    label: "vs sebelumnya"
+  };
+
+  if (!isAllTime) {
+    const durationMs = end.getTime() - start.getTime();
+    const prevStart = new Date(start.getTime() - durationMs - 1);
+    const prevEnd = new Date(start.getTime() - 1);
+
+    const prevRecords = await db.select().from(absensi)
+      .where(and(
+        gte(absensi.waktuScan, prevStart),
+        lte(absensi.waktuScan, prevEnd)
+      ));
+
+    const prevHadirSet = new Set<string>();
+    const prevIzinSakitSet = new Set<string>();
+
+    prevRecords.forEach(record => {
+      if (record.statusKehadiran === 'hadir') prevHadirSet.add(record.idSantri);
+      else if (record.statusKehadiran === 'izin' || record.statusKehadiran === 'sakit') prevIzinSakitSet.add(record.idSantri);
+    });
+
+    const prevHadir = prevHadirSet.size;
+    const prevIzinSakit = prevIzinSakitSet.size;
+    const prevAlpa = Math.max(0, totalSantri - prevHadir - prevIzinSakit);
+    const prevPersen = totalSantri > 0 ? Math.round((prevHadir / totalSantri) * 100) : 0;
+
+    trendData = {
+      hadirDiff: totalHadir - prevHadir,
+      izinDiff: totalIzinSakit - prevIzinSakit,
+      alpaDiff: totalAlpa - prevAlpa,
+      persenDiff: persentaseHadir - prevPersen,
+      label: durationMs <= 24 * 60 * 60 * 1000 ? "vs kemarin" : "vs periode lalu"
+    };
+  }
 
   return {
     totalSantri,
     totalHadir,
     totalIzinSakit,
     totalAlpa,
-    persentaseHadir: totalSantri > 0 ? Math.round((totalHadir / totalSantri) * 100) : 0
+    persentaseHadir,
+    trendData
   };
 }
 
@@ -77,7 +120,6 @@ export async function getWeeklyTrend(params?: { start?: string | null, end?: str
   // Base date is endDate (in WIB)
   const baseDate = new Date(`${endDateStr}T12:00:00.000+07:00`);
   
-  // Loop 7 hari ke belakang (index 6 to 0)
   for (let i = 6; i >= 0; i--) {
     const d = new Date(baseDate.getTime());
     d.setDate(d.getDate() - i);
@@ -90,7 +132,6 @@ export async function getWeeklyTrend(params?: { start?: string | null, end?: str
     const start = new Date(`${dStr}T00:00:00.000+07:00`);
     const end = new Date(`${dStr}T23:59:59.999+07:00`);
     
-    // Count unique santri present on that day
     const records = await db.select({ idSantri: absensi.idSantri }).from(absensi)
       .where(and(
         gte(absensi.waktuScan, start),
@@ -142,12 +183,10 @@ export async function getRecentScans(params?: { start?: string | null, end?: str
   const isAllTime = params?.start === 'all';
   const hasRange = !!params?.start && !isAllTime;
   
-  // If custom range
   const type = isAllTime ? 'semua' : (hasRange ? 'kustom' : 'hari_ini');
   
   const laporan = await getLaporanAbsensi(type, params?.start || undefined, params?.end || undefined);
   
-  // Urutkan berdasarkan waktu (Masuk/Pulang) terbaru
   const sorted = laporan.sort((a: any, b: any) => {
     const timeA = Math.max(
       a.waktuMasuk ? new Date(a.waktuMasuk).getTime() : 0, 
