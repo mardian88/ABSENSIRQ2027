@@ -18,7 +18,8 @@ function getDateBounds(startStr?: string | null, endStr?: string | null) {
     return {
       start: new Date("2000-01-01T00:00:00.000+07:00"),
       end: new Date("2100-01-01T23:59:59.999+07:00"),
-      isAllTime: true
+      isAllTime: true,
+      endDateStr: todayWIBString
     };
   }
 
