@@ -13,6 +13,7 @@ export const getColumns = (): ColumnDef<AlpaData>[] => {
     },
     {
       accessorKey: "santri.namaLengkap",
+    id: "namaLengkap",
       header: ({ column }) => {
         return (
           <Button

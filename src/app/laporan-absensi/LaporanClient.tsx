@@ -131,7 +131,7 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
               <Filter className="w-4 h-4 mr-1" /> Waktu:
             </div>
             {[
-              { id: "hari_ini", label: "Hari Ini" },
+              { id: "hari_ini", label: "Hari Ini" }, { id: "kemarin", label: "Kemarin" },
               { id: "minggu_ini", label: "Minggu Ini" },
               { id: "bulan_ini", label: "Bulan Ini" },
               { id: "triwulan", label: "Triwulan" },

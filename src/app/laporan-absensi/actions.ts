@@ -40,6 +40,9 @@ export async function getLaporanAbsensi(filterPeriod: string, startDate?: string
   
   if (filterPeriod === "hari_ini") {
     startWaktu = startOfTodayWIB;
+  } else if (filterPeriod === "kemarin") {
+    startWaktu = new Date(startOfTodayWIB.getTime() - 24 * 60 * 60 * 1000);
+    endWaktu = new Date(startOfTodayWIB.getTime() - 1);
   } else if (filterPeriod === "minggu_ini") {
     // 7 days ago
     startWaktu = new Date(startOfTodayWIB.getTime() - 6 * 24 * 60 * 60 * 1000);

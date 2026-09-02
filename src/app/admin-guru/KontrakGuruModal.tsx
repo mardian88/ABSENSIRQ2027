@@ -184,6 +184,21 @@ export function KontrakGuruModal({ isOpen, onClose, guru }: { isOpen: boolean, o
                       <label className="block text-sm font-medium mb-1">Tanggal Selesai</label>
                       <DatePicker name="tanggalSelesai" date={tanggalSelesai} setDate={setTanggalSelesai} placeholder="DD/MM/YYYY" />
                     </div>
+                    <div className="col-span-2 flex flex-wrap gap-2 mt-1">
+                      <span className="text-xs text-slate-500 flex items-center mr-1">Preset Tanggal Selesai:</span>
+                      <button type="button" onClick={() => {
+                        const d = new Date(); d.setMonth(d.getMonth() + 6); setTanggalSelesai(d);
+                      }} className="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-xs font-medium">6 Bulan</button>
+                      <button type="button" onClick={() => {
+                        const d = new Date(); d.setFullYear(d.getFullYear() + 1); setTanggalSelesai(d);
+                      }} className="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-xs font-medium">1 Tahun</button>
+                      <button type="button" onClick={() => {
+                        const d = new Date(); d.setFullYear(d.getFullYear() + 2); setTanggalSelesai(d);
+                      }} className="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-xs font-medium">2 Tahun</button>
+                      <button type="button" onClick={() => {
+                        const d = new Date(); d.setFullYear(d.getFullYear() + 5); setTanggalSelesai(d);
+                      }} className="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-xs font-medium">5 Tahun</button>
+                    </div>
                   </div>
                 )}
                 

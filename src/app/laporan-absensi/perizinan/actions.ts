@@ -37,6 +37,12 @@ export async function getDaftarPerizinan(period: string = "semua"): Promise<Peri
       startDate = new Date(now.setHours(0, 0, 0, 0));
       endDate = new Date(now.setHours(23, 59, 59, 999));
       break;
+    case 'kemarin':
+      startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate.getTime());
+      endDate.setHours(23, 59, 59, 999);
+      break;
     case 'minggu_ini':
       const day = now.getDay();
       const diff = now.getDate() - day + (day === 0 ? -6 : 1);

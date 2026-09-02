@@ -214,7 +214,7 @@ export default function PindaiQR() {
         } else if (inputMode === "kamera") {
           animationFrameId.current = requestAnimationFrame(tick);
         }
-      }, 1500); // Dikurangi dari 3000ms ke 1500ms agar lebih cepat siap scan berikutnya
+      }, 800); // 800ms agar sangat sat-set (kurang dari 1 detik) agar lebih cepat siap scan berikutnya
     }
   };
 

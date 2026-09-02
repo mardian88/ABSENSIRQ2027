@@ -15,6 +15,7 @@ export const getIzinColumns = (
     },
     {
       accessorKey: "santri.namaLengkap",
+    id: "namaLengkap",
       header: ({ column }) => {
         return (
           <Button

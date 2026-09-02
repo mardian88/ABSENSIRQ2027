@@ -156,7 +156,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                 className="bg-transparent border-none text-sm font-medium text-slate-700 focus:ring-0 cursor-pointer w-full"
               >
                 <option value="semua">Semua Waktu</option>
-                <option value="hari_ini">Hari Ini</option>
+                <option value="hari_ini">Hari Ini</option>`n                <option value="kemarin">Kemarin</option>
                 <option value="minggu_ini">Minggu Ini</option>
                 <option value="bulan_ini">Bulan Ini</option>
                 <option value="triwulan">Triwulan (3 Bulan)</option>

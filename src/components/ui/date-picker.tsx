@@ -40,7 +40,7 @@ export function DatePicker({
           {date ? format(date, "dd/MM/yyyy", { locale: id }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 z-[200]" align="start">
         <Calendar
           mode="single"
           selected={date}

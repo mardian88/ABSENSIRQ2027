@@ -210,8 +210,8 @@ export async function recordAbsensiById(idSantriOrGuru: string, jenisAbsen: stri
     });
   }
 
-  revalidatePath("/");
-  revalidatePath("/absensi/manual");
+  // revalidatePath("/");
+  // revalidatePath("/absensi/manual");
   return { success: true, data: { namaLengkap: santriData.namaLengkap, waktu: formatTimeID(now) } };
 }
 
@@ -262,7 +262,7 @@ export async function recordAbsensiGuruById(idGuru: string, jenisAbsen: string, 
     await sendTemplatedMessage(guruData.kontakWa, jenisPesan, payload);
   });
 
-  revalidatePath("/");
+  // revalidatePath("/");
   return { success: true, data: { namaLengkap: guruData.namaLengkap, waktu: formatTimeID(now) } };
 }
 
@@ -309,36 +309,60 @@ export async function getSantriForManualAbsen() {
     .where(eq(guru.statusAktif, true))
     .orderBy(desc(guru.id));
 
-  const todayAbsensi = await db.select({ idSantri: absensi.idSantri })
+  const todayAbsensi = await db.select()
     .from(absensi)
-    .where(
-      and(
-        eq(absensi.jenisAbsen, 'masuk'),
-        between(absensi.waktuScan, startOfDayWIB, endOfDayWIB)
-      )
-    );
+    .where(between(absensi.waktuScan, startOfDayWIB, endOfDayWIB));
     
-  const todayAbsensiGuru = await db.select({ idGuru: absensiGuru.idGuru })
+  const todayAbsensiGuru = await db.select()
     .from(absensiGuru)
-    .where(
-      and(
-        eq(absensiGuru.jenisAbsen, 'masuk'),
-        between(absensiGuru.waktuScan, startOfDayWIB, endOfDayWIB)
-      )
-    );
+    .where(between(absensiGuru.waktuScan, startOfDayWIB, endOfDayWIB));
 
-  const absenSet = new Set([
-    ...todayAbsensi.map((a: any) => a.idSantri),
-    ...todayAbsensiGuru.map((a: any) => a.idGuru)
-  ]);
+  const activeIzin = await db.select().from(perizinanSantri).where(
+    and(
+      lte(perizinanSantri.tanggalMulai, endOfDayWIB),
+      gte(perizinanSantri.tanggalSelesai, startOfDayWIB)
+    )
+  );
 
-  const filteredSantri = santriList.filter((s: any) => !absenSet.has(s.id));
-  const filteredGuru = guruList.filter((g: any) => !absenSet.has(g.id)).map((g: any) => ({
-    ...g,
-    halaqoh: "Guru"
-  }));
+  const formattedSantri = santriList.map(s => {
+    const masuk = todayAbsensi.find(a => a.idSantri === s.id && a.jenisAbsen === 'masuk');
+    const pulang = todayAbsensi.find(a => a.idSantri === s.id && a.jenisAbsen === 'pulang');
+    const izin = activeIzin.find(i => i.idSantri === s.id);
 
-  return [...filteredSantri, ...filteredGuru];
+    let status: "belum_absen" | "sudah_masuk" | "sudah_pulang" | "izin" | "sakit" = "belum_absen";
+    if (izin) status = (izin.kategori.toLowerCase() === "sakit" ? "sakit" : "izin");
+    else if (pulang) status = "sudah_pulang";
+    else if (masuk) status = "sudah_masuk";
+
+    return {
+      ...s,
+      kategori: "Santri",
+      statusHariIni: status,
+      waktuMasuk: masuk ? new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date(masuk.waktuScan)) : null,
+      waktuPulang: pulang ? new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date(pulang.waktuScan)) : null,
+    };
+  });
+
+  const formattedGuru = guruList.map(g => {
+    const masuk = todayAbsensiGuru.find(a => a.idGuru === g.id && a.jenisAbsen === 'masuk');
+    const pulang = todayAbsensiGuru.find(a => a.idGuru === g.id && a.jenisAbsen === 'pulang');
+
+    let status: "belum_absen" | "sudah_masuk" | "sudah_pulang" | "izin" | "sakit" = "belum_absen";
+    if (pulang) status = "sudah_pulang";
+    else if (masuk) status = "sudah_masuk";
+
+    return {
+      ...g,
+      halaqoh: "Guru",
+      kategori: "Guru",
+      statusHariIni: status,
+      waktuMasuk: masuk ? new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date(masuk.waktuScan)) : null,
+      waktuPulang: pulang ? new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date(pulang.waktuScan)) : null,
+    };
+  });
+
+  return [...formattedSantri, ...formattedGuru];
 }
+
 
 
