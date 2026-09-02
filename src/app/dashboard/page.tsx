@@ -3,7 +3,8 @@ import {
   getDashboardStats, 
   getWeeklyTrend, 
   getMethodDistribution, 
-  getRecentScans 
+  getRecentScans,
+  getActiveFonnteQuotaDashboard
 } from "./actions";
 import { getDashboardPoin } from "./poin-actions";
 import { DashboardClient } from "./DashboardClient";
@@ -16,12 +17,13 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
   const filterParams = { start, end };
 
   // Fetch initial data on the server side
-  const [stats, trend, distribution, recentScans, poinStats] = await Promise.all([
+  const [stats, trend, distribution, recentScans, poinStats, fonnteQuota] = await Promise.all([
     getDashboardStats(filterParams),
     getWeeklyTrend(filterParams),
     getMethodDistribution(filterParams),
     getRecentScans(filterParams),
-    getDashboardPoin() // Poin maybe doesn't need date filter, or can add if needed
+    getDashboardPoin(), // Poin maybe doesn't need date filter, or can add if needed
+    getActiveFonnteQuotaDashboard()
   ]);
 
   return (
@@ -34,6 +36,7 @@ export default async function DashboardPage(props: { searchParams: Promise<any> 
         initialPoinStats={poinStats}
         initialStart={start}
         initialEnd={end}
+        initialFonnteQuota={fonnteQuota}
       />
     </div>
   );

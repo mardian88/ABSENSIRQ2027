@@ -6,7 +6,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell
 } from "recharts";
-import { getDashboardStats, getWeeklyTrend, getMethodDistribution, getRecentScans } from "./actions";
+import { getDashboardStats, getWeeklyTrend, getMethodDistribution, getRecentScans, getActiveFonnteQuotaDashboard } from "./actions";
 import { getDashboardPoin } from "./poin-actions";
 import Link from "next/link";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -21,7 +21,8 @@ export function DashboardClient({
   initialRecentScans,
   initialPoinStats,
   initialStart,
-  initialEnd
+  initialEnd,
+  initialFonnteQuota
 }: {
   initialStats: any;
   initialTrend: any;
@@ -30,6 +31,7 @@ export function DashboardClient({
   initialPoinStats: any;
   initialStart?: string | null;
   initialEnd?: string | null;
+  initialFonnteQuota?: string | number | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,6 +48,7 @@ export function DashboardClient({
 
   const [startDate, setStartDate] = useState(initialStart || "");
   const [endDate, setEndDate] = useState(initialEnd || "");
+  const [fonnteQuota, setFonnteQuota] = useState(initialFonnteQuota);
 
   useEffect(() => {
     setStats(initialStats);
@@ -53,7 +56,8 @@ export function DashboardClient({
     setDistribution(initialDistribution);
     setRecentScans(initialRecentScans);
     setPoinStats(initialPoinStats);
-  }, [initialStats, initialTrend, initialDistribution, initialRecentScans, initialPoinStats]);
+    setFonnteQuota(initialFonnteQuota);
+  }, [initialStats, initialTrend, initialDistribution, initialRecentScans, initialPoinStats, initialFonnteQuota]);
 
   const fetchData = useCallback(async () => {
     setIsRefreshing(true);
@@ -62,18 +66,20 @@ export function DashboardClient({
       const currentEnd = searchParams.get('end');
       const filterParams = { start: currentStart || null, end: currentEnd || null };
 
-      const [newStats, newTrend, newDist, newRecent, newPoin] = await Promise.all([
+      const [newStats, newTrend, newDist, newRecent, newPoin, newQuota] = await Promise.all([
         getDashboardStats(filterParams),
         getWeeklyTrend(filterParams),
         getMethodDistribution(filterParams),
         getRecentScans(filterParams),
-        getDashboardPoin()
+        getDashboardPoin(),
+        getActiveFonnteQuotaDashboard()
       ]);
       setStats(newStats);
       setTrend(newTrend);
       setDistribution(newDist);
       setRecentScans(newRecent);
       setPoinStats(newPoin);
+      setFonnteQuota(newQuota);
       setLastUpdate(new Date());
     } catch (e) {
       console.error("Gagal menyegarkan data", e);
@@ -157,6 +163,11 @@ export function DashboardClient({
           <p className="text-slate-500 text-sm mt-1 flex items-center gap-2">
             Updated {lastUpdate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
           </p>
+          {fonnteQuota !== null && fonnteQuota !== undefined && (
+            <p className="text-slate-500 text-sm mt-0.5 flex items-center gap-2">
+              Sisa Quota Token: <span className="font-semibold text-emerald-600">{fonnteQuota}</span>
+            </p>
+          )}
         </div>
         
         <div className="flex flex-wrap items-center gap-2">

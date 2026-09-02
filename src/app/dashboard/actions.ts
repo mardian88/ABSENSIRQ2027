@@ -212,3 +212,24 @@ export async function getRecentScans(params?: { start?: string | null, end?: str
     kategori: item.kategori 
   }));
 }
+
+
+import { fonnteTokens } from '@/db/schema';
+import { checkFonnteQuota } from '@/app/pengaturan/actions';
+
+export async function getActiveFonnteQuotaDashboard() {
+  try {
+    const activeToken = await db.query.fonnteTokens.findFirst({
+      where: eq(fonnteTokens.isActive, true)
+    });
+    if (!activeToken) return null;
+    
+    const quotaRes = await checkFonnteQuota(activeToken.token);
+    if (quotaRes.status && quotaRes.quota !== undefined) {
+      return quotaRes.quota;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
