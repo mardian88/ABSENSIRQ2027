@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit, Camera, QrCode, Briefcase } from "lucide-react";
+import { Edit, Camera, QrCode, Briefcase, Badge as BadgeIcon } from "lucide-react";
 
 export const getGuruColumns = ({
   handleDownloadQR,
@@ -8,12 +8,14 @@ export const getGuruColumns = ({
   setEditingData,
   setIsModalOpen,
   setKontrakGuru,
+  handleCetakIdCard,
 }: {
   handleDownloadQR: (guru: any) => void;
   setFaceRegistrationGuru: (guru: {id: string, namaLengkap: string}) => void;
   setEditingData: (guru: any) => void;
   setIsModalOpen: (open: boolean) => void;
   setKontrakGuru: (guru: any) => void;
+  handleCetakIdCard: (guru: any) => void;
 }): ColumnDef<any>[] => [
   {
     id: "select",
@@ -70,6 +72,13 @@ export const getGuruColumns = ({
       const item = row.original;
       return (
         <div className="flex items-center gap-2 justify-end">
+          <button 
+            onClick={() => handleCetakIdCard(item)} 
+            className="text-slate-400 hover:text-emerald-600"
+            title="Cetak ID Card"
+          >
+            <BadgeIcon className="w-4 h-4 inline" />
+          </button>
           <button 
             onClick={() => setFaceRegistrationGuru({ id: item.id, namaLengkap: item.namaLengkap })}
             className={`text-slate-400 hover:text-blue-600`}

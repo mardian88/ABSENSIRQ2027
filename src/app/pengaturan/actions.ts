@@ -10,8 +10,8 @@ cloudinary.config({
 
 
 import { db } from "@/db";
-import { pengaturanProfil, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanAbsensiGlobal, pengumumanPortal, notifikasiPortal, santri, pengumumanGuru, notifikasiGuru, guru } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { pengaturanProfil, sesiAbsensi, pengaturanHariAktif, hariLibur, pengaturanAbsensiGlobal, pengumumanPortal, notifikasiPortal, santri, pengumumanGuru, notifikasiGuru, guru, idCardTemplates } from "@/db/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 
@@ -669,6 +669,53 @@ export async function hapusPengumumanGuru(id: string) {
   await db.delete(pengumumanGuru).where(eq(pengumumanGuru.id, id));
   revalidatePath('/pengaturan');
   revalidatePath('/portal-guru');
+}
+
+export async function getActiveIdCardTemplate(tipe: string) {
+  try {
+    const template = await db.query.idCardTemplates.findFirst({
+      where: and(eq(idCardTemplates.tipe, tipe), eq(idCardTemplates.isActive, true))
+    });
+    return template || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function getIdCardTemplates() {
+  return await db.select().from(idCardTemplates).orderBy(desc(idCardTemplates.createdAt));
+}
+
+export async function saveIdCardTemplate(data: { id?: string, tipe: string, nama: string, backgroundUrl: string, isActive: boolean }) {
+  if (data.isActive) {
+    await db.update(idCardTemplates).set({ isActive: false }).where(eq(idCardTemplates.tipe, data.tipe));
+  }
+  
+  if (data.id) {
+    await db.update(idCardTemplates).set({
+      nama: data.nama,
+      backgroundUrl: data.backgroundUrl,
+      isActive: data.isActive
+    }).where(eq(idCardTemplates.id, data.id));
+  } else {
+    await db.insert(idCardTemplates).values({
+      id: uuidv4(),
+      tipe: data.tipe,
+      nama: data.nama,
+      backgroundUrl: data.backgroundUrl,
+      isActive: data.isActive,
+      createdAt: new Date()
+    });
+  }
+}
+
+export async function deleteIdCardTemplate(id: string) {
+  await db.delete(idCardTemplates).where(eq(idCardTemplates.id, id));
+}
+
+export async function setActiveIdCardTemplate(id: string, tipe: string) {
+  await db.update(idCardTemplates).set({ isActive: false }).where(eq(idCardTemplates.tipe, tipe));
+  await db.update(idCardTemplates).set({ isActive: true }).where(eq(idCardTemplates.id, id));
 }
 
 

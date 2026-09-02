@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Plus, Search, Edit2, Trash2, Camera, Upload, Download, GraduationCap, QrCode, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Camera, Upload, Download, GraduationCap, QrCode, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Badge as BadgeIcon } from "lucide-react";
 import { createSantri, updateSantri, deleteSantri, importSantriBatch, jadikanAlumni, jadikanAlumniBatch, syncQRCodeBatch, updateHalaqoh, updateHalaqohBatch, updateSesiBatch, hapusVektorWajahBatch, importVektorWajahBatch, updateSaudaraBatch } from "./actions";
 import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
+import { FaceRegistrationModal } from "./FaceRegistrationModal";
 import { RegisterWajahModal } from "./RegisterWajahModal";
+import { IdCardPrintModal } from "@/components/IdCardPrintModal";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -113,6 +115,25 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
 
   // Hanya tampilkan yang bukan alumni
   const nonAlumniList = santriList.filter(s => s.statusSantri !== "alumni");
+
+  const [idCardPrintData, setIdCardPrintData] = useState<any[]>([]);
+  const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false);
+
+  const handleCetakIdCard = (santri: any) => {
+    setIdCardPrintData([santri]);
+    setIsIdCardModalOpen(true);
+  };
+
+  const handleCetakMassal = () => {
+    const selectedIds = Object.keys(rowSelection).filter(k => (rowSelection as any)[k]).map(k => nonAlumniList[parseInt(k)]?.id).filter(Boolean);
+    if (selectedIds.length === 0) {
+      showError("Pilih minimal satu santri");
+      return;
+    }
+    const selectedSantri = nonAlumniList.filter(s => selectedIds.includes(s.id));
+    setIdCardPrintData(selectedSantri);
+    setIsIdCardModalOpen(true);
+  };
 
   // selectedIds derived from rowSelection map where keys are row indices
   const selectedIds = Object.keys(rowSelection)
@@ -630,7 +651,8 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
           downloadQR,
           setFaceRegistrationSantri,
           handleEdit,
-          handleDelete
+          handleDelete,
+          handleCetakIdCard
         })}
         data={nonAlumniList}
         searchKey="namaLengkap"
@@ -675,6 +697,9 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
                     
                     {/* Status & Data Wajah Section */}
                     <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">Status & Data Umum</div>
+                    <button onClick={handleCetakMassal} className="flex items-center gap-2 px-4 py-2.5 hover:bg-emerald-50 text-emerald-700 text-sm text-left border-b border-slate-50">
+                      <BadgeIcon className="w-4 h-4" /> Cetak ID Card Terpilih
+                    </button>
                     <button onClick={handleJadikanAlumniBatch} className="flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-sm text-left border-b border-slate-50">
                       <GraduationCap className="w-4 h-4" /> Jadikan Alumni
                     </button>
@@ -1004,6 +1029,13 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
           }}
         />
       )}
+
+      <IdCardPrintModal
+        isOpen={isIdCardModalOpen}
+        onClose={() => setIsIdCardModalOpen(false)}
+        people={idCardPrintData}
+        tipe="santri"
+      />
     </div>
   );
 }

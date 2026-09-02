@@ -6,6 +6,7 @@ import { addGuru, updateGuru, deleteGurus } from "./actions";
 import { showError, showSuccess, showConfirm } from "@/lib/sweetalert";
 import { RegisterWajahGuruModal } from "./RegisterWajahGuruModal";
 import { KontrakGuruModal } from "./KontrakGuruModal";
+import { IdCardPrintModal } from "@/components/IdCardPrintModal";
 import QRCode from "qrcode";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { getGuruColumns } from "./columns";
@@ -21,6 +22,25 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
   const [faceRegistrationGuru, setFaceRegistrationGuru] = useState<{id: string, namaLengkap: string} | null>(null);
   const [kontrakGuru, setKontrakGuru] = useState<any>(null);
   const [tanggalLahir, setTanggalLahir] = useState<Date | undefined>(undefined);
+
+  const [idCardPrintData, setIdCardPrintData] = useState<any[]>([]);
+  const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false);
+
+  const handleCetakIdCard = (guru: any) => {
+    setIdCardPrintData([guru]);
+    setIsIdCardModalOpen(true);
+  };
+
+  const handleCetakMassal = () => {
+    const selectedIds = Object.keys(rowSelection).filter(k => (rowSelection as any)[k]).map(k => data[parseInt(k)]?.id).filter(Boolean);
+    if (selectedIds.length === 0) {
+      showError("Pilih minimal satu guru");
+      return;
+    }
+    const selectedGuru = data.filter(g => selectedIds.includes(g.id));
+    setIdCardPrintData(selectedGuru);
+    setIsIdCardModalOpen(true);
+  };
 
   const selectedIds = Object.keys(rowSelection)
     .filter(k => (rowSelection as any)[k])
@@ -103,10 +123,16 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
         </div>
         <div className="flex items-center gap-2">
           {selectedIds.length > 0 && (
-            <button onClick={handleDelete} className="flex items-center gap-2 px-4 py-2 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg font-medium transition-colors">
-              <Trash2 className="w-4 h-4" />
-              <span>Hapus ({selectedIds.length})</span>
-            </button>
+            <>
+              <button onClick={handleCetakMassal} className="flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg font-medium transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Cetak ID Card ({selectedIds.length})</span>
+              </button>
+              <button onClick={handleDelete} className="flex items-center gap-2 px-4 py-2 bg-rose-100 text-rose-700 hover:bg-rose-200 rounded-lg font-medium transition-colors">
+                <Trash2 className="w-4 h-4" />
+                <span>Hapus ({selectedIds.length})</span>
+              </button>
+            </>
           )}
           <button 
             onClick={() => { setEditingData(null); setTanggalLahir(undefined); setIsModalOpen(true); }}
@@ -128,6 +154,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
           },
           setIsModalOpen,
           setKontrakGuru,
+          handleCetakIdCard
         })}
         data={data}
         searchKey="namaLengkap"
@@ -200,6 +227,13 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
           onClose={() => setKontrakGuru(null)}
         />
       )}
+
+      <IdCardPrintModal
+        isOpen={isIdCardModalOpen}
+        onClose={() => setIsIdCardModalOpen(false)}
+        people={idCardPrintData}
+        tipe="guru"
+      />
     </div>
   );
 }

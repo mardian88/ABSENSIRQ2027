@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit2, Trash2, Camera, QrCode, GraduationCap } from "lucide-react";
+import { Edit2, Trash2, Camera, QrCode, GraduationCap, Badge as BadgeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const getSantriColumns = ({
@@ -11,6 +11,7 @@ export const getSantriColumns = ({
   setFaceRegistrationSantri,
   handleEdit,
   handleDelete,
+  handleCetakIdCard,
 }: {
   halaqohList: any[];
   handleHalaqohChange: (id: string, newIdHalaqoh: string) => void;
@@ -19,6 +20,7 @@ export const getSantriColumns = ({
   setFaceRegistrationSantri: (santri: {id: string, namaLengkap: string, nomorInduk?: string}) => void;
   handleEdit: (santri: any) => void;
   handleDelete: (id: string) => void;
+  handleCetakIdCard: (santri: any) => void;
 }): ColumnDef<any>[] => [
   {
     id: "select",
@@ -116,6 +118,13 @@ export const getSantriColumns = ({
       const s = row.original;
       return (
         <div className="flex items-center gap-1 justify-end">
+          <button 
+            onClick={() => handleCetakIdCard(s)} 
+            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+            title="Cetak ID Card"
+          >
+            <BadgeIcon className="w-4 h-4" />
+          </button>
           <button 
             onClick={() => handleJadikanAlumni(s.id)} 
             className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"

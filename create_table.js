@@ -1,24 +1,24 @@
+require('dotenv').config();
 const { createClient } = require('@libsql/client');
 
-async function main() {
+async function run() {
+  const url = process.env.DATABASE_URL || 'file:./sqlite.db';
+  console.log('Connecting to', url);
   const client = createClient({
-    url: 'file:sqlite.db',
+    url,
+    authToken: process.env.DATABASE_AUTH_TOKEN
   });
-
+  
   await client.execute(`
-    CREATE TABLE IF NOT EXISTS keuangan_topup (
+    CREATE TABLE IF NOT EXISTS id_card_templates (
       id TEXT PRIMARY KEY,
-      id_santri TEXT NOT NULL REFERENCES santri(id),
-      nominal INTEGER NOT NULL,
-      metode TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending',
-      bukti_url TEXT,
-      tanggal_ajuan INTEGER NOT NULL,
-      id_admin TEXT REFERENCES user(id)
+      tipe TEXT NOT NULL,
+      nama TEXT NOT NULL,
+      background_url TEXT NOT NULL,
+      is_active INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL
     );
   `);
-
-  console.log("Table keuangan_topup created successfully");
+  console.log('Table created successfully');
 }
-
-main().catch(console.error);
+run().catch(console.error);

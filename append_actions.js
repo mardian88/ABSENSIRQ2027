@@ -1,39 +1,44 @@
 const fs = require('fs');
-const code = `
-import { pengumumanPortal } from '@/db/schema';
+let text = fs.readFileSync('src/app/pengaturan/actions.ts', 'utf-8');
+text += `
+import { idCardTemplates } from '@/db/schema';
 import { v4 as uuidv4 } from 'uuid';
 
-export async function getPengumumanPortal() {
-  return await db.select().from(pengumumanPortal).orderBy(desc(pengumumanPortal.tanggal));
+export async function getIdCardTemplates() {
+  return await db.select().from(idCardTemplates).orderBy(desc(idCardTemplates.createdAt));
 }
 
-export async function tambahPengumuman(judul: string, isi: string, isAktif: boolean) {
-  const admin = await requireAdmin();
-  await db.insert(pengumumanPortal).values({
-    id: uuidv4(),
-    judul,
-    isi,
-    tanggal: new Date(),
-    isAktif,
-    idAdmin: admin.id
-  });
-  revalidatePath('/pengaturan');
-  revalidatePath('/portal-ortu');
+export async function saveIdCardTemplate(data: { id?: string, tipe: string, nama: string, backgroundUrl: string, isActive: boolean }) {
+  if (data.isActive) {
+    await db.update(idCardTemplates).set({ isActive: false }).where(eq(idCardTemplates.tipe, data.tipe));
+  }
+  
+  if (data.id) {
+    await db.update(idCardTemplates).set({
+      nama: data.nama,
+      backgroundUrl: data.backgroundUrl,
+      isActive: data.isActive
+    }).where(eq(idCardTemplates.id, data.id));
+  } else {
+    await db.insert(idCardTemplates).values({
+      id: uuidv4(),
+      tipe: data.tipe,
+      nama: data.nama,
+      backgroundUrl: data.backgroundUrl,
+      isActive: data.isActive,
+      createdAt: new Date()
+    });
+  }
 }
 
-export async function updatePengumuman(id: string, judul: string, isi: string, isAktif: boolean) {
-  await requireAdmin();
-  await db.update(pengumumanPortal).set({ judul, isi, isAktif }).where(eq(pengumumanPortal.id, id));
-  revalidatePath('/pengaturan');
-  revalidatePath('/portal-ortu');
+export async function deleteIdCardTemplate(id: string) {
+  await db.delete(idCardTemplates).where(eq(idCardTemplates.id, id));
 }
 
-export async function hapusPengumuman(id: string) {
-  await requireAdmin();
-  await db.delete(pengumumanPortal).where(eq(pengumumanPortal.id, id));
-  revalidatePath('/pengaturan');
-  revalidatePath('/portal-ortu');
+export async function setActiveIdCardTemplate(id: string, tipe: string) {
+  await db.update(idCardTemplates).set({ isActive: false }).where(eq(idCardTemplates.tipe, tipe));
+  await db.update(idCardTemplates).set({ isActive: true }).where(eq(idCardTemplates.id, id));
 }
 `;
-fs.appendFileSync('src/app/pengaturan/actions.ts', code);
-console.log("Appended to actions.ts");
+fs.writeFileSync('src/app/pengaturan/actions.ts', text, 'utf-8');
+console.log('Done');

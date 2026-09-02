@@ -15,6 +15,7 @@ import { HariAktifLiburManager } from "./HariAktifLiburManager";
 import { AutoAlpaManager } from "./AutoAlpaManager";
 import { ThankYouPageManager } from "./ThankYouPageManager";
 import { KategoriPoinManager } from "./KategoriPoinManager";
+import { IdCardManager } from "./IdCardManager";
 import { PesanOtomatisManager } from "./PesanOtomatisManager";
 import { KeuanganManager } from "./KeuanganManager";
 import { SaudaraManager } from "./SaudaraManager";
@@ -110,13 +111,19 @@ export default function PengaturanPage() {
           onClick={() => setActiveTab("poin")} 
           className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'poin' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
         >
-          ⭐ Poin
+          🏆 Poin
+        </button>
+        <button 
+          onClick={() => setActiveTab("idcard")} 
+          className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'idcard' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
+        >
+          🪪 ID Card
         </button>
         <button 
           onClick={() => setActiveTab("cabang")} 
           className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'cabang' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
         >
-          📍 Cabang
+          🏢 Cabang
         </button>
         <button 
           onClick={() => setActiveTab("keuangan")} 
@@ -299,6 +306,10 @@ export default function PengaturanPage() {
 
       {activeTab === "poin" && (
         <KategoriPoinManager />
+      )}
+
+      {activeTab === "idcard" && (
+        <IdCardManager />
       )}
 
       {activeTab === "cabang" && (

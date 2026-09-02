@@ -565,3 +565,12 @@ export const notifikasiGuru = sqliteTable('notifikasi_guru', {
   isRead: integer('is_read', { mode: 'boolean' }).default(false),
   tanggal: integer('tanggal', { mode: 'timestamp' }).notNull()
 });
+
+export const idCardTemplates = sqliteTable('id_card_templates', {
+  id: text('id').primaryKey(),
+  tipe: text('tipe').notNull(), // 'santri' | 'guru'
+  nama: text('nama').notNull(),
+  backgroundUrl: text('background_url').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+});
