@@ -13,7 +13,7 @@ import Link from "next/link";
 export function FormIzinClient() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [jumlahHari, setJumlahHari] = useState(1);
+  const [jumlahHari, setJumlahHari] = useState<number | "">("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [keterangan, setKeterangan] = useState("");
@@ -50,13 +50,15 @@ export function FormIzinClient() {
       }
 
       const buktiFile = formData.get("buktiFile") as File | null;
-      if (jumlahHari >= 2 && (!buktiFile || buktiFile.size === 0)) {
+      const finalJumlahHari = jumlahHari === "" ? 1 : jumlahHari;
+      
+      if (finalJumlahHari >= 2 && (!buktiFile || buktiFile.size === 0)) {
         toast.error("Wajib melampirkan foto bukti untuk izin 2 hari atau lebih!");
         setLoading(false);
         return;
       }
 
-      formData.append("jumlahHari", jumlahHari.toString());
+      formData.append("jumlahHari", finalJumlahHari.toString());
       
       // Needs to fetch the current user's ID via an API or we can just send it to a server action that knows it from cookies.
       // Let's call our server action via fetch to an API route, or just use the server action directly.
@@ -129,14 +131,43 @@ export function FormIzinClient() {
 
           <div className="space-y-2">
             <Label className="text-slate-700">Izin Berapa Hari? <span className="text-rose-500">*</span></Label>
+            
+            <div className="flex gap-2 pb-1">
+              {[1, 2, 3].map(hari => (
+                <button
+                  key={hari}
+                  type="button"
+                  onClick={() => setJumlahHari(hari)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all border ${
+                    jumlahHari === hari 
+                      ? 'bg-emerald-100 border-emerald-500 text-emerald-700' 
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {hari} Hari
+                </button>
+              ))}
+            </div>
+
             <Input 
               type="number" 
-              name="jumlahHari" 
-              value={jumlahHari}
-              onChange={(e) => setJumlahHari(Math.max(1, Math.min(9, parseInt(e.target.value) || 1)))}
+              name="jumlahHariInput" 
+              value={jumlahHari === "" ? "" : jumlahHari}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "") {
+                  setJumlahHari("");
+                } else {
+                  const num = parseInt(val);
+                  if (!isNaN(num)) {
+                    setJumlahHari(Math.max(1, Math.min(9, num)));
+                  }
+                }
+              }}
               min={1} 
               max={9}
               required 
+              placeholder="Atau ketik jumlah hari..."
               className="bg-white text-lg font-bold" 
             />
           </div>
@@ -158,7 +189,7 @@ export function FormIzinClient() {
             </p>
           </div>
 
-          {jumlahHari >= 2 && (
+          {(typeof jumlahHari === "number" && jumlahHari >= 2) && (
             <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
               <Label className="text-slate-700">Lampiran Bukti <span className="text-rose-500">*</span></Label>
               <p className="text-xs text-slate-500 -mt-1">Wajib menyertakan foto surat sakit atau bukti lainnya.</p>
