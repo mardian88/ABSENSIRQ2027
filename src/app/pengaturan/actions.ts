@@ -718,4 +718,8 @@ export async function setActiveIdCardTemplate(id: string, tipe: string) {
   await db.update(idCardTemplates).set({ isActive: true }).where(eq(idCardTemplates.id, id));
 }
 
+export async function updateIdCardLayout(id: string, layout: string) {
+  await db.update(idCardTemplates).set({ layout }).where(eq(idCardTemplates.id, id));
+}
+
 
