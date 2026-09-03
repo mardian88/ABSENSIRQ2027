@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Loader2, Printer, AlertTriangle, Edit, Save, LayoutTemplate } from "lucide-react";
 import { getActiveIdCardTemplate, updateIdCardLayout } from "@/app/pengaturan/actions";
 import { QRCodeSVG } from "qrcode.react";
@@ -139,12 +140,33 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
               </p>
             </div>
           ) : isEditMode ? (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center w-full">
               <div className="mb-4 text-center">
                 <p className="text-sm text-amber-600 font-medium">Mode Edit Layout Aktif</p>
                 <p className="text-xs text-slate-500">Geser (drag) atau ubah ukuran (resize) elemen di bawah ini.</p>
               </div>
               
+              <div className="mb-6 flex gap-4 bg-white p-3 rounded-lg shadow-sm border border-slate-200">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-semibold text-slate-600">Ukuran Font Nama:</label>
+                  <Input 
+                    type="number" 
+                    value={layout.name.fontSize}
+                    onChange={(e) => setLayout(l => ({...l, name: {...l.name, fontSize: parseInt(e.target.value) || 10}}))}
+                    className="w-16 h-8 text-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-semibold text-slate-600">Ukuran Font NIS/NIP:</label>
+                  <Input 
+                    type="number" 
+                    value={layout.id.fontSize}
+                    onChange={(e) => setLayout(l => ({...l, id: {...l.id, fontSize: parseInt(e.target.value) || 8}}))}
+                    className="w-16 h-8 text-sm"
+                  />
+                </div>
+              </div>
+
               {people.length > 0 && (
                 <div 
                   className="relative overflow-hidden bg-white shadow-xl mx-auto ring-2 ring-amber-400"
@@ -177,7 +199,7 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                   >
                     <div className="w-full h-full flex items-center justify-center border-2 border-dashed border-blue-400 bg-blue-400/10 cursor-move">
                       <span 
-                        className="truncate px-1 text-center leading-tight w-full"
+                        className="px-1 text-center leading-tight w-full break-words"
                         style={{ 
                           fontSize: `${layout.name.fontSize}px`, 
                           fontWeight: layout.name.fontWeight as any 
@@ -208,7 +230,7 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                   >
                     <div className="w-full h-full flex items-center justify-center border-2 border-dashed border-green-400 bg-green-400/10 cursor-move">
                       <span 
-                        className="truncate px-1 text-center"
+                        className="px-1 text-center"
                         style={{ 
                           fontSize: `${layout.id.fontSize}px`, 
                           fontWeight: layout.id.fontWeight as any 
@@ -298,7 +320,7 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                       }}
                     >
                       <span 
-                        className="truncate px-1 text-center leading-tight w-full"
+                        className="px-1 text-center leading-tight w-full break-words"
                         style={{ 
                           fontSize: `${layout.name.fontSize}px`, 
                           fontWeight: layout.name.fontWeight as any 
@@ -319,7 +341,7 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                       }}
                     >
                       <span 
-                        className="truncate px-1 text-center"
+                        className="px-1 text-center"
                         style={{ 
                           fontSize: `${layout.id.fontSize}px`, 
                           fontWeight: layout.id.fontWeight as any 
