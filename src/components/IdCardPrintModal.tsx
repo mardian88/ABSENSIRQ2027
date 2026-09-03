@@ -18,8 +18,8 @@ interface IdCardPrintModalProps {
 }
 
 const DEFAULT_LAYOUT = {
-  name: { x: 0, y: 160, width: 204, height: 40, fontSize: 13, fontWeight: 'bold' },
-  id: { x: 0, y: 200, width: 204, height: 20, fontSize: 10, fontWeight: '600' },
+  name: { x: 0, y: 160, width: 204, height: 40, fontSize: 13, fontWeight: 'bold', color: '#000000' },
+  id: { x: 0, y: 200, width: 204, height: 20, fontSize: 10, fontWeight: '600', color: '#000000' },
   qr: { x: 74, y: 240, width: 55, height: 55 }
 };
 
@@ -146,23 +146,37 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                 <p className="text-xs text-slate-500">Geser (drag) atau ubah ukuran (resize) elemen di bawah ini.</p>
               </div>
               
-              <div className="mb-6 flex gap-4 bg-white p-3 rounded-lg shadow-sm border border-slate-200">
+              <div className="mb-6 flex flex-wrap gap-4 bg-white p-3 rounded-lg shadow-sm border border-slate-200 justify-center">
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-semibold text-slate-600">Ukuran Font Nama:</label>
+                  <label className="text-xs font-semibold text-slate-600">Font Nama:</label>
                   <Input 
                     type="number" 
                     value={layout.name.fontSize}
                     onChange={(e) => setLayout(l => ({...l, name: {...l.name, fontSize: parseInt(e.target.value) || 10}}))}
-                    className="w-16 h-8 text-sm"
+                    className="w-16 h-8 text-sm px-2"
+                  />
+                  <input 
+                    type="color" 
+                    value={layout.name.color || '#000000'}
+                    onChange={(e) => setLayout(l => ({...l, name: {...l.name, color: e.target.value}}))}
+                    className="w-8 h-8 rounded-md cursor-pointer border border-slate-300 p-0"
+                    title="Warna Font Nama"
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-semibold text-slate-600">Ukuran Font NIS/NIP:</label>
+                  <label className="text-xs font-semibold text-slate-600">Font NIS/NIP:</label>
                   <Input 
                     type="number" 
                     value={layout.id.fontSize}
                     onChange={(e) => setLayout(l => ({...l, id: {...l.id, fontSize: parseInt(e.target.value) || 8}}))}
-                    className="w-16 h-8 text-sm"
+                    className="w-16 h-8 text-sm px-2"
+                  />
+                  <input 
+                    type="color" 
+                    value={layout.id.color || '#000000'}
+                    onChange={(e) => setLayout(l => ({...l, id: {...l.id, color: e.target.value}}))}
+                    className="w-8 h-8 rounded-md cursor-pointer border border-slate-300 p-0"
+                    title="Warna Font NIS/NIP"
                   />
                 </div>
               </div>
@@ -202,7 +216,8 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                         className="px-1 text-center leading-tight w-full break-words"
                         style={{ 
                           fontSize: `${layout.name.fontSize}px`, 
-                          fontWeight: layout.name.fontWeight as any 
+                          fontWeight: layout.name.fontWeight as any,
+                          color: layout.name.color || '#000000'
                         }}
                       >
                         {people[0].namaLengkap || people[0].namaGuru || "NAMA LENGKAP"}
@@ -233,7 +248,8 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                         className="px-1 text-center"
                         style={{ 
                           fontSize: `${layout.id.fontSize}px`, 
-                          fontWeight: layout.id.fontWeight as any 
+                          fontWeight: layout.id.fontWeight as any,
+                          color: layout.id.color || '#000000'
                         }}
                       >
                         {people[0].nomorInduk || people[0].nip || people[0].kodeQr || "ID-123456"}
@@ -323,7 +339,8 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                         className="px-1 text-center leading-tight w-full break-words"
                         style={{ 
                           fontSize: `${layout.name.fontSize}px`, 
-                          fontWeight: layout.name.fontWeight as any 
+                          fontWeight: layout.name.fontWeight as any,
+                          color: layout.name.color || '#000000'
                         }}
                       >
                         {p.namaLengkap || p.namaGuru}
@@ -344,7 +361,8 @@ export function IdCardPrintModal({ isOpen, onClose, people, tipe }: IdCardPrintM
                         className="px-1 text-center"
                         style={{ 
                           fontSize: `${layout.id.fontSize}px`, 
-                          fontWeight: layout.id.fontWeight as any 
+                          fontWeight: layout.id.fontWeight as any,
+                          color: layout.id.color || '#000000'
                         }}
                       >
                         {p.nomorInduk || p.nip || p.kodeQr || "-"}
