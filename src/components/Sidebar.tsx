@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { 
   Home, Users, UserCheck, AlertTriangle, Wallet, Megaphone, Settings, 
   X, BookOpen, LogOut, GraduationCap, ClipboardList, FileText, Briefcase, 
-  Coins, ChevronDown, ChevronRight, UserMinus, CheckCircle2, RefreshCw, Heart 
+  Coins, ChevronDown, ChevronRight, UserMinus, CheckCircle2, RefreshCw, Heart, Calendar 
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { getPengaturanProfil } from "@/app/pengaturan/actions";
@@ -55,6 +55,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         { name: "Laporan Hadir", href: "/laporan-absensi", icon: ClipboardList, exact: true },
         { name: "History Belum Hadir", href: "/laporan-absensi/belum-hadir", icon: UserMinus },
         { name: "Laporan Perizinan", href: "/laporan-absensi/perizinan", icon: FileText, exact: true },
+        { name: "Rekap Bulanan", href: "/laporan-absensi/rekap-bulanan", icon: Calendar, exact: true },
         { name: "Laporan Alpa", href: "/laporan-absensi/alpa", icon: FileText, exact: true },
         { name: "Laporan Kafalah", href: "/admin-penggajian", icon: Coins },
         { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
