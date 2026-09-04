@@ -229,3 +229,67 @@ export async function updateDurasiPerizinan(id: string, tanggalMulaiStr: string,
     return { success: false, message: "Gagal mengubah durasi perizinan" };
   }
 }
+
+export async function getActiveSantriOptions() {
+  try {
+    const data = await db.select({
+      id: santri.id,
+      namaLengkap: santri.namaLengkap,
+      nomorInduk: santri.nomorInduk,
+    }).from(santri).where(eq(santri.statusSantri, 'aktif')).orderBy(santri.namaLengkap);
+    return { success: true, data };
+  } catch (error) {
+    console.error(error);
+    return { success: false, data: [] };
+  }
+}
+
+export async function createPerizinanManual(idSantri: string, kategori: string, tanggalMulaiStr: string, tanggalSelesaiStr: string, keterangan: string) {
+  try {
+    if (!idSantri || !kategori || !tanggalMulaiStr || !tanggalSelesaiStr || !keterangan) {
+      return { success: false, message: "Semua form wajib diisi" };
+    }
+
+    const tanggalMulai = new Date(tanggalMulaiStr);
+    const tanggalSelesai = new Date(tanggalSelesaiStr);
+    
+    tanggalMulai.setHours(0, 0, 0, 0);
+    tanggalSelesai.setHours(23, 59, 59, 999);
+
+    if (tanggalMulai > tanggalSelesai) {
+      return { success: false, message: "Tanggal mulai tidak boleh lebih dari tanggal selesai" };
+    }
+
+    // Insert ke perizinan_santri
+    await db.insert(perizinanSantri).values({
+      id: uuidv4(),
+      idSantri,
+      kategori,
+      tanggalMulai,
+      tanggalSelesai,
+      keterangan,
+      buktiUrl: null, // Tanpa bukti
+      waktuPengajuan: new Date()
+    });
+
+    // Loop insert ke absensi
+    let current = new Date(tanggalMulai);
+    while (current <= tanggalSelesai) {
+      await db.insert(absensi).values({
+        id: uuidv4(),
+        idSantri,
+        waktuScan: new Date(current),
+        metodeScan: 'Manual Admin',
+        jenisAbsen: 'masuk',
+        statusKehadiran: kategori.toLowerCase()
+      });
+      current.setDate(current.getDate() + 1);
+    }
+
+    revalidatePath('/laporan-absensi/perizinan');
+    return { success: true, message: "Berhasil menambahkan laporan perizinan manual" };
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: "Terjadi kesalahan sistem saat menyimpan data" };
+  }
+}

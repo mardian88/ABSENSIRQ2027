@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { getDaftarPerizinan, PerizinanData, resetLaporanIzin } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
-import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, X, Trash2, RefreshCw, CalendarClock } from "lucide-react";
+import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, X, Trash2, RefreshCw, CalendarClock, Plus } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -22,6 +22,63 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
   const [editStartDate, setEditStartDate] = useState<Date | undefined>(undefined);
   const [editEndDate, setEditEndDate] = useState<Date | undefined>(undefined);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addSantriId, setAddSantriId] = useState("");
+  const [addKategori, setAddKategori] = useState("Sakit");
+  const [addTanggalMulai, setAddTanggalMulai] = useState<Date | undefined>(new Date());
+  const [addTanggalSelesai, setAddTanggalSelesai] = useState<Date | undefined>(new Date());
+  const [addKeterangan, setAddKeterangan] = useState("");
+  const [isSavingAdd, setIsSavingAdd] = useState(false);
+  const [santriOptions, setSantriOptions] = useState<{id: string, namaLengkap: string, nomorInduk: string}[]>([]);
+  const [isLoadingSantri, setIsLoadingSantri] = useState(false);
+
+  const handleOpenAddModal = async () => {
+    setIsAddModalOpen(true);
+    if (santriOptions.length === 0) {
+      setIsLoadingSantri(true);
+      try {
+        const { getActiveSantriOptions } = await import("./actions");
+        const res = await getActiveSantriOptions();
+        if (res.success && res.data) {
+          setSantriOptions(res.data);
+        }
+      } catch (err) {
+        toast.error("Gagal mengambil data santri");
+      } finally {
+        setIsLoadingSantri(false);
+      }
+    }
+  };
+
+  const handleSubmitAdd = async () => {
+    if (!addSantriId || !addKategori || !addTanggalMulai || !addTanggalSelesai || !addKeterangan) {
+      toast.error("Semua form wajib diisi");
+      return;
+    }
+    setIsSavingAdd(true);
+    try {
+      const { createPerizinanManual } = await import("./actions");
+      const res = await createPerizinanManual(addSantriId, addKategori, addTanggalMulai.toISOString(), addTanggalSelesai.toISOString(), addKeterangan);
+      if (res.success) {
+        toast.success(res.message);
+        setIsAddModalOpen(false);
+        // Reset form
+        setAddSantriId("");
+        setAddKeterangan("");
+        setAddKategori("Sakit");
+        setAddTanggalMulai(new Date());
+        setAddTanggalSelesai(new Date());
+        handleRefresh();
+      } else {
+        toast.error(res.message);
+      }
+    } catch (err) {
+      toast.error("Terjadi kesalahan sistem");
+    } finally {
+      setIsSavingAdd(false);
+    }
+  };
 
   const handleOpenDetailModal = (izin: PerizinanData) => {
     setSelectedIzin(izin);
@@ -201,6 +258,12 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
             <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
             
             <button 
+              onClick={handleOpenAddModal}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm"
+            >
+              <Plus className="w-4 h-4" /> Tambah Manual
+            </button>
+            <button 
               onClick={() => setIsResetModalOpen(true)}
               className="px-4 py-2 bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-rose-600 font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm"
             >
@@ -373,6 +436,84 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                 className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors w-full sm:w-auto"
               >
                 Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[150]">
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg relative shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <Plus className="w-5 h-5 text-indigo-600" /> Tambah Izin/Sakit Manual
+            </h2>
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Pilih Santri</label>
+                {isLoadingSantri ? (
+                  <div className="p-2 text-sm text-slate-500">Memuat data santri...</div>
+                ) : (
+                  <select
+                    value={addSantriId}
+                    onChange={(e) => setAddSantriId(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">-- Pilih Santri --</option>
+                    {santriOptions.map(s => (
+                      <option key={s.id} value={s.id}>{s.namaLengkap} ({s.nomorInduk})</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Kategori</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="addKategori" value="Sakit" checked={addKategori === 'Sakit'} onChange={(e) => setAddKategori(e.target.value)} className="w-4 h-4 text-indigo-600" />
+                    Sakit
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="addKategori" value="Izin" checked={addKategori === 'Izin'} onChange={(e) => setAddKategori(e.target.value)} className="w-4 h-4 text-indigo-600" />
+                    Izin
+                  </label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Mulai</label>
+                  <DatePicker date={addTanggalMulai} setDate={setAddTanggalMulai} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Selesai</label>
+                  <DatePicker date={addTanggalSelesai} setDate={setAddTanggalSelesai} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Keterangan / Alasan</label>
+                <textarea
+                  value={addKeterangan}
+                  onChange={(e) => setAddKeterangan(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  placeholder="Ketik keterangan..."
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={isSavingAdd}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleSubmitAdd}
+                disabled={isSavingAdd || !addSantriId || !addKeterangan || !addTanggalMulai || !addTanggalSelesai}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSavingAdd ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : "Simpan Laporan"}
               </button>
             </div>
           </div>
