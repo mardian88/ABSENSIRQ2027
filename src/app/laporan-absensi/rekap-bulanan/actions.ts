@@ -102,12 +102,14 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       const row = santriMap.get(p.idSantri)!;
       const status = p.kategori.toLowerCase(); // 'izin' atau 'sakit'
       
-      const start = new Date(Math.max(p.tanggalMulai.getTime(), startOfMonth.getTime()));
-      const end = new Date(Math.min(p.tanggalSelesai.getTime(), endOfMonth.getTime()));
+      const pStartStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(p.tanggalMulai);
+      const pEndStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(p.tanggalSelesai);
       
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const day = d.getDate();
-        row.kehadiran[day] = status;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${tahun}-${String(bulan).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if (dateStr >= pStartStr && dateStr <= pEndStr) {
+          row.kehadiran[day] = status;
+        }
       }
     }
 
@@ -140,10 +142,8 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
 
     const monthHolidays: Record<number, string> = {};
     
-    // Untuk Auto-Alpa, HANYA berlaku jika hari tersebut sudah benar-benar lewat (strictly past).
-    // Jam 23:59 WIB berarti kita hanya memproses hari yang 'kemarin' atau sebelumnya.
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    // Gunakan tanggal WIB agar tidak terkena bug zona waktu server (Vercel UTC)
+    const todayStrWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
 
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(tahun, bulan - 1, day);
@@ -159,8 +159,8 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
         isHoliday = true;
       }
 
-      // Hanya auto-alpa jika harinya sudah berlalu (kemarin)
-      const isStrictlyPast = currentDate < startOfToday;
+      // Hanya auto-alpa jika harinya sudah lewat 23:59 WIB (berarti secara kalender string YYYY-MM-DD, nilainya < today)
+      const isStrictlyPast = dateStr < todayStrWib;
 
       if (isStrictlyPast && !isHoliday) {
         Array.from(santriMap.values()).forEach(row => {
