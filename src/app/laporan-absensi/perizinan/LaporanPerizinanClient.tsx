@@ -49,6 +49,58 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     }
   };
 
+  const handleExport = () => {
+    if (dataIzin.length === 0) {
+      toast.error("Tidak ada data untuk diekspor");
+      return;
+    }
+
+    const formattedData = dataIzin.map((izin, i) => ({
+      "No": i + 1,
+      "Nama Santri": izin.santri.namaLengkap,
+      "NIS": izin.santri.nomorInduk || "-",
+      "Kategori": izin.kategori.toUpperCase(),
+      "Mulai": formatDateID(izin.tanggalMulai),
+      "Selesai": formatDateID(izin.tanggalSelesai),
+      "Alasan": izin.keterangan,
+      "Tgl Pengajuan": `${formatDateID(izin.waktuPengajuan)} ${formatTimeID(izin.waktuPengajuan)}`
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(formattedData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Perizinan");
+    XLSX.writeFile(wb, `Laporan_Perizinan_Santri_${filterPeriod}.xlsx`);
+  };
+
+  const [rowSelection, setRowSelection] = useState({});
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteSelected = async (table: any) => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    if (selectedRows.length === 0) return;
+    
+    if (!confirm(`Apakah Anda yakin ingin menghapus ${selectedRows.length} laporan perizinan yang dipilih beserta fotonya? Data yang dihapus tidak dapat dikembalikan.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    const idsToDelete = selectedRows.map((r: any) => r.original.id);
+    
+    try {
+      const { hapusPerizinanBanyak } = await import("./actions");
+      const res = await hapusPerizinanBanyak(idsToDelete);
+      if (res.success) {
+        toast.success(res.message);
+        handleRefresh();
+        setRowSelection({});
+      } else {
+        toast.error(res.message);
+      }
+    } catch (err) {
+      toast.error("Gagal menghapus laporan perizinan");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleOpenDetailModal = (izin: PerizinanData) => {
