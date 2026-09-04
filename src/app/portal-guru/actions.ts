@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, halaqoh, absensi, pengumumanGuru, notifikasiGuru } from "@/db/schema";
+import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, halaqoh, absensi, pengumumanGuru, notifikasiGuru, logPesanManual } from "@/db/schema";
 import { eq, and, desc, between, lte, gte, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -203,9 +203,28 @@ export async function getSantriBelumHadirGuru() {
     );
 
     const belumHadir = allActiveSantri.filter(s => !attendedIds.has(s.id));
-    belumHadir.sort((a, b) => a.namaLengkap.localeCompare(b.namaLengkap));
+    
+    // Get log pesan manual
+    const logs = await db.select({
+      idSantri: logPesanManual.idSantri,
+      status: logPesanManual.status
+    }).from(logPesanManual).where(
+      and(
+        eq(logPesanManual.tanggal, wibDateString),
+        eq(logPesanManual.jenis, 'belum_hadir')
+      )
+    );
 
-    return { success: true, data: belumHadir };
+    const logMap = new Map(logs.map(l => [l.idSantri, l.status]));
+
+    const belumHadirWithStatus = belumHadir.map(s => ({
+      ...s,
+      statusPesan: logMap.get(s.id) || null
+    }));
+
+    belumHadirWithStatus.sort((a, b) => a.namaLengkap.localeCompare(b.namaLengkap));
+
+    return { success: true, data: belumHadirWithStatus };
   } catch (err: any) {
     console.error("Error getSantriBelumHadirGuru:", err);
     return { success: false, data: [] };

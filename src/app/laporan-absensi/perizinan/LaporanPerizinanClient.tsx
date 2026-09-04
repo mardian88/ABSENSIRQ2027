@@ -6,6 +6,7 @@ import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filt
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DatePicker } from "@/components/ui/date-picker";
 import { getIzinColumns } from "./columns";
 
 export function LaporanPerizinanClient({ initialData }: { initialData: PerizinanData[] }) {
@@ -18,8 +19,8 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
   const [selectedIzin, setSelectedIzin] = useState<PerizinanData | null>(null);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editStartDate, setEditStartDate] = useState("");
-  const [editEndDate, setEditEndDate] = useState("");
+  const [editStartDate, setEditStartDate] = useState<Date | undefined>(undefined);
+  const [editEndDate, setEditEndDate] = useState<Date | undefined>(undefined);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const handleOpenDetailModal = (izin: PerizinanData) => {
@@ -29,17 +30,8 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
 
   const handleOpenEditModal = (izin: PerizinanData) => {
     setSelectedIzin(izin);
-    // Format to YYYY-MM-DD for input type="date"
-    const formatDateForInput = (d: Date) => {
-      const date = new Date(d);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-    
-    setEditStartDate(formatDateForInput(izin.tanggalMulai));
-    setEditEndDate(formatDateForInput(izin.tanggalSelesai));
+    setEditStartDate(new Date(izin.tanggalMulai));
+    setEditEndDate(new Date(izin.tanggalSelesai));
     setIsEditModalOpen(true);
   };
 
@@ -49,7 +41,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     setIsSavingEdit(true);
     try {
       const { updateDurasiPerizinan } = await import("./actions");
-      const res = await updateDurasiPerizinan(selectedIzin.id, editStartDate, editEndDate);
+      const res = await updateDurasiPerizinan(selectedIzin.id, editStartDate.toISOString(), editEndDate.toISOString());
       if (res.success) {
         toast.success(res.message);
         setIsEditModalOpen(false);
@@ -279,20 +271,18 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Mulai</label>
-                <input 
-                  type="date" 
-                  value={editStartDate}
-                  onChange={(e) => setEditStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                <DatePicker 
+                  date={editStartDate}
+                  setDate={setEditStartDate}
+                  placeholder="Pilih tanggal mulai"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Selesai</label>
-                <input 
-                  type="date" 
-                  value={editEndDate}
-                  onChange={(e) => setEditEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                <DatePicker 
+                  date={editEndDate}
+                  setDate={setEditEndDate}
+                  placeholder="Pilih tanggal selesai"
                 />
               </div>
             </div>
