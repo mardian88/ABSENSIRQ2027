@@ -128,7 +128,7 @@ export function RekapBulananClient() {
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Bulanan");
-    XLSX.writeFile(workbook, \Rekap_Bulanan_\_\_\.xlsx\);
+    XLSX.writeFile(workbook, `Rekap_Bulanan_${halaqohName}_${monthName}_${selectedTahun}.xlsx`);
   };
 
   return (
@@ -214,7 +214,7 @@ export function RekapBulananClient() {
                   {daysArray.map(day => (
                     <th 
                       key={day} 
-                      className={\px-1.5 py-3 font-semibold text-center border-r border-slate-200 min-w-[30px] \\}
+                      className={`px-1.5 py-3 font-semibold text-center border-r border-slate-200 min-w-[30px] ${isWeekend(day, selectedBulan, selectedTahun) ? 'bg-orange-100 text-orange-800' : ''}`}
                     >
                       {day}
                     </th>
@@ -236,7 +236,7 @@ export function RekapBulananClient() {
                     {daysArray.map(day => (
                       <td 
                         key={day} 
-                        className={\px-1.5 py-2 text-center border-r border-slate-200 \\}
+                        className={`px-1.5 py-2 text-center border-r border-slate-200 ${isWeekend(day, selectedBulan, selectedTahun) ? 'bg-orange-50/50' : ''}`}
                       >
                         {renderStatus(row.kehadiran[day])}
                       </td>
