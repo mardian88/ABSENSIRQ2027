@@ -78,10 +78,6 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-200 bg-slate-50/50">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
     <div className="flex flex-col h-full bg-slate-50 relative min-h-screen">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:2rem_2rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-[0.2] pointer-events-none" />
 
