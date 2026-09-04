@@ -150,10 +150,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     }
   };
 
-  const handleOpenDetailModal = (izin: PerizinanData) => {
-    setSelectedIzin(izin);
-    setIsDetailModalOpen(true);
-  };
+
 
   const handleSubmitReset = async () => {
     setIsResetting(true);
