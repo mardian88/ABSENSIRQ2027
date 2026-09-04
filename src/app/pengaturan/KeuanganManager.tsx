@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, ShieldAlert, Loader2 } from "lucide-react";
@@ -14,7 +14,7 @@ const schema = z.object({
   nominalSaudara: z.coerce.number().min(0, "Nominal tidak boleh negatif"),
 });
 
-type FormData = z.infer<typeof schema>;
+type KeuanganFormValues = z.infer<typeof schema>;
 
 export function KeuanganManager() {
   const [data, setData] = useState<any[]>([]);
@@ -34,7 +34,7 @@ export function KeuanganManager() {
     fetchData();
   }, []);
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       namaPembayaran: "",
@@ -43,7 +43,7 @@ export function KeuanganManager() {
     }
   });
 
-  const onSubmit = async (values: FormData) => {
+  const onSubmit = async (values: KeuanganFormValues) => {
     setIsSaving(true);
     try {
       if (editingId) {

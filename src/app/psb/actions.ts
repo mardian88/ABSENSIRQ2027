@@ -105,7 +105,7 @@ export async function submitPendaftaran(data: SubmitPSBInput) {
   // 2. Server-side Validation (Anti Injection)
   const validationResult = psbSchema.safeParse(data);
   if (!validationResult.success) {
-    console.error("Zod Validation Error:", validationResult.error.errors);
+    console.error("Zod Validation Error:", validationResult.error.issues);
     return { success: false, message: "Data tidak valid atau mengandung karakter yang dilarang." };
   }
 
