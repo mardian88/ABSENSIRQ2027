@@ -84,7 +84,25 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       row.kehadiran[day] = status;
     }
 
-    // 4. Hitung Total (hanya yang eksplisit tercatat)
+    // Auto-detect Alpa untuk hari kerja yang terlewat
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(tahun, bulan - 1, day);
+      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      const isPastOrToday = currentDate <= today;
+
+      if (isPastOrToday && !isWeekend) {
+        Array.from(santriMap.values()).forEach(row => {
+          if (!row.kehadiran[day]) {
+            row.kehadiran[day] = 'alpa';
+          }
+        });
+      }
+    }
+
+    // 4. Hitung Total
     const finalData = Array.from(santriMap.values()).map(row => {
       let h = 0, i = 0, s = 0, a = 0;
       
@@ -104,5 +122,55 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
   } catch (error) {
     console.error(error);
     return { success: false, data: [], message: "Gagal memuat rekap bulanan" };
+  }
+}
+
+export async function updateGender(idSantri: string, jenisKelamin: string) {
+  try {
+    await db.update(santri).set({ jenisKelamin }).where(eq(santri.id, idSantri));
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    return { success: false };
+  }
+}
+
+import { v4 as uuidv4 } from "uuid";
+
+export async function updateAbsensiManual(idSantri: string, tanggalStr: string, status: string) {
+  try {
+    const tanggal = new Date(tanggalStr);
+    const startOfDay = new Date(tanggal);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(tanggal);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Hapus data absensi masuk (atau semua absensi harian) pada hari tersebut untuk santri ini
+    await db.delete(absensi).where(and(
+      eq(absensi.idSantri, idSantri),
+      gte(absensi.waktuScan, startOfDay),
+      lte(absensi.waktuScan, endOfDay)
+    ));
+
+    // Jika status tidak kosong, insert absensi baru
+    if (status) {
+      // Kita set waktuScan ke tengah hari (12:00) agar aman
+      const waktuScan = new Date(tanggal);
+      waktuScan.setHours(12, 0, 0, 0);
+
+      await db.insert(absensi).values({
+        id: uuidv4(),
+        idSantri,
+        waktuScan,
+        metodeScan: 'Manual Admin',
+        jenisAbsen: 'masuk',
+        statusKehadiran: status
+      });
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    return { success: false };
   }
 }

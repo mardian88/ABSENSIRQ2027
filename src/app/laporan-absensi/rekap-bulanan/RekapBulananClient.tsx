@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { getHalaqohOptions, getRekapBulananData, RekapSantriRow } from "./actions";
+import { getHalaqohOptions, getRekapBulananData, updateGender, updateAbsensiManual, RekapSantriRow } from "./actions";
 import { Download, Search, Loader2, Calendar, FileSpreadsheet } from "lucide-react";
 import toast from "react-hot-toast";
 import * as XLSX from "xlsx";
@@ -66,17 +66,52 @@ export function RekapBulananClient() {
   const daysInMonth = getDaysInMonth(selectedBulan, selectedTahun);
   const daysArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
 
-  const renderStatus = (status?: string) => {
-    if (!status) return "";
-    switch(status) {
-      case 'hadir':
-      case 'terlambat': return <span className="text-emerald-600 font-bold">H</span>;
-      case 'izin': return <span className="text-amber-500 font-bold">I</span>;
-      case 'sakit': return <span className="text-blue-500 font-bold">S</span>;
-      case 'alpa': return <span className="text-rose-500 font-bold">A</span>;
-      default: return "";
+  const handleGenderChange = async (idSantri: string, newGender: string) => {
+    // Update local state first for instant feedback
+    setData(prev => prev.map(row => 
+      row.id === idSantri ? { ...row, jenisKelamin: newGender } : row
+    ));
+    
+    const res = await updateGender(idSantri, newGender);
+    if (!res.success) {
+      toast.error("Gagal mengubah jenis kelamin di database");
     }
   };
+
+  const handleAbsensiChange = async (idSantri: string, day: number, newStatus: string) => {
+    // Update local state
+    setData(prev => prev.map(row => {
+      if (row.id !== idSantri) return row;
+      
+      const newKehadiran = { ...row.kehadiran, [day]: newStatus };
+      if (!newStatus) delete newKehadiran[day];
+
+      // Recalculate totals
+      let h = 0, i = 0, s = 0, a = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const stat = newKehadiran[d];
+        if (stat === 'hadir' || stat === 'terlambat') h++;
+        else if (stat === 'izin') i++;
+        else if (stat === 'sakit') s++;
+        else if (stat === 'alpa') a++;
+      }
+
+      return {
+        ...row,
+        kehadiran: newKehadiran,
+        total: { hadir: h, izin: i, sakit: s, alpa: a }
+      };
+    }));
+
+    // Update database
+    const dateStr = `${selectedTahun}-${String(selectedBulan).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const res = await updateAbsensiManual(idSantri, dateStr, newStatus);
+    if (!res.success) {
+      toast.error("Gagal menyimpan perubahan ke database");
+    }
+  };
+
+
 
   const handleExport = () => {
     if (data.length === 0) {
@@ -232,15 +267,45 @@ export function RekapBulananClient() {
                     <td className="px-4 py-2 font-medium text-slate-800 border-r border-slate-200 sticky left-0 z-10 bg-white">
                       {row.namaLengkap}
                     </td>
-                    <td className="px-2 py-2 text-center text-slate-600 border-r border-slate-200">{row.jenisKelamin}</td>
-                    {daysArray.map(day => (
-                      <td 
-                        key={day} 
-                        className={`px-1.5 py-2 text-center border-r border-slate-200 ${isWeekend(day, selectedBulan, selectedTahun) ? 'bg-orange-50/50' : ''}`}
+                    <td className="px-0 py-0 border-r border-slate-200 bg-white">
+                      <select
+                        value={row.jenisKelamin}
+                        onChange={(e) => handleGenderChange(row.id, e.target.value)}
+                        className="w-full h-full py-2 bg-transparent text-center text-slate-600 outline-none cursor-pointer hover:bg-slate-100 appearance-none font-medium"
+                        style={{ textAlignLast: 'center' }}
                       >
-                        {renderStatus(row.kehadiran[day])}
-                      </td>
-                    ))}
+                        <option value="L">L</option>
+                        <option value="P">P</option>
+                      </select>
+                    </td>
+                    {daysArray.map(day => {
+                      const stat = row.kehadiran[day] || "";
+                      let textColor = "text-slate-400";
+                      if (stat === 'hadir' || stat === 'terlambat') textColor = "text-emerald-600";
+                      else if (stat === 'izin') textColor = "text-amber-500";
+                      else if (stat === 'sakit') textColor = "text-blue-500";
+                      else if (stat === 'alpa') textColor = "text-rose-500";
+                      
+                      return (
+                        <td 
+                          key={day} 
+                          className={`px-0 py-0 text-center border-r border-slate-200 ${isWeekend(day, selectedBulan, selectedTahun) ? 'bg-orange-50/50' : 'bg-white'}`}
+                        >
+                          <select
+                            value={stat === 'terlambat' ? 'hadir' : stat}
+                            onChange={(e) => handleAbsensiChange(row.id, day, e.target.value)}
+                            className={`w-full h-full py-2 bg-transparent text-center font-bold outline-none cursor-pointer hover:bg-slate-100 appearance-none ${textColor}`}
+                            style={{ textAlignLast: 'center' }}
+                          >
+                            <option value=""></option>
+                            <option value="hadir" className="text-emerald-600">H</option>
+                            <option value="izin" className="text-amber-500">I</option>
+                            <option value="sakit" className="text-blue-500">S</option>
+                            <option value="alpa" className="text-rose-500">A</option>
+                          </select>
+                        </td>
+                      );
+                    })}
                     <td className="px-2 py-2 text-center font-bold text-emerald-600 border-r border-slate-200 bg-emerald-50/30">{row.total.hadir || ""}</td>
                     <td className="px-2 py-2 text-center font-bold text-amber-500 border-r border-slate-200 bg-amber-50/30">{row.total.izin || ""}</td>
                     <td className="px-2 py-2 text-center font-bold text-blue-500 border-r border-slate-200 bg-blue-50/30">{row.total.sakit || ""}</td>
