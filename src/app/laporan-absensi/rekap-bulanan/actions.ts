@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { halaqoh, santri, absensi, pengaturanHariAktif, hariLibur } from "@/db/schema";
+import { halaqoh, santri, absensi, pengaturanHariAktif, hariLibur, perizinanSantri } from "@/db/schema";
 import { and, eq, gte, lte, asc, desc } from "drizzle-orm";
 
 export async function getHalaqohOptions() {
@@ -58,6 +58,18 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
         eq(absensi.jenisAbsen, 'masuk')
       ));
 
+    // Dapatkan data perizinanSantri untuk menjamin akurasi Laporan Perizinan
+    const perizinanRecords = await db.select({
+      idSantri: perizinanSantri.idSantri,
+      kategori: perizinanSantri.kategori,
+      tanggalMulai: perizinanSantri.tanggalMulai,
+      tanggalSelesai: perizinanSantri.tanggalSelesai
+    }).from(perizinanSantri)
+      .where(and(
+        lte(perizinanSantri.tanggalMulai, endOfMonth),
+        gte(perizinanSantri.tanggalSelesai, startOfMonth)
+      ));
+
     // 3. Susun data rekap per santri
     const santriMap = new Map<string, RekapSantriRow>();
     
@@ -72,20 +84,34 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       });
     }
 
-    const daysInMonth = new Date(tahun, bulan, 0).getDate();
+    const daysInMonth = endOfMonth.getDate();
 
+    // Isi dari absensi (Hadir)
     for (const r of absensiRecords) {
       if (!santriMap.has(r.idSantri)) continue;
       const row = santriMap.get(r.idSantri)!;
-      
       const day = r.waktuScan.getDate();
       const status = r.statusKehadiran.toLowerCase();
-      
+      // Jangan timpa jika sudah diisi manual sebelumnya (misal sudah ada record)
       row.kehadiran[day] = status;
     }
 
+    // Timpa dari perizinan (Izin/Sakit) untuk memastikan sangat akurat
+    for (const p of perizinanRecords) {
+      if (!santriMap.has(p.idSantri)) continue;
+      const row = santriMap.get(p.idSantri)!;
+      const status = p.kategori.toLowerCase(); // 'izin' atau 'sakit'
+      
+      const start = new Date(Math.max(p.tanggalMulai.getTime(), startOfMonth.getTime()));
+      const end = new Date(Math.min(p.tanggalSelesai.getTime(), endOfMonth.getTime()));
+      
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const day = d.getDate();
+        row.kehadiran[day] = status;
+      }
+    }
+
     // 4. Pengaturan Hari Libur & Auto-Alpa
-    // Ambil pengaturan hari aktif
     const activeDaysConfig = await db.select().from(pengaturanHariAktif);
     const activeDaysMap: Record<number, boolean> = {
       0: activeDaysConfig.find(d => d.id === 'minggu')?.isAktif ?? false,
@@ -97,7 +123,6 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       6: activeDaysConfig.find(d => d.id === 'sabtu')?.isAktif ?? false,
     };
 
-    // Ambil hari libur spesifik bulan ini
     const startDateStr = `${tahun}-${String(bulan).padStart(2, '0')}-01`;
     const endDateStr = `${tahun}-${String(bulan).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
     const holidays = await db.select().from(hariLibur).where(
@@ -114,8 +139,11 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
     });
 
     const monthHolidays: Record<number, string> = {};
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    
+    // Untuk Auto-Alpa, HANYA berlaku jika hari tersebut sudah benar-benar lewat (strictly past).
+    // Jam 23:59 WIB berarti kita hanya memproses hari yang 'kemarin' atau sebelumnya.
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
 
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(tahun, bulan - 1, day);
@@ -131,9 +159,10 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
         isHoliday = true;
       }
 
-      const isPastOrToday = currentDate <= today;
+      // Hanya auto-alpa jika harinya sudah berlalu (kemarin)
+      const isStrictlyPast = currentDate < startOfToday;
 
-      if (isPastOrToday && !isHoliday) {
+      if (isStrictlyPast && !isHoliday) {
         Array.from(santriMap.values()).forEach(row => {
           if (!row.kehadiran[day]) {
             row.kehadiran[day] = 'alpa';
