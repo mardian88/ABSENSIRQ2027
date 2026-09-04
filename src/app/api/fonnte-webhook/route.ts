@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { logPesanManual, santri, ortu } from "@/db/schema";
+import { logPesanManual, santri, keluarga } from "@/db/schema";
 import { eq, like } from "drizzle-orm";
 import { sendFonnteMessage } from "@/lib/fonnte";
 
@@ -92,12 +92,12 @@ export async function POST(req: NextRequest) {
       
       let senderContext = "Pengirim ini belum terdaftar di database (Kemungkinan Calon Wali Santri). Arahkan mereka untuk mendaftar jika bertanya tentang pendaftaran.";
       
-      const parentMatch = await db.select().from(ortu)
-        .where(like(ortu.kontakWa, `%${sender.substring(2)}%`))
+      const parentMatch = await db.select().from(keluarga)
+        .where(like(keluarga.nomorWhatsapp, `%${sender.substring(2)}%`))
         .limit(1).then(res => res[0]);
       
       if (parentMatch) {
-         senderContext = `Pengirim ini adalah Orang Tua/Wali Santri aktif bernama "${parentMatch.namaLengkap}". Layani mereka sebagai wali santri. Jangan suruh mendaftar lagi kecuali mereka bertanya untuk mendaftarkan anak lain.`;
+         senderContext = `Pengirim ini adalah Orang Tua/Wali Santri aktif bernama "${parentMatch.namaWali}". Layani mereka sebagai wali santri. Jangan suruh mendaftar lagi kecuali mereka bertanya untuk mendaftarkan anak lain.`;
       }
 
       console.log(`[AI CS] Processing message from ${sender}...`);
