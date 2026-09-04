@@ -14,6 +14,7 @@ export function RekapBulananClient() {
   const [selectedHalaqoh, setSelectedHalaqoh] = useState("");
   
   const [data, setData] = useState<RekapSantriRow[]>([]);
+  const [holidays, setHolidays] = useState<Record<number, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -47,6 +48,7 @@ export function RekapBulananClient() {
     const res = await getRekapBulananData(selectedBulan, selectedTahun, selectedHalaqoh);
     if (res.success && res.data) {
       setData(res.data);
+      setHolidays(res.holidays || {});
       setHasSearched(true);
     } else {
       toast.error(res.message || "Gagal memuat data");
@@ -56,11 +58,6 @@ export function RekapBulananClient() {
 
   const getDaysInMonth = (month: number, year: number) => {
     return new Date(year, month, 0).getDate();
-  };
-
-  const isWeekend = (day: number, month: number, year: number) => {
-    const date = new Date(year, month - 1, day);
-    return date.getDay() === 0 || date.getDay() === 6; // Sunday or Saturday
   };
 
   const daysInMonth = getDaysInMonth(selectedBulan, selectedTahun);
@@ -249,7 +246,8 @@ export function RekapBulananClient() {
                   {daysArray.map(day => (
                     <th 
                       key={day} 
-                      className={`px-1.5 py-3 font-semibold text-center border-r border-slate-200 min-w-[30px] ${isWeekend(day, selectedBulan, selectedTahun) ? 'bg-orange-100 text-orange-800' : ''}`}
+                      title={holidays[day] || undefined}
+                      className={`px-1.5 py-3 font-semibold text-center border-r border-slate-200 min-w-[30px] ${holidays[day] ? 'bg-orange-100 text-orange-800' : ''}`}
                     >
                       {day}
                     </th>
@@ -288,8 +286,9 @@ export function RekapBulananClient() {
                       
                       return (
                         <td 
-                          key={day} 
-                          className={`px-0 py-0 text-center border-r border-slate-200 ${isWeekend(day, selectedBulan, selectedTahun) ? 'bg-orange-50/50' : 'bg-white'}`}
+                          key={day}
+                          title={holidays[day] || undefined}
+                          className={`px-0 py-0 text-center border-r border-slate-200 ${holidays[day] ? 'bg-orange-50/50' : 'bg-white'}`}
                         >
                           <select
                             value={stat === 'terlambat' ? 'hadir' : stat}

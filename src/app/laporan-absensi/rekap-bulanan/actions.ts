@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { halaqoh, santri, absensi } from "@/db/schema";
+import { halaqoh, santri, absensi, pengaturanHariAktif, hariLibur } from "@/db/schema";
 import { and, eq, gte, lte, asc, desc } from "drizzle-orm";
 
 export async function getHalaqohOptions() {
@@ -84,16 +84,56 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       row.kehadiran[day] = status;
     }
 
-    // Auto-detect Alpa untuk hari kerja yang terlewat
+    // 4. Pengaturan Hari Libur & Auto-Alpa
+    // Ambil pengaturan hari aktif
+    const activeDaysConfig = await db.select().from(pengaturanHariAktif);
+    const activeDaysMap: Record<number, boolean> = {
+      0: activeDaysConfig.find(d => d.id === 'minggu')?.isAktif ?? false,
+      1: activeDaysConfig.find(d => d.id === 'senin')?.isAktif ?? true,
+      2: activeDaysConfig.find(d => d.id === 'selasa')?.isAktif ?? true,
+      3: activeDaysConfig.find(d => d.id === 'rabu')?.isAktif ?? true,
+      4: activeDaysConfig.find(d => d.id === 'kamis')?.isAktif ?? true,
+      5: activeDaysConfig.find(d => d.id === 'jumat')?.isAktif ?? true,
+      6: activeDaysConfig.find(d => d.id === 'sabtu')?.isAktif ?? false,
+    };
+
+    // Ambil hari libur spesifik bulan ini
+    const startDateStr = `${tahun}-${String(bulan).padStart(2, '0')}-01`;
+    const endDateStr = `${tahun}-${String(bulan).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+    const holidays = await db.select().from(hariLibur).where(
+      and(
+        gte(hariLibur.tanggal, startDateStr),
+        lte(hariLibur.tanggal, endDateStr),
+        eq(hariLibur.isAktif, true)
+      )
+    );
+
+    const holidayMap = new Map<string, string>();
+    holidays.forEach(h => {
+      holidayMap.set(h.tanggal, h.keterangan);
+    });
+
+    const monthHolidays: Record<number, string> = {};
     const today = new Date();
     today.setHours(23, 59, 59, 999);
 
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(tahun, bulan - 1, day);
-      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      const dayOfWeek = currentDate.getDay();
+      const dateStr = `${tahun}-${String(bulan).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      
+      let isHoliday = false;
+      if (holidayMap.has(dateStr)) {
+        monthHolidays[day] = holidayMap.get(dateStr)!;
+        isHoliday = true;
+      } else if (!activeDaysMap[dayOfWeek]) {
+        monthHolidays[day] = "Bukan Hari Aktif";
+        isHoliday = true;
+      }
+
       const isPastOrToday = currentDate <= today;
 
-      if (isPastOrToday && !isWeekend) {
+      if (isPastOrToday && !isHoliday) {
         Array.from(santriMap.values()).forEach(row => {
           if (!row.kehadiran[day]) {
             row.kehadiran[day] = 'alpa';
@@ -102,7 +142,7 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       }
     }
 
-    // 4. Hitung Total
+    // 5. Hitung Total
     const finalData = Array.from(santriMap.values()).map(row => {
       let h = 0, i = 0, s = 0, a = 0;
       
@@ -118,7 +158,7 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       return row;
     });
 
-    return { success: true, data: finalData };
+    return { success: true, data: finalData, holidays: monthHolidays };
   } catch (error) {
     console.error(error);
     return { success: false, data: [], message: "Gagal memuat rekap bulanan" };
