@@ -33,9 +33,9 @@ const humanConfig: Partial<Config> = {
 };
 
 // --- Konfigurasi Akurasi ---
-const SIMILARITY_THRESHOLD = 0.55;       // Minimum similarity untuk dianggap cocok (turun dari 0.62 agar lebih sensitif)
-const MIN_GAP_TO_SECOND = 0.08;          // Minimal selisih antara best match dan second best
-const REQUIRED_CONSECUTIVE_FRAMES = 3;   // Jumlah frame berturut-turut harus cocok orang yang sama
+const SIMILARITY_THRESHOLD = 0.74;       // Minimum similarity untuk dianggap cocok (dinaikkan dari 0.55 agar tidak salah orang)
+const MIN_GAP_TO_SECOND = 0.15;          // Minimal selisih antara best match dan second best (dinaikkan dari 0.08)
+const REQUIRED_CONSECUTIVE_FRAMES = 5;   // Jumlah frame berturut-turut harus cocok orang yang sama (dinaikkan dari 3)
 const MIN_FACE_SIZE = 80;                // Minimum ukuran wajah (pixel) agar bisa diproses
 const SCAN_COOLDOWN_MS = 5000;           // Jeda antar scan untuk orang yang sama
 

@@ -139,6 +139,7 @@ export const getSantriColumns = ({
           >
             <QrCode className="w-4 h-4" />
           </button>
+          {/* Wajah registration disabled
           <button 
             onClick={() => setFaceRegistrationSantri({ id: s.id, namaLengkap: s.namaLengkap })}
             className={`p-2 rounded-lg transition-colors ${s.hasFaceData ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
@@ -146,6 +147,7 @@ export const getSantriColumns = ({
           >
             <Camera className="w-4 h-4" />
           </button>
+          */}
           <button onClick={() => handleEdit(s)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
             <Edit2 className="w-4 h-4" />
           </button>

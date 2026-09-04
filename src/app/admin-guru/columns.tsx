@@ -79,6 +79,7 @@ export const getGuruColumns = ({
           >
             <BadgeIcon className="w-4 h-4 inline" />
           </button>
+          {/* Wajah registration disabled
           <button 
             onClick={() => setFaceRegistrationGuru({ id: item.id, namaLengkap: item.namaLengkap })}
             className={`text-slate-400 hover:text-blue-600`}
@@ -86,6 +87,7 @@ export const getGuruColumns = ({
           >
             <Camera className={`w-4 h-4 inline ${item.hasFaceData ? 'text-blue-500' : ''}`} />
           </button>
+          */}
           <button onClick={() => handleDownloadQR(item)} className="text-slate-400 hover:text-slate-700" title="Unduh QR Code">
             <QrCode className="w-4 h-4 inline" />
           </button>

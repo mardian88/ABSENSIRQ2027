@@ -27,7 +27,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       title: "KIOSK",
       icon: UserCheck,
       items: [
-        { name: "Pindai Wajah", href: "/pindai-wajah", icon: UserCheck },
+        // { name: "Pindai Wajah", href: "/pindai-wajah", icon: UserCheck }, // Sementara dinonaktifkan
         { name: "Pindai QR", href: "/pindai-qr", icon: UserCheck },
         { name: "Absensi Manual", href: "/absensi/manual", icon: UserCheck },
       ]

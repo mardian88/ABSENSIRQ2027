@@ -12,7 +12,7 @@ export function KioskNav({ onRekamWajah }: KioskNavProps = {}) {
   const pathname = usePathname();
 
   const navItems = [
-    { name: "Wajah", href: "/pindai-wajah", icon: UserCheck },
+    // { name: "Wajah", href: "/pindai-wajah", icon: UserCheck }, // Sementara dinonaktifkan
     { name: "QR Code", href: "/pindai-qr", icon: QrCode },
     { name: "Manual", href: "/absensi/manual", icon: Keyboard },
   ];
