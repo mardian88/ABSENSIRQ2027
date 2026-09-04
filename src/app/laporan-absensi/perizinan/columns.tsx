@@ -36,6 +36,7 @@ export const getIzinColumns = (
       cell: ({ row }) => <span className="text-sm">{row.index + 1}</span>,
     },
     {
+      id: "namaLengkap",
       accessorKey: "santri.namaLengkap",
       header: ({ column }) => {
         return (
