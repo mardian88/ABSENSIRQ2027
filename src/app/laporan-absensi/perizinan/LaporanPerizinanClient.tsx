@@ -49,36 +49,6 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     }
   };
 
-  const exportToExcel = () => {
-    if (dataIzin.length === 0) {
-      toast.error("Tidak ada data untuk diekspor");
-      return;
-    }
-
-    const exportData = dataIzin.map(item => {
-      const durasi = Math.round((new Date(item.tanggalSelesai).getTime() - new Date(item.tanggalMulai).getTime()) / (1000 * 60 * 60 * 24)) + 1;
-      return {
-        "Waktu Submit": formatDateID(item.waktuPengajuan),
-        "NIS": item.santri.nomorInduk,
-        "Nama Santri": item.santri.namaLengkap,
-        "Kategori": item.kategori,
-        "Durasi": `${durasi} Hari`,
-        "Tanggal Mulai": formatDateID(item.tanggalMulai),
-        "Tanggal Selesai": formatDateID(item.tanggalSelesai),
-        "Keterangan": item.keterangan,
-        "Bukti URL": item.buktiUrl || "Tidak Ada",
-      };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `Laporan Perizinan`);
-    
-    worksheet['!cols'] = [
-      { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 50 }, { wch: 15 },
-    ];
-    
-    XLSX.writeFile(workbook, `Laporan_Perizinan_Santri_${filterPeriod}.xlsx`);
   };
 
   const handleOpenDetailModal = (izin: PerizinanData) => {
@@ -112,37 +82,46 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-200 bg-slate-50/50">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-800">Laporan Perizinan</h1>
-              <p className="text-slate-500">Kelola dan ekspor data izin dan sakit santri.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center text-sm font-medium text-slate-500 mr-2 border border-slate-200 rounded-lg px-3 py-2 bg-slate-50">
-                Terakhir diupdate: {formatTimeID(lastRefresh)} WIB
+    <div className="flex flex-col h-full bg-slate-50 relative min-h-screen">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:2rem_2rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-[0.2] pointer-events-none" />
+
+      <div className="relative z-10 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-6">
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-sm">
+                <ImageIcon className="w-5 h-5" />
               </div>
-              <button 
-                onClick={handleRefresh}
-                className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-slate-200 bg-white"
-                title="Refresh Data"
-              >
-                <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
-              <button 
-                onClick={exportToExcel}
-                className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-all shadow-sm font-medium"
-              >
-                <Download className="w-4 h-4" /> Export Excel
-              </button>
-              <button 
-                onClick={() => {
-                  setResetPassword("");
-                  setIsResetModalOpen(true);
-                }}
-                className="flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg transition-all shadow-sm font-medium"
-              >
-                <Trash2 className="w-4 h-4" /> Reset Laporan
-              </button>
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Laporan Perizinan</h1>
             </div>
+            <p className="text-slate-500 text-sm">Rekam jejak izin dan sakit santri dengan bukti terlampir</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <button 
+              onClick={handleRefresh} 
+              disabled={isLoading}
+              className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-emerald-500' : 'text-slate-500'}`} /> 
+              {isLoading ? 'Menyegarkan...' : 'Segarkan Data'}
+            </button>
+            <button 
+              onClick={handleExport}
+              className="px-4 py-2 bg-white border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-slate-700 font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm"
+            >
+              <Download className="w-4 h-4" /> Export Excel
+            </button>
+            
+            <div className="h-8 w-px bg-slate-200 hidden md:block"></div>
+            
+            <button 
+              onClick={() => setIsResetModalOpen(true)}
+              className="px-4 py-2 bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-rose-600 font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm"
+            >
+              <Trash2 className="w-4 h-4" /> Reset Laporan
+            </button>
           </div>
         </div>
 
@@ -156,7 +135,8 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                 className="bg-transparent border-none text-sm font-medium text-slate-700 focus:ring-0 cursor-pointer w-full"
               >
                 <option value="semua">Semua Waktu</option>
-                <option value="hari_ini">Hari Ini</option>`n                <option value="kemarin">Kemarin</option>
+                <option value="hari_ini">Hari Ini</option>
+                <option value="kemarin">Kemarin</option>
                 <option value="minggu_ini">Minggu Ini</option>
                 <option value="bulan_ini">Bulan Ini</option>
                 <option value="triwulan">Triwulan (3 Bulan)</option>
@@ -177,6 +157,21 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
                 columns={getIzinColumns(handleOpenDetailModal)}
                 data={dataIzin}
                 searchKey="namaLengkap"
+                rowSelection={rowSelection}
+                onRowSelectionChange={setRowSelection}
+                toolbarActions={(table) => {
+                  const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+                  return selectedCount > 0 ? (
+                    <button
+                      onClick={() => handleDeleteSelected(table)}
+                      disabled={isDeleting}
+                      className="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-600 font-medium rounded-lg shadow-sm hover:bg-rose-100 transition-colors flex items-center gap-2 text-sm z-10"
+                    >
+                      {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                      Hapus {selectedCount} Terpilih
+                    </button>
+                  ) : <></>;
+                }}
               />
             </div>
           )}

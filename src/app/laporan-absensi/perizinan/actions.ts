@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { perizinanSantri, santri, absensi } from "@/db/schema";
-import { desc, eq, gte, and, lte } from "drizzle-orm";
+import { desc, eq, gte, and, lte, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -120,5 +120,37 @@ export async function resetLaporanIzin(password: string): Promise<{success: bool
   } catch (error) {
     console.error(error);
     return { success: false, message: 'Terjadi kesalahan sistem' };
+  }
+}
+
+export async function hapusPerizinanBanyak(ids: string[]): Promise<{success: boolean, message: string}> {
+  try {
+    if (!ids || ids.length === 0) {
+      return { success: false, message: "Tidak ada data yang dipilih" };
+    }
+    
+    // Opsional: Hapus foto dari cloudinary jika diperlukan
+    const dataToDelete = await db.select({ buktiUrl: perizinanSantri.buktiUrl }).from(perizinanSantri).where(inArray(perizinanSantri.id, ids));
+    
+    for (const d of dataToDelete) {
+      if (d.buktiUrl && d.buktiUrl.includes("cloudinary.com")) {
+        // Ekstrak public_id: biasanya izin_santri/filename
+        const match = d.buktiUrl.match(/izin_santri\/[^.]+/);
+        if (match) {
+          try {
+            await cloudinary.uploader.destroy(match[0]);
+          } catch (err) {
+            console.error("Gagal menghapus gambar izin dari cloudinary", err);
+          }
+        }
+      }
+    }
+
+    await db.delete(perizinanSantri).where(inArray(perizinanSantri.id, ids));
+    revalidatePath('/laporan-absensi/perizinan');
+    return { success: true, message: `Berhasil menghapus ${ids.length} laporan perizinan` };
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: "Terjadi kesalahan sistem saat menghapus perizinan" };
   }
 }

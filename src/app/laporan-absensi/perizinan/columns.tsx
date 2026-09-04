@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { PerizinanData } from "./actions";
 
 export const getIzinColumns = (
@@ -10,12 +11,32 @@ export const getIzinColumns = (
 ): ColumnDef<PerizinanData>[] => {
   return [
     {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+          className="translate-y-[2px]"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="translate-y-[2px]"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
       header: "No",
       cell: ({ row }) => <span className="text-sm">{row.index + 1}</span>,
     },
     {
       accessorKey: "santri.namaLengkap",
-    id: "namaLengkap",
       header: ({ column }) => {
         return (
           <Button
