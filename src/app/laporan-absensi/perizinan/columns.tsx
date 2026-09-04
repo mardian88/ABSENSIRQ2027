@@ -1,13 +1,14 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Eye } from "lucide-react";
+import { ArrowUpDown, Eye, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PerizinanData } from "./actions";
 
 export const getIzinColumns = (
-  onOpenDetailModal: (izin: PerizinanData) => void
+  onOpenDetailModal: (izin: PerizinanData) => void,
+  onOpenEditModal: (izin: PerizinanData) => void
 ): ColumnDef<PerizinanData>[] => {
   return [
     {
@@ -95,6 +96,13 @@ export const getIzinColumns = (
               title="Lihat Detail & Bukti"
             >
               <Eye className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onOpenEditModal(izin)}
+              className="p-1.5 bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-700 rounded-lg transition-colors border border-transparent hover:border-amber-200 shadow-sm"
+              title="Ubah Durasi Izin"
+            >
+              <CalendarClock className="w-4 h-4" />
             </button>
           </div>
         );

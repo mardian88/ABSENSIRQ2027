@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { getDaftarPerizinan, PerizinanData, resetLaporanIzin } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
-import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, X, Trash2, RefreshCw } from "lucide-react";
+import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, X, Trash2, RefreshCw, CalendarClock } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -16,6 +16,53 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedIzin, setSelectedIzin] = useState<PerizinanData | null>(null);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const handleOpenDetailModal = (izin: PerizinanData) => {
+    setSelectedIzin(izin);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleOpenEditModal = (izin: PerizinanData) => {
+    setSelectedIzin(izin);
+    // Format to YYYY-MM-DD for input type="date"
+    const formatDateForInput = (d: Date) => {
+      const date = new Date(d);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    setEditStartDate(formatDateForInput(izin.tanggalMulai));
+    setEditEndDate(formatDateForInput(izin.tanggalSelesai));
+    setIsEditModalOpen(true);
+  };
+
+  const handleSubmitEdit = async () => {
+    if (!selectedIzin || !editStartDate || !editEndDate) return;
+    
+    setIsSavingEdit(true);
+    try {
+      const { updateDurasiPerizinan } = await import("./actions");
+      const res = await updateDurasiPerizinan(selectedIzin.id, editStartDate, editEndDate);
+      if (res.success) {
+        toast.success(res.message);
+        setIsEditModalOpen(false);
+        handleRefresh();
+      } else {
+        toast.error(res.message);
+      }
+    } catch (err) {
+      toast.error("Terjadi kesalahan sistem saat mengubah durasi");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [resetPassword, setResetPassword] = useState("");
@@ -202,7 +249,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
           ) : (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
               <DataTable sortColumn="waktuPengajuan"
-                columns={getIzinColumns(handleOpenDetailModal)}
+                columns={getIzinColumns(handleOpenDetailModal, handleOpenEditModal)}
                 data={dataIzin}
                 searchKey="namaLengkap"
                 rowSelection={rowSelection}
@@ -225,6 +272,52 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
           )}
         </div>
       </div>
+
+      {isEditModalOpen && selectedIzin && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm relative shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <CalendarClock className="w-5 h-5 text-amber-600" /> Ubah Durasi
+            </h2>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Mulai</label>
+                <input 
+                  type="date" 
+                  value={editStartDate}
+                  onChange={(e) => setEditStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Selesai</label>
+                <input 
+                  type="date" 
+                  value={editEndDate}
+                  onChange={(e) => setEditEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={isSavingEdit}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleSubmitEdit}
+                disabled={isSavingEdit || !editStartDate || !editEndDate}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSavingEdit ? <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</> : "Simpan Durasi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isDetailModalOpen && selectedIzin && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">

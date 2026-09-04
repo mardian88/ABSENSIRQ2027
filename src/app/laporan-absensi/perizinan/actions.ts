@@ -5,6 +5,7 @@ import { perizinanSantri, santri, absensi } from "@/db/schema";
 import { desc, eq, gte, and, lte, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v2 as cloudinary } from "cloudinary";
+import { v4 as uuidv4 } from "uuid";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -129,12 +130,12 @@ export async function hapusPerizinanBanyak(ids: string[]): Promise<{success: boo
       return { success: false, message: "Tidak ada data yang dipilih" };
     }
     
-    // Opsional: Hapus foto dari cloudinary jika diperlukan
-    const dataToDelete = await db.select({ buktiUrl: perizinanSantri.buktiUrl }).from(perizinanSantri).where(inArray(perizinanSantri.id, ids));
+    // Ambil data sebelum dihapus untuk referensi Cloudinary & Absensi
+    const dataToDelete = await db.select().from(perizinanSantri).where(inArray(perizinanSantri.id, ids));
     
     for (const d of dataToDelete) {
+      // 1. Hapus gambar dari Cloudinary
       if (d.buktiUrl && d.buktiUrl.includes("cloudinary.com")) {
-        // Ekstrak public_id: biasanya izin_santri/filename
         const match = d.buktiUrl.match(/izin_santri\/[^.]+/);
         if (match) {
           try {
@@ -144,13 +145,87 @@ export async function hapusPerizinanBanyak(ids: string[]): Promise<{success: boo
           }
         }
       }
+      
+      // 2. Hapus catatan absensi (Izin/Sakit) pada rentang tanggal tersebut
+      // Kita set end date ke ujung hari agar semua absensi di hari terakhir ikut terhapus
+      const endDate = new Date(d.tanggalSelesai);
+      endDate.setHours(23, 59, 59, 999);
+      
+      await db.delete(absensi).where(
+        and(
+          eq(absensi.idSantri, d.idSantri),
+          gte(absensi.waktuScan, d.tanggalMulai),
+          lte(absensi.waktuScan, endDate),
+          inArray(absensi.statusKehadiran, ['izin', 'sakit'])
+        )
+      );
     }
 
+    // 3. Hapus rekam perizinan
     await db.delete(perizinanSantri).where(inArray(perizinanSantri.id, ids));
     revalidatePath('/laporan-absensi/perizinan');
-    return { success: true, message: `Berhasil menghapus ${ids.length} laporan perizinan` };
+    return { success: true, message: `Berhasil menghapus ${ids.length} laporan perizinan beserta catatan absensinya` };
   } catch (error) {
     console.error(error);
     return { success: false, message: "Terjadi kesalahan sistem saat menghapus perizinan" };
+  }
+}
+
+export async function updateDurasiPerizinan(id: string, tanggalMulaiStr: string, tanggalSelesaiStr: string): Promise<{success: boolean, message: string}> {
+  try {
+    const tanggalMulai = new Date(tanggalMulaiStr);
+    const tanggalSelesai = new Date(tanggalSelesaiStr);
+    
+    tanggalMulai.setHours(0, 0, 0, 0);
+    tanggalSelesai.setHours(23, 59, 59, 999);
+
+    if (tanggalMulai > tanggalSelesai) {
+      return { success: false, message: "Tanggal mulai tidak boleh lebih dari tanggal selesai" };
+    }
+
+    const [existing] = await db.select().from(perizinanSantri).where(eq(perizinanSantri.id, id));
+    if (!existing) {
+      return { success: false, message: "Data perizinan tidak ditemukan" };
+    }
+
+    // 1. Hapus catatan absensi lama
+    const oldEndDate = new Date(existing.tanggalSelesai);
+    oldEndDate.setHours(23, 59, 59, 999);
+    await db.delete(absensi).where(
+      and(
+        eq(absensi.idSantri, existing.idSantri),
+        gte(absensi.waktuScan, existing.tanggalMulai),
+        lte(absensi.waktuScan, oldEndDate),
+        inArray(absensi.statusKehadiran, ['izin', 'sakit'])
+      )
+    );
+
+    // 2. Insert catatan absensi baru
+    let current = new Date(tanggalMulai);
+    while (current <= tanggalSelesai) {
+      await db.insert(absensi).values({
+        id: uuidv4(),
+        idSantri: existing.idSantri,
+        waktuScan: new Date(current),
+        metodeScan: 'Portal Ortu', // pertahankan metode
+        jenisAbsen: 'masuk',
+        statusKehadiran: existing.kategori.toLowerCase()
+      });
+      current.setDate(current.getDate() + 1);
+    }
+
+    // 3. Update data perizinan
+    await db.update(perizinanSantri)
+      .set({ 
+        tanggalMulai: tanggalMulai,
+        tanggalSelesai: tanggalSelesai
+      })
+      .where(eq(perizinanSantri.id, id));
+
+    revalidatePath('/laporan-absensi/perizinan');
+    return { success: true, message: "Berhasil mengubah durasi perizinan dan memperbarui catatan absensi" };
+  } catch (error) {
+    console.error(error);
+    return { success: false, message: "Gagal mengubah durasi perizinan" };
   }
 }
