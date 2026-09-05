@@ -141,3 +141,15 @@ export async function saveCapaianSurah(
     return { success: false, error: error.message };
   }
 }
+
+export async function getSantriByHalaqah(idHalaqah: string) {
+  return await db.select({
+    id: santri.id,
+    namaLengkap: santri.namaLengkap,
+    nis: santri.nomorInduk
+  })
+  .from(santri)
+  .where(and(eq(santri.idHalaqoh, idHalaqah), eq(santri.statusSantri, 'aktif')))
+  .orderBy(asc(santri.namaLengkap));
+}
+

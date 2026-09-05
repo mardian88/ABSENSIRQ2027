@@ -6,9 +6,10 @@ import { ChevronRight, Filter, AlertCircle, Save, CheckCircle, Search, Zap, Refr
 import { saveCapaianSurah } from "./actions"
 
 export default function RaportClient({ data }: { data: any }) {
-  const { activeSemester, allHalaqah, santriList, surahs, predicates } = data
+  const { activeSemester, allHalaqah, surahs, predicates } = data
   
   const [selectedHalaqah, setSelectedHalaqah] = useState<string>("")
+  const [santriList, setSantriList] = useState<any[]>([])
   const [currentSantriIndex, setCurrentSantriIndex] = useState(0)
   const [juzFilter, setJuzFilter] = useState<number | null>(30)
   const [searchQuery, setSearchQuery] = useState("")
@@ -104,6 +105,24 @@ export default function RaportClient({ data }: { data: any }) {
       setIsSaving(false)
     }
   }
+
+  useEffect(() => {
+    async function loadSantri() {
+      if (!selectedHalaqah) {
+        setSantriList([])
+        return
+      }
+      try {
+        const { getSantriByHalaqah } = await import('./actions')
+        const list = await getSantriByHalaqah(selectedHalaqah)
+        setSantriList(list)
+        setCurrentSantriIndex(0)
+      } catch (e) {
+        console.error("Failed to load santri:", e)
+      }
+    }
+    loadSantri()
+  }, [selectedHalaqah])
 
   useEffect(() => {
     async function loadData() {

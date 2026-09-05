@@ -5,6 +5,8 @@ export const metadata = {
   title: "Raport Santri - Sistem Absensi RQM",
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function RaportSantriPage() {
   const data = await getRaportData()
   
