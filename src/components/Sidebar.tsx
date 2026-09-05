@@ -58,6 +58,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         { name: "Rekap Bulanan", href: "/laporan-absensi/rekap-bulanan", icon: Calendar, exact: true },
         { name: "Laporan Alpa", href: "/laporan-absensi/alpa", icon: FileText, exact: true },
         { name: "Laporan Kafalah", href: "/admin-penggajian", icon: Coins },
+        { name: "Raport Santri", href: "/laporan-absensi/raport-santri", icon: FileText, exact: true },
         { name: "Poin Santri", href: "/poin", icon: AlertTriangle },
       ]
     },

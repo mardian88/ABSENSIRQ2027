@@ -575,3 +575,65 @@ export const idCardTemplates = sqliteTable('id_card_templates', {
   layout: text('layout'),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 });
+
+// ==========================================
+// MODUL RAPORT SANTRI
+// ==========================================
+
+export const pengaturanSemester = sqliteTable('pengaturan_semester', {
+  id: text('id').primaryKey(),
+  nama: text('nama').notNull(), // e.g. "Semester Ganjil"
+  tahunAjaran: text('tahun_ajaran').notNull(), // e.g. "2024/2025"
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(false),
+  waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
+});
+
+export const surahMaster = sqliteTable('surah_master', {
+  id: text('id').primaryKey(),
+  juz: integer('juz').notNull(),
+  nomorSurah: integer('nomor_surah').notNull(),
+  namaSurah: text('nama_surah').notNull(),
+  namaArab: text('nama_arab').notNull(),
+  jumlahAyat: integer('jumlah_ayat').notNull(),
+  tipe: text('tipe').notNull(), // 'Makkiyah' / 'Madaniyah'
+  urutanDalamJuz: integer('urutan_dalam_juz').notNull()
+});
+
+export const pengaturanPredikatRaport = sqliteTable('pengaturan_predikat_raport', {
+  id: text('id').primaryKey(),
+  jenis: text('jenis').notNull(), // 'KB' atau 'KH'
+  rentangMin: integer('rentang_min').notNull(),
+  rentangMax: integer('rentang_max').notNull(),
+  predikat: text('predikat').notNull()
+});
+
+export const pengaturanCatatanPreset = sqliteTable('pengaturan_catatan_preset', {
+  id: text('id').primaryKey(),
+  jenis: text('jenis').notNull(), // 'KB' atau 'KH'
+  isiCatatan: text('isi_catatan').notNull()
+});
+
+export const raportSantri = sqliteTable('raport_santri', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  idSemester: text('id_semester').references(() => pengaturanSemester.id).notNull(),
+  idHalaqah: text('id_halaqah').references(() => halaqoh.id),
+  catatanWaliKelas: text('catatan_wali_kelas'),
+  waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull(),
+  diperbaruiPada: integer('diperbarui_pada', { mode: 'timestamp' }).notNull()
+});
+
+export const raportCapaianSurah = sqliteTable('raport_capaian_surah', {
+  id: text('id').primaryKey(),
+  idRaport: text('id_raport').references(() => raportSantri.id).notNull(),
+  idSurah: text('id_surah').references(() => surahMaster.id).notNull(),
+  statusSetoran: text('status_setoran'), 
+  nilaiKb: integer('nilai_kb'),
+  predikatKb: text('predikat_kb'),
+  catatanKb: text('catatan_kb'),
+  nilaiKh: integer('nilai_kh'),
+  predikatKh: text('predikat_kh'),
+  catatanKh: text('catatan_kh'),
+  tanggalUjian: text('tanggal_ujian'), // YYYY-MM-DD
+  isVerifikasi: integer('is_verifikasi', { mode: 'boolean' }).notNull().default(false)
+});
