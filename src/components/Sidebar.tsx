@@ -68,6 +68,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         { name: "Input Admin", href: "/e-raport/admin", icon: FileText },
         { name: "Tugas Surah", href: "/e-raport/surah-santri", icon: BookOpen },
         { name: "Tugas Guru", href: "/e-raport/penugasan", icon: Users },
+        { name: "Setoran Tahfidz", href: "/e-raport/setoran", icon: BookOpen },
         { name: "Leger & Print", href: "/e-raport/leger", icon: ClipboardList },
       ]
     },
