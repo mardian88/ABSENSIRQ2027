@@ -23,6 +23,7 @@ import { PengumumanManager } from "./PengumumanManager";
 import { PengumumanGuruManager } from "./PengumumanGuruManager";
 import { AudioNotifManager } from "./AudioNotifManager";
 import { getAudioSettings } from "./actions";
+import { PengaturanRaportManager } from "./PengaturanRaportManager";
 
 export default function PengaturanPage() {
   const [loading, setLoading] = useState(true);
@@ -101,14 +102,20 @@ export default function PengaturanPage() {
         >
           💬 Pesan Otomatis
         </button>
-        <button 
-          onClick={() => setActiveTab("ortu")} 
-          className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'ortu' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
-        >
-          👨‍👩‍👧 Portal Ortu
-        </button>
-        <button 
-          onClick={() => setActiveTab("poin")} 
+          <button 
+            onClick={() => setActiveTab("ortu")} 
+            className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'ortu' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
+          >
+            👨‍👩‍👧 Portal Ortu
+          </button>
+          <button 
+            onClick={() => setActiveTab("raport")} 
+            className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'raport' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
+          >
+            📖 E-Raport
+          </button>
+          <button 
+            onClick={() => setActiveTab("poin")} 
           className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-all ${activeTab === 'poin' ? 'bg-white shadow text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'}`}
         >
           🏆 Poin
@@ -302,6 +309,10 @@ export default function PengaturanPage() {
 
       {activeTab === "ortu" && (
         <ThankYouPageManager />
+      )}
+
+      {activeTab === "raport" && (
+        <PengaturanRaportManager />
       )}
 
       {activeTab === "poin" && (

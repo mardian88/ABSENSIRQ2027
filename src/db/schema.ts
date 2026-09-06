@@ -577,14 +577,22 @@ export const idCardTemplates = sqliteTable('id_card_templates', {
 });
 
 // ==========================================
-// MODUL RAPORT SANTRI
+// MODUL E-RAPORT (NEW ARCHITECTURE)
 // ==========================================
 
-export const pengaturanSemester = sqliteTable('pengaturan_semester', {
+export const tahunAjaran = sqliteTable('tahun_ajaran', {
   id: text('id').primaryKey(),
-  nama: text('nama').notNull(), // e.g. "Semester Ganjil"
-  tahunAjaran: text('tahun_ajaran').notNull(), // e.g. "2024/2025"
+  nama: text('nama').notNull(), // e.g. "2026/2027"
   isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(false),
+  waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
+});
+
+export const semester = sqliteTable('semester', {
+  id: text('id').primaryKey(),
+  idTahunAjaran: text('id_tahun_ajaran').references(() => tahunAjaran.id).notNull(),
+  nama: text('nama').notNull(), // "Ganjil" / "Genap"
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(false),
+  jumlahHariEfektif: integer('jumlah_hari_efektif').notNull().default(0),
   waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull()
 });
 
@@ -595,35 +603,82 @@ export const surahMaster = sqliteTable('surah_master', {
   namaSurah: text('nama_surah').notNull(),
   namaArab: text('nama_arab').notNull(),
   jumlahAyat: integer('jumlah_ayat').notNull(),
-  tipe: text('tipe').notNull(), // 'Makkiyah' / 'Madaniyah'
-  urutanDalamJuz: integer('urutan_dalam_juz').notNull()
+  tipe: text('tipe').notNull(),
+  urutanDalamJuz: integer('urutan_dalam_juz').notNull(),
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
 });
 
-export const pengaturanPredikatRaport = sqliteTable('pengaturan_predikat_raport', {
+export const tahsinMaster = sqliteTable('tahsin_master', {
   id: text('id').primaryKey(),
-  jenis: text('jenis').notNull(), // 'KB' atau 'KH'
-  rentangMin: integer('rentang_min').notNull(),
-  rentangMax: integer('rentang_max').notNull(),
-  predikat: text('predikat').notNull()
+  namaItem: text('nama_item').notNull(),
+  urutan: integer('urutan').notNull(),
+  idHalaqah: text('id_halaqah').references(() => halaqoh.id), // if null, applies globally
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
 });
 
-export const pengaturanCatatanPreset = sqliteTable('pengaturan_catatan_preset', {
+export const penugasanGuru = sqliteTable('penugasan_guru', {
   id: text('id').primaryKey(),
-  jenis: text('jenis').notNull(), // 'KB' atau 'KH'
-  isiCatatan: text('isi_catatan').notNull()
+  idGuru: text('id_guru').references(() => guru.id).notNull(),
+  idHalaqah: text('id_halaqah').references(() => halaqoh.id).notNull(),
+  subject: text('subject').notNull(), // "Tahfidz" | "Tahsin" | "General"
+  role: text('role').notNull(), // "pengampu_utama" | "pembimbing"
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
+});
+
+export const santriSurah = sqliteTable('santri_surah', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  idSurah: text('id_surah').references(() => surahMaster.id).notNull(),
+  isAktif: integer('is_aktif', { mode: 'boolean' }).notNull().default(true),
+});
+
+export const pengaturanRaport = sqliteTable('pengaturan_raport', {
+  id: text('id').primaryKey(),
+  namaLembaga: text('nama_lembaga').notNull(),
+  alamatLembaga: text('alamat_lembaga').notNull(),
+  kontakLembaga: text('kontak_lembaga').notNull(),
+  namaKepala: text('nama_kepala').notNull(),
+  nipKepala: text('nip_kepala'),
+  logoUrl: text('logo_url'),
+  ttdKepalaUrl: text('ttd_kepala_url'),
+  
+  // Bobot dalam persen (total 100)
+  bobotAkhlak: integer('bobot_akhlak').notNull().default(20),
+  bobotKedisiplinan: integer('bobot_kedisiplinan').notNull().default(20),
+  bobotKognitif: integer('bobot_kognitif').notNull().default(60),
+  
+  skalaPenilaian: text('skala_penilaian').notNull(), // JSON string representing array of { min, max, grade }
+  showUasLisan: integer('show_uas_lisan', { mode: 'boolean' }).notNull().default(true),
 });
 
 export const raportSantri = sqliteTable('raport_santri', {
   id: text('id').primaryKey(),
   idSantri: text('id_santri').references(() => santri.id).notNull(),
-  idSemester: text('id_semester').references(() => pengaturanSemester.id).notNull(),
+  idSemester: text('id_semester').references(() => semester.id).notNull(),
   idHalaqah: text('id_halaqah').references(() => halaqoh.id),
+  
+  // JSON Text Fields
+  akhlak: text('akhlak'), 
+  kedisiplinan: text('kedisiplinan'),
+  kognitif: text('kognitif'), // holds Tahsin items, uas_tulis, uas_lisan
+  
+  sakit: integer('sakit').notNull().default(0),
+  izin: integer('izin').notNull().default(0),
+  alpa: integer('alpa').notNull().default(0),
+  jumlahHariEfektif: integer('jumlah_hari_efektif').notNull().default(0),
+  
+  nilaiAkhirAkhlak: integer('nilai_akhir_akhlak'),
+  nilaiAkhirKedisiplinan: integer('nilai_akhir_kedisiplinan'),
+  nilaiAkhirKognitif: integer('nilai_akhir_kognitif'),
+  nilaiAkhirTotal: integer('nilai_akhir_total'),
+  predikatTotal: text('predikat_total'),
+  
   catatanWaliKelas: text('catatan_wali_kelas'),
   waktuDibuat: integer('waktu_dibuat', { mode: 'timestamp' }).notNull(),
   diperbaruiPada: integer('diperbarui_pada', { mode: 'timestamp' }).notNull()
 });
 
-export const raportCapaianSurah = sqliteTable('raport_capaian_surah', {
+export const raportTahfidzProgress = sqliteTable('raport_tahfidz_progress', {
   id: text('id').primaryKey(),
   idRaport: text('id_raport').references(() => raportSantri.id).notNull(),
   idSurah: text('id_surah').references(() => surahMaster.id).notNull(),
@@ -634,6 +689,5 @@ export const raportCapaianSurah = sqliteTable('raport_capaian_surah', {
   nilaiKh: integer('nilai_kh'),
   predikatKh: text('predikat_kh'),
   catatanKh: text('catatan_kh'),
-  tanggalUjian: text('tanggal_ujian'), // YYYY-MM-DD
-  isVerifikasi: integer('is_verifikasi', { mode: 'boolean' }).notNull().default(false)
 });
+

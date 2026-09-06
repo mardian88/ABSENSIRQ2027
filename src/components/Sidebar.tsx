@@ -62,6 +62,16 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       ]
     },
     {
+      title: "E-Raport",
+      icon: BookOpen,
+      items: [
+        { name: "Input Admin", href: "/e-raport/admin", icon: FileText },
+        { name: "Tugas Surah", href: "/e-raport/surah-santri", icon: BookOpen },
+        { name: "Tugas Guru", href: "/e-raport/penugasan", icon: Users },
+        { name: "Leger & Print", href: "/e-raport/leger", icon: ClipboardList },
+      ]
+    },
+    {
       title: "Mutabaah",
       icon: BookOpen,
       items: [
@@ -96,6 +106,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     "KIOSK": false,
     "Database": false,
     "Laporan": false,
+    "E-Raport": false,
     "Mutabaah": false,
     "Keuangan": false,
   });
