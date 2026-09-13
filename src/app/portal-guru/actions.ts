@@ -1,0 +1,240 @@
+"use server";
+
+import { db } from "@/db";
+import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, halaqoh, absensi, pengumumanGuru, notifikasiGuru, logPesanManual } from "@/db/schema";
+import { eq, and, desc, between, lte, gte, inArray } from "drizzle-orm";
+import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
+
+const GURU_SESSION_COOKIE = "guru_session";
+
+export async function loginGuru(nip: string, kontakWa: string) {
+  const [guruData] = await db.select().from(guru).where(
+    and(eq(guru.nip, nip), eq(guru.kontakWa, kontakWa))
+  );
+
+  if (!guruData) {
+    return { success: false, message: "NIP atau Nomor WA tidak sesuai." };
+  }
+
+  if (!guruData.statusAktif) {
+    return { success: false, message: "Akun Anda berstatus Non-Aktif." };
+  }
+
+  // Set cookie
+  (await cookies()).set(GURU_SESSION_COOKIE, guruData.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 7 // 1 minggu
+  });
+
+  return { success: true };
+}
+
+export async function logoutGuru() {
+  (await cookies()).delete(GURU_SESSION_COOKIE);
+  return { success: true };
+}
+
+export async function getGuruSession() {
+  const cookieStore = await cookies();
+  const idGuru = cookieStore.get(GURU_SESSION_COOKIE)?.value;
+  if (!idGuru) return null;
+
+  const [guruData] = await db.select().from(guru).where(eq(guru.id, idGuru));
+  if (!guruData) return null;
+
+  return guruData;
+}
+
+export async function getGuruDashboardData() {
+  const session = await getGuruSession();
+  if (!session) return null;
+
+  const idGuru = session.id;
+
+  // Absensi 30 hari terakhir
+  const now = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const absensiData = await db.select().from(absensiGuru).where(
+    and(
+      eq(absensiGuru.idGuru, idGuru),
+      between(absensiGuru.waktuScan, thirtyDaysAgo, now)
+    )
+  ).orderBy(desc(absensiGuru.waktuScan)).limit(10);
+
+  // Kontrak aktif
+  const kontrakList = await db.select().from(kontrakGuru).where(
+    eq(kontrakGuru.idGuru, idGuru)
+  ).orderBy(desc(kontrakGuru.createdAt));
+
+  // Pengumuman & Notifikasi
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const allPengumuman = await db.select()
+    .from(pengumumanGuru)
+    .where(eq(pengumumanGuru.isAktif, true))
+    .orderBy(desc(pengumumanGuru.tanggal));
+
+  const pengumumanData = allPengumuman.filter(p => p.tanggal >= sevenDaysAgo);
+
+  const notifikasiData = await db.select()
+    .from(notifikasiGuru)
+    .where(eq(notifikasiGuru.idGuru, idGuru))
+    .orderBy(desc(notifikasiGuru.tanggal));
+
+  return {
+    profil: session,
+    absensi: absensiData,
+    kontrak: kontrakList,
+    pengumuman: pengumumanData,
+    notifikasi: notifikasiData
+  };
+}
+
+export async function updateKontrakSignature(idKontrak: string, signatureUrl: string) {
+  const session = await getGuruSession();
+  if (!session) return { success: false, message: "Unauthorized" };
+
+  try {
+    await db.update(kontrakGuru).set({
+      eSignUrl: signatureUrl,
+      statusKontrak: 'aktif'
+    }).where(
+      and(eq(kontrakGuru.id, idKontrak), eq(kontrakGuru.idGuru, session.id))
+    );
+    revalidatePath("/portal-guru/kontrak");
+    return { success: true, message: "Tanda tangan berhasil disimpan. Kontrak sekarang Aktif." };
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function getSantriIzinHariIni() {
+  const session = await getGuruSession();
+  if (!session) return { success: false, data: [] };
+
+  try {
+    // Cari halaqoh yang diajar oleh guru ini
+    const guruHalaqoh = await db.select({ id: halaqoh.id, namaHalaqoh: halaqoh.namaHalaqoh }).from(halaqoh).where(eq(halaqoh.idGuru, session.id));
+    const halaqohIds = guruHalaqoh.map(h => h.id);
+
+    if (halaqohIds.length === 0) return { success: true, data: [] };
+
+    // Tentukan hari ini (mulai dari 00:00 sampai 23:59)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(today);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    // Dapatkan data perizinan aktif hari ini untuk santri di halaqoh guru tersebut
+    const activeIzin = await db.select({
+      id: perizinanSantri.id,
+      kategori: perizinanSantri.kategori,
+      tanggalMulai: perizinanSantri.tanggalMulai,
+      tanggalSelesai: perizinanSantri.tanggalSelesai,
+      keterangan: perizinanSantri.keterangan,
+      buktiUrl: perizinanSantri.buktiUrl,
+      waktuPengajuan: perizinanSantri.waktuPengajuan,
+      santri: {
+        namaLengkap: santri.namaLengkap,
+        nomorInduk: santri.nomorInduk,
+      },
+      halaqoh: {
+        namaHalaqoh: halaqoh.namaHalaqoh
+      }
+    })
+    .from(perizinanSantri)
+    .innerJoin(santri, eq(perizinanSantri.idSantri, santri.id))
+    .innerJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
+    .where(
+      and(
+        inArray(santri.idHalaqoh, halaqohIds),
+        lte(perizinanSantri.tanggalMulai, endOfToday), // Mulai sebelum/pas hari ini berakhir
+        gte(perizinanSantri.tanggalSelesai, today)     // Selesai setelah/pas hari ini dimulai
+      )
+    )
+    .orderBy(desc(perizinanSantri.waktuPengajuan));
+
+    return { success: true, data: activeIzin };
+  } catch (err: any) {
+    console.error("Error getSantriIzinHariIni:", err);
+    return { success: false, data: [] };
+  }
+}
+
+export async function getSantriBelumHadirGuru() {
+  const session = await getGuruSession();
+  if (!session) return { success: false, data: [] };
+
+  try {
+    const guruHalaqoh = await db.select({ id: halaqoh.id }).from(halaqoh).where(eq(halaqoh.idGuru, session.id));
+    const halaqohIds = guruHalaqoh.map(h => h.id);
+    if (halaqohIds.length === 0) return { success: true, data: [] };
+
+    // Format WIB Start of Today
+    const now = new Date();
+    const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const wibDateString = dateFormatter.format(now);
+    const startOfTodayWIB = new Date(`${wibDateString}T00:00:00.000+07:00`);
+
+    const attendedRecords = await db.select({ idSantri: absensi.idSantri })
+      .from(absensi)
+      .where(gte(absensi.waktuScan, startOfTodayWIB));
+    const attendedIds = new Set(attendedRecords.map(r => r.idSantri));
+
+    const allActiveSantri = await db.select({
+      id: santri.id,
+      nomorInduk: santri.nomorInduk,
+      namaLengkap: santri.namaLengkap,
+      halaqoh: halaqoh.namaHalaqoh
+    })
+    .from(santri)
+    .innerJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
+    .where(
+      and(
+        eq(santri.statusSantri, 'aktif'),
+        inArray(santri.idHalaqoh, halaqohIds)
+      )
+    );
+
+    const belumHadir = allActiveSantri.filter(s => !attendedIds.has(s.id));
+    
+    // Get log pesan manual
+    const logs = await db.select({
+      idSantri: logPesanManual.idSantri,
+      status: logPesanManual.status
+    }).from(logPesanManual).where(
+      and(
+        eq(logPesanManual.tanggal, wibDateString),
+        eq(logPesanManual.jenis, 'belum_hadir')
+      )
+    );
+
+    const logMap = new Map(logs.map(l => [l.idSantri, l.status]));
+
+    const belumHadirWithStatus = belumHadir.map(s => ({
+      ...s,
+      statusPesan: logMap.get(s.id) || null
+    }));
+
+    belumHadirWithStatus.sort((a, b) => a.namaLengkap.localeCompare(b.namaLengkap));
+
+    return { success: true, data: belumHadirWithStatus };
+  } catch (err: any) {
+    console.error("Error getSantriBelumHadirGuru:", err);
+    return { success: false, data: [] };
+  }
+}
+
+
+export async function markNotifikasiGuruRead(id: string) {
+  await db.update(notifikasiGuru).set({ isRead: true }).where(eq(notifikasiGuru.id, id));
+  revalidatePath('/portal-guru');
+  return true;
+}
+
