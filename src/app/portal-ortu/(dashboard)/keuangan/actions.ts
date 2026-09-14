@@ -7,6 +7,13 @@ import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 async function getOrtuSantriId() {
   const cookieStore = await cookies();
@@ -108,25 +115,44 @@ export async function getKeuanganData() {
   };
 }
 
-export async function submitPendingUnifiedPayment(
-  payload: {
-    tabunganNominal: number;
-    kasNominal: number;
-    infaqNominal: number;
-    bulanKas: number;
-    tahunKas: number;
-    bulanInfaq: number;
-    tahunInfaq: number;
-    metode: string;
-    angkaUnik: number;
-  }
-) {
+export async function submitPendingUnifiedPayment(formData: FormData) {
   const idSantri = await getOrtuSantriId();
-  const { tabunganNominal, kasNominal, infaqNominal, bulanKas, tahunKas, bulanInfaq, tahunInfaq, metode, angkaUnik } = payload;
+  
+  const tabunganNominal = Number(formData.get("tabunganNominal")) || 0;
+  const kasNominal = Number(formData.get("kasNominal")) || 0;
+  const infaqNominal = Number(formData.get("infaqNominal")) || 0;
+  const bulanKas = Number(formData.get("bulanKas")) || 0;
+  const tahunKas = Number(formData.get("tahunKas")) || 0;
+  const bulanInfaq = Number(formData.get("bulanInfaq")) || 0;
+  const tahunInfaq = Number(formData.get("tahunInfaq")) || 0;
+  const metode = (formData.get("metode") as string) || '';
+  const angkaUnik = Number(formData.get("angkaUnik")) || 0;
+  const buktiFile = formData.get("buktiFile") as File | null;
+
   const totalNominal = tabunganNominal + kasNominal + infaqNominal + angkaUnik;
 
   const [s] = await db.select().from(santri).where(eq(santri.id, idSantri));
   if (!s) throw new Error("Santri tidak ditemukan");
+
+  let buktiUrl = null;
+  if (buktiFile && buktiFile.size > 0) {
+    try {
+      const buffer = Buffer.from(await buktiFile.arrayBuffer());
+      const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: "bukti_pembayaran" },
+          (error: any, result: any) => {
+            if (error || !result) reject(error || new Error("Unknown upload error"));
+            else resolve(result);
+          }
+        ).end(buffer);
+      });
+      buktiUrl = uploadResult.secure_url;
+    } catch (e) {
+      console.error("Gagal mengunggah bukti ke Cloudinary:", e);
+      throw new Error("Gagal mengunggah bukti transfer");
+    }
+  }
 
   let jenisArr = [];
   if (tabunganNominal > 0) jenisArr.push(`tabungan:${tabunganNominal}`);
@@ -144,6 +170,7 @@ export async function submitPendingUnifiedPayment(
       tanggalAjuan: new Date(),
       jenisPembayaran: jenisArr.join(','),
       angkaUnik,
+      buktiUrl,
       // bulanTarget dan tahunTarget dikosongkan karena sudah ada di jenisPembayaran (jika digabung)
       bulanTarget: null,
       tahunTarget: null

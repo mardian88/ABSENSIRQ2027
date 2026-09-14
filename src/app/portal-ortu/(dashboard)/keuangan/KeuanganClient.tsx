@@ -26,6 +26,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
   const [uniqueCode, setUniqueCode] = useState<number>(0);
   const [baseNominal, setBaseNominal] = useState<number>(0);
   const [totalNominal, setTotalNominal] = useState<number>(0);
+  const [buktiFile, setBuktiFile] = useState<File | null>(null);
 
   // Countdown state
   const [timeLeft, setTimeLeft] = useState<number>(3600); // 60 minutes in seconds
@@ -56,6 +57,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
     setPayKas(true);
     setPayInfaq(true);
     setPaymentMethod(null);
+    setBuktiFile(null);
     setUniqueCode(Math.floor(Math.random() * (300 - 10 + 1)) + 10);
     setIsGatewayOpen(true);
   };
@@ -79,23 +81,30 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
       return;
     }
 
+    if (!buktiFile) {
+      showError("Gagal", "Harap unggah bukti transfer terlebih dahulu.");
+      return;
+    }
+
     startTransition(async () => {
       try {
         const tabunganNominal = (payTabungan && topupInput) ? Number(topupInput) : 0;
         const kasNominal = payKas ? data.tagihanKas : 0;
         const infaqNominal = payInfaq ? data.tagihanInfaq : 0;
 
-        await submitPendingUnifiedPayment({
-          tabunganNominal,
-          kasNominal,
-          infaqNominal,
-          bulanKas: data.nextBulanKas,
-          tahunKas: data.nextTahunKas,
-          bulanInfaq: data.nextBulanInfaq,
-          tahunInfaq: data.nextTahunInfaq,
-          metode: paymentMethod === 'qris' ? 'QRIS' : 'Transfer Bank',
-          angkaUnik: uniqueCode
-        });
+        const formData = new FormData();
+        formData.append("tabunganNominal", tabunganNominal.toString());
+        formData.append("kasNominal", kasNominal.toString());
+        formData.append("infaqNominal", infaqNominal.toString());
+        formData.append("bulanKas", data.nextBulanKas.toString());
+        formData.append("tahunKas", data.nextTahunKas.toString());
+        formData.append("bulanInfaq", data.nextBulanInfaq.toString());
+        formData.append("tahunInfaq", data.nextTahunInfaq.toString());
+        formData.append("metode", paymentMethod === 'qris' ? 'QRIS' : 'Transfer Bank');
+        formData.append("angkaUnik", uniqueCode.toString());
+        formData.append("buktiFile", buktiFile);
+
+        await submitPendingUnifiedPayment(formData);
         
         showSuccess("Pembayaran Diajukan!", "Bukti transfer akan diverifikasi oleh Admin. Saldo dan status tagihan akan terupdate setelah diverifikasi.");
         setIsGatewayOpen(false);
@@ -471,17 +480,43 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                     </div>
                   )}
 
+                    <div className="mt-4 p-4 bg-white border border-slate-200 rounded-xl space-y-3">
+                      <label className="text-sm font-semibold text-slate-700 block">Unggah Bukti Transfer <span className="text-rose-500">*</span></label>
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            setBuktiFile(e.target.files[0]);
+                          } else {
+                            setBuktiFile(null);
+                          }
+                        }}
+                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                      />
+                      {buktiFile && (
+                        <p className="text-xs text-emerald-600 font-medium break-all">
+                          Terpilih: {buktiFile.name}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-indigo-800 text-[11px] flex gap-2 mt-4 leading-tight">
                       <AlertCircle className="w-4 h-4 shrink-0" />
-                      <p>Setelah transfer/scan QRIS, klik tombol di bawah agar diverifikasi Admin.</p>
+                      <p>Setelah transfer/scan QRIS dan mengunggah bukti, klik tombol di bawah agar diverifikasi Admin.</p>
                     </div>
 
                     <button 
                       onClick={handleSimulatePayment}
-                      disabled={isPending || timeLeft === 0}
-                      className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20 disabled:opacity-50 mt-3 text-sm"
+                      disabled={isPending || timeLeft === 0 || !buktiFile}
+                      className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20 disabled:opacity-50 mt-3 text-sm flex items-center justify-center"
                     >
-                      {isPending ? "Memproses..." : "Selesai & Konfirmasi"}
+                      {isPending ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                          Memproses...
+                        </>
+                      ) : "Selesai & Konfirmasi"}
                     </button>
                 </div>
               )}
