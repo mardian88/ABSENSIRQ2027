@@ -52,10 +52,17 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
   };
 
   const handleOpenUnified = () => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear();
+
+    const isKasLate = data.nextTahunKas < currentYear || (data.nextTahunKas === currentYear && data.nextBulanKas <= currentMonth);
+    const isInfaqLate = data.nextTahunInfaq < currentYear || (data.nextTahunInfaq === currentYear && data.nextBulanInfaq <= currentMonth);
+
     setPayTabungan(false);
     setTopupInput("");
-    setPayKas(true);
-    setPayInfaq(true);
+    setPayKas(isKasLate);
+    setPayInfaq(isInfaqLate);
     setPaymentMethod(null);
     setBuktiFile(null);
     setUniqueCode(Math.floor(Math.random() * (300 - 10 + 1)) + 10);
@@ -311,7 +318,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                           </div>
                           <div>
                             <p className="font-bold text-slate-800">Iuran Kas</p>
-                            <p className="text-xs text-slate-500">Iuran bulan {formatBulanTahun(data.nextBulanKas, data.nextTahunKas)}</p>
+                            <p className="text-xs text-orange-500 font-medium">Iuran bulan {formatBulanTahun(data.nextBulanKas, data.nextTahunKas)}</p>
                           </div>
                         </div>
                         <span className="font-bold text-slate-800">{formatRp(data.tagihanKas)}</span>
@@ -325,7 +332,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                           </div>
                           <div>
                             <p className="font-bold text-slate-800">Infaq Bulanan</p>
-                            <p className="text-xs text-slate-500">Infaq bulan {formatBulanTahun(data.nextBulanInfaq, data.nextTahunInfaq)}</p>
+                            <p className="text-xs text-orange-500 font-medium">Infaq bulan {formatBulanTahun(data.nextBulanInfaq, data.nextTahunInfaq)}</p>
                           </div>
                         </div>
                         <span className="font-bold text-slate-800">{formatRp(data.tagihanInfaq)}</span>

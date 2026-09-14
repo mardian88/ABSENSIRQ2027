@@ -173,9 +173,9 @@ export default function DonasiDetailClient({ program, donaturs, idSantri, namaSa
             <p className="text-[10px] text-slate-500 mt-1 text-center max-w-[200px] leading-tight">Scan QR code menggunakan aplikasi M-Banking atau e-Wallet kesayangan Anda.</p>
           </div>
 
-          <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-xl text-indigo-800 text-[11px] flex gap-2 leading-tight">
+          <div className="bg-orange-50 border border-orange-200 p-3 rounded-xl text-orange-600 text-[11px] flex gap-2 leading-tight font-medium">
             <AlertCircle className="w-4 h-4 shrink-0" />
-            <p>Setelah melakukan transfer/scan QRIS, silakan klik tombol di bawah agar Wakaf diverifikasi oleh Admin.</p>
+            <p>Pastikan melakukan transfer sesuai nominal Tertera, dengan cara scan QRIS di atas, silakan klik tombol di bawah agar Wakaf diverifikasi oleh Admin.</p>
           </div>
 
           <button 
