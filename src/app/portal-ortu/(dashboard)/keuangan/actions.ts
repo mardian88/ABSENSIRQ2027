@@ -140,7 +140,7 @@ export async function submitPendingUnifiedPayment(formData: FormData) {
       const buffer = Buffer.from(await buktiFile.arrayBuffer());
       const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
         cloudinary.uploader.upload_stream(
-          { folder: "bukti_pembayaran" },
+          { folder: "bukti_tf" },
           (error: any, result: any) => {
             if (error || !result) reject(error || new Error("Unknown upload error"));
             else resolve(result);
