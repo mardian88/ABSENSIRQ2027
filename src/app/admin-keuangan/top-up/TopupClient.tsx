@@ -27,7 +27,7 @@ export function TopupClient({ initialData }: { initialData: TopupData[] }) {
   const handleSetuju = async (t: TopupData) => {
     const confirmed = await showConfirm(
       "Setujui Top-Up?",
-      `Setujui pengisian saldo Rp ${new Intl.NumberFormat('id-ID').format(t.nominal)} untuk ${t.namaSantri}? Saldo santri akan otomatis bertambah.`
+      `Setujui pengisian saldo Rp ${new Intl.NumberFormat('id-ID').format(t.nominal - (t.angkaUnik || 0))} untuk ${t.namaSantri}? Saldo santri akan otomatis bertambah.`
     );
     if (!confirmed) return;
 
@@ -130,7 +130,7 @@ export function TopupClient({ initialData }: { initialData: TopupData[] }) {
                 </td>
                 <td className="px-6 py-4">
                   <div className="font-semibold text-emerald-600">
-                    + {new Intl.NumberFormat('id-ID').format(t.nominal)}
+                    + {new Intl.NumberFormat('id-ID').format(t.nominal - (t.angkaUnik || 0))}
                   </div>
                   <div className="text-xs text-slate-500 mt-1 capitalize">
                     {t.jenisPembayaran === 'tabungan' || !t.jenisPembayaran ? 'Top-Up Tabungan' : `Iuran: ${t.jenisPembayaran}`}

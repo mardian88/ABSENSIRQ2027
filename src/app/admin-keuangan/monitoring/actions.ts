@@ -196,3 +196,31 @@ export async function getRekapPembayaranSemua(tahun: number) {
 
   return [...dataKas, ...dataInfaq];
 }
+
+export async function hapusPembayaranRiwayat(idSantri: string, bulan: number, tahun: number, jenis: 'kas' | 'infaq' | 'keduanya', idTagihanKas?: string, idTagihanInfaq?: string) {
+  const { revalidatePath } = await import("next/cache");
+  if (jenis === 'kas' || jenis === 'keduanya') {
+    if (idTagihanKas) {
+      await db.delete(keuanganKas).where(and(
+        eq(keuanganKas.idSantri, idSantri),
+        eq(keuanganKas.bulan, bulan),
+        eq(keuanganKas.tahun, tahun),
+        eq(keuanganKas.idTagihan, idTagihanKas)
+      ));
+    }
+  }
+  
+  if (jenis === 'infaq' || jenis === 'keduanya') {
+    if (idTagihanInfaq) {
+      await db.delete(keuanganInfaq).where(and(
+        eq(keuanganInfaq.idSantri, idSantri),
+        eq(keuanganInfaq.bulan, bulan),
+        eq(keuanganInfaq.tahun, tahun),
+        eq(keuanganInfaq.idTagihan, idTagihanInfaq)
+      ));
+    }
+  }
+
+  revalidatePath('/admin-keuangan/monitoring');
+  revalidatePath('/portal-ortu/keuangan');
+}

@@ -1,0 +1,1 @@
+import { auth } from './src/lib/auth'; async function run() { try { const res = await auth.api.signUpEmail({ body: { name: 'Admin', email: 'admin@rumahquran.com', password: 'mardian28' } }); console.log('Sukses:', res); } catch(e) { console.error('Error:', e); } } run();

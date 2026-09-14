@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Search, Filter, Calendar, CreditCard, User, Clock, AlertCircle, CheckCircle2, TrendingUp, Wallet, Banknote } from "lucide-react";
 import { format } from "date-fns";
 import { getRekapPembayaranSemua } from "./actions";
+import { showSuccess, showError, showPrompt } from "@/lib/sweetalert";
 
 interface Tagihan {
   id: string;
@@ -155,6 +156,49 @@ export function MonitoringClient({
   const countMenunggak = santriStats.length - countLunas;
   
   const formatRupiah = (nom: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(nom);
+
+  const handleHapusRiwayat = async (santriId: string, bulanNum: number, isKasPaid: boolean, isInfaqPaid: boolean) => {
+    if (!isKasPaid && !isInfaqPaid) return;
+    
+    let hapusKas = false;
+    let hapusInfaq = false;
+
+    if (isKasPaid && isInfaqPaid) {
+      hapusKas = window.confirm("Hapus pembayaran KAS bulan ini?");
+      hapusInfaq = window.confirm("Hapus pembayaran INFAQ bulan ini?");
+    } else if (isKasPaid) {
+      hapusKas = window.confirm("Hapus pembayaran KAS bulan ini?");
+    } else if (isInfaqPaid) {
+      hapusInfaq = window.confirm("Hapus pembayaran INFAQ bulan ini?");
+    }
+
+    if (!hapusKas && !hapusInfaq) return;
+
+    const pwd = await showPrompt("Masukkan password admin untuk menghapus:", "password");
+    if (pwd !== "rqm") {
+       showError("Gagal", "Password salah!");
+       return;
+    }
+
+    let jenisHapus: 'kas'|'infaq'|'keduanya' = (hapusKas && hapusInfaq) ? 'keduanya' : (hapusKas ? 'kas' : 'infaq');
+
+    try {
+      const { hapusPembayaranRiwayat } = await import("./actions");
+      await hapusPembayaranRiwayat(santriId, bulanNum, tahun, jenisHapus, tagihanKas?.id, tagihanInfaq?.id);
+      
+      setRekapData(prev => prev.filter(r => {
+         if (r.idSantri === santriId && r.bulan === bulanNum && r.tahun === tahun) {
+            if (jenisHapus === 'keduanya') return false;
+            if (jenisHapus === 'kas' && r.idTagihan === tagihanKas?.id) return false;
+            if (jenisHapus === 'infaq' && r.idTagihan === tagihanInfaq?.id) return false;
+         }
+         return true;
+       }));
+       showSuccess("Sukses", "Riwayat berhasil dihapus.");
+    } catch(e) {
+       showError("Gagal", "Terjadi kesalahan sistem.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -351,9 +395,14 @@ export function MonitoringClient({
 
                       return (
                         <td key={bulanNum} className={`p-4 text-center ${isLast ? 'pr-8 sm:pr-12' : ''}`}>
-                          <div className="flex justify-center" title={tooltip}>
+                          <button 
+                            type="button"
+                            onClick={() => handleHapusRiwayat(santri.id, bulanNum, isKasPaid, isInfaqPaid)}
+                            className="flex justify-center w-full focus:outline-none focus:ring-2 focus:ring-orange-500 rounded" 
+                            title={tooltip}
+                          >
                             {badge}
-                          </div>
+                          </button>
                         </td>
                       );
                     })}

@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { keuanganKas, keuanganTabungan, keuanganTopup, santri, pengaturanKeuangan, keuanganInfaq } from "@/db/schema";
+import { keuanganKas, keuanganTabungan, keuanganTopup, santri, pengaturanKeuangan, keuanganInfaq, notifikasiPortal } from "@/db/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
@@ -147,6 +147,16 @@ export async function submitPendingUnifiedPayment(
       // bulanTarget dan tahunTarget dikosongkan karena sudah ada di jenisPembayaran (jika digabung)
       bulanTarget: null,
       tahunTarget: null
+    });
+
+    await tx.insert(notifikasiPortal).values({
+      id: uuidv4(),
+      idSantri,
+      judul: 'Pembayaran Menunggu Verifikasi',
+      isi: `Terima kasih, pembayaran Anda sebesar Rp ${new Intl.NumberFormat('id-ID').format(tabunganNominal + kasNominal + infaqNominal)} telah diajukan dan sedang menunggu verifikasi admin.`,
+      jenis: 'pembayaran',
+      isRead: false,
+      tanggal: new Date()
     });
   });
 

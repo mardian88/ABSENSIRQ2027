@@ -248,7 +248,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-slate-800">{formatRp(item.nominal)}</p>
+                  <p className="font-bold text-slate-800">{formatRp(item.nominal - (item.angkaUnik || 0))}</p>
                   <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded inline-block mt-1 ${
                     item.status === 'pending' ? 'bg-orange-50 text-orange-600' :
                     item.status === 'berhasil' ? 'bg-emerald-50 text-emerald-600' :
