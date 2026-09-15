@@ -171,13 +171,13 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
   };
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-20">
-      <div className="sticky top-0 z-30 bg-slate-50 pb-2 shadow-sm rounded-b-3xl">
+    <div className="max-w-md mx-auto min-h-screen bg-[#faf8f5] pb-20">
+      <div className="sticky top-0 z-30 bg-[#faf8f5] pb-2 shadow-sm rounded-b-3xl">
         {/* Header Profile / Saldo */}
-        <div className="bg-emerald-600 rounded-b-3xl p-5 shadow-md text-white relative z-20">
+        <div className="bg-[#4a6741] rounded-b-3xl p-5 shadow-md text-white relative z-20">
           <h1 className="text-xl font-bold mb-4">Keuangan & Tabungan</h1>
           
-          <div className="bg-emerald-500/50 backdrop-blur-md border border-emerald-400 p-5 rounded-2xl shadow-inner relative overflow-hidden">
+          <div className="bg-[#4a6741]/50 backdrop-blur-md border border-emerald-400 p-5 rounded-xl shadow-inner relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-20">
               <Wallet className="w-20 h-20" />
             </div>
@@ -188,7 +188,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
               <div className="mt-4 flex gap-3">
                 <button 
                   onClick={handleOpenUnified}
-                  className="flex-1 bg-white text-emerald-700 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors shadow-sm text-sm"
+                  className="flex-1 bg-[#ffffff] text-[#4a6741] py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#4a6741]/5 transition-colors shadow-sm text-sm"
                 >
                   <Plus className="w-4 h-4" /> Infaq Bulanan, Kas & Tabungan
                 </button>
@@ -199,16 +199,16 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
 
         {/* Tabs */}
         <div className="mt-4 px-6">
-          <div className="flex bg-slate-200/50 p-1 rounded-xl">
+          <div className="flex bg-[#eae7e0]/50 p-1 rounded-xl">
             <button 
               onClick={() => setActiveTab('kas')}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'kas' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'kas' ? 'bg-[#ffffff] text-[#4a6741] shadow-sm' : 'text-[#374151]/80'}`}
             >
               Infaq & Kas
             </button>
             <button 
               onClick={() => setActiveTab('topup')}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'topup' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'topup' ? 'bg-[#ffffff] text-[#4a6741] shadow-sm' : 'text-[#374151]/80'}`}
             >
               Riwayat Top-up Tabungan
             </button>
@@ -219,28 +219,28 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
       {/* Kas Content */}
       {activeTab === 'kas' && (
         <div className="mt-6 px-6 space-y-4 animate-in slide-in-from-left-4 fade-in duration-300">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+          <h3 className="font-bold text-[#4a6741] flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-teal-600" /> Riwayat Infaq & Kas Terakhir
           </h3>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-100">
+          <div className="bg-[#ffffff] rounded-xl shadow-sm border border-[#f3f4f6] divide-y divide-slate-100">
             {displayRiwayatKas.length > 0 ? displayRiwayatKas.map((item: any) => (
-              <div key={item.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div key={item.id} className="p-4 flex items-center justify-between hover:bg-[#faf8f5] transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 border border-teal-100 shrink-0">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-medium text-slate-800 capitalize">{item.jenis} - Bulan {item.bulan} {item.tahun}</p>
-                    <p className="text-xs text-slate-400">{format(new Date(item.tanggalBayar), 'dd MMM yyyy')}</p>
+                    <p className="font-medium text-[#4a6741] capitalize">{item.jenis} - Bulan {item.bulan} {item.tahun}</p>
+                    <p className="text-xs text-[#374151]/60">{format(new Date(item.tanggalBayar), 'dd MMM yyyy')}</p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-slate-800">{formatRp(item.nominal)}</p>
-                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded inline-block mt-1">LUNAS</p>
+                  <p className="font-bold text-[#4a6741]">{formatRp(item.nominal)}</p>
+                  <p className="text-[10px] font-bold text-[#4a6741] uppercase tracking-wider bg-[#4a6741]/5 px-2 py-0.5 rounded inline-block mt-1">LUNAS</p>
                 </div>
               </div>
             )) : (
-              <div className="p-8 text-center text-slate-400 text-sm">Belum ada histori pembayaran infaq & kas</div>
+              <div className="p-8 text-center text-[#374151]/60 text-sm">Belum ada histori pembayaran infaq & kas</div>
             )}
           </div>
         </div>
@@ -249,29 +249,29 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
       {/* Topup Content */}
       {activeTab === 'topup' && (
         <div className="mt-6 px-6 space-y-4 animate-in slide-in-from-left-4 fade-in duration-300">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
-            <History className="w-5 h-5 text-emerald-600" /> Riwayat Top-up Tabungan Terakhir
+          <h3 className="font-bold text-[#4a6741] flex items-center gap-2">
+            <History className="w-5 h-5 text-[#4a6741]" /> Riwayat Top-up Tabungan Terakhir
           </h3>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-100">
+          <div className="bg-[#ffffff] rounded-xl shadow-sm border border-[#f3f4f6] divide-y divide-slate-100">
             {displayRiwayatTopup.length > 0 ? displayRiwayatTopup.map((item: any) => (
-              <div key={item.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div key={item.id} className="p-4 flex items-center justify-between hover:bg-[#faf8f5] transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-200 shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-[#faf8f5] flex items-center justify-center text-[#374151]/80 border border-slate-200 shrink-0">
                     {item.status === 'pending' && <Clock className="w-5 h-5 text-orange-500" />}
-                    {item.status === 'berhasil' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                    {item.status === 'berhasil' && <CheckCircle2 className="w-5 h-5 text-[#4a6741]" />}
                     {item.status === 'gagal' && <XCircle className="w-5 h-5 text-rose-500" />}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-800 text-sm">Top-Up Tabungan</p>
-                    <p className="text-xs text-slate-500">Metode: {item.metode}</p>
-                    <p className="text-xs text-slate-400">{format(new Date(item.tanggalAjuan), 'dd MMM yyyy, HH:mm')}</p>
+                    <p className="font-bold text-[#4a6741] text-sm">Top-Up Tabungan</p>
+                    <p className="text-xs text-[#374151]/80">Metode: {item.metode}</p>
+                    <p className="text-xs text-[#374151]/60">{format(new Date(item.tanggalAjuan), 'dd MMM yyyy, HH:mm')}</p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-bold text-slate-800">{formatRp(item.nominal - (item.angkaUnik || 0))}</p>
+                  <p className="font-bold text-[#4a6741]">{formatRp(item.nominal - (item.angkaUnik || 0))}</p>
                   <p className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded inline-block mt-1 ${
                     item.status === 'pending' ? 'bg-orange-50 text-orange-600' :
-                    item.status === 'berhasil' ? 'bg-emerald-50 text-emerald-600' :
+                    item.status === 'berhasil' ? 'bg-[#4a6741]/5 text-[#4a6741]' :
                     'bg-rose-50 text-rose-600'
                   }`}>
                     {item.status}
@@ -279,7 +279,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                 </div>
               </div>
             )) : (
-              <div className="p-8 text-center text-slate-400 text-sm">Belum ada histori top-up tabungan</div>
+              <div className="p-8 text-center text-[#374151]/60 text-sm">Belum ada histori top-up tabungan</div>
             )}
           </div>
         </div>
@@ -288,12 +288,12 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
       {/* Payment Gateway Modal */}
       {isGatewayOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center p-0 sm:p-4">
-          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 flex flex-col max-h-[85svh]">
+          <div className="bg-[#ffffff] w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 flex flex-col max-h-[85svh]">
             
-            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-900 text-white shrink-0">
+            <div className="p-5 border-b border-[#f3f4f6] flex justify-between items-center bg-slate-900 text-white shrink-0">
               <div>
                 <h2 className="text-lg font-bold">Checkout Pembayaran</h2>
-                <p className="text-xs text-slate-400 mt-0.5 capitalize">Pilih Item Pembayaran</p>
+                <p className="text-xs text-[#374151]/60 mt-0.5 capitalize">Pilih Item Pembayaran</p>
               </div>
               <button 
                 onClick={() => {
@@ -301,7 +301,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                   setPaymentMethod(null);
                 }} 
                 disabled={isPending}
-                className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                className="w-8 h-8 flex items-center justify-center bg-[#ffffff]/10 rounded-full hover:bg-[#ffffff]/20 transition-colors"
               >
                 <span className="text-xl leading-none -mt-0.5">&times;</span>
               </button>
@@ -313,62 +313,62 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                 <div className="space-y-6">
                   
                   <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-slate-700">Pilih Item yang Dibayar</label>
+                    <label className="block text-sm font-semibold text-[#374151]">Pilih Item yang Dibayar</label>
                     <div className="space-y-3">
                       {showKas && (
-                        <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payKas ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                        <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payKas ? 'border-emerald-500 bg-[#4a6741]/5/50' : 'border-slate-200 hover:bg-[#faf8f5]'}`}>
                           <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payKas ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
+                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payKas ? 'bg-[#4a6741] border-emerald-500' : 'border-slate-300'}`}>
                               {payKas && <CheckSquare className="w-4 h-4 text-white" />}
                             </div>
                             <div>
-                              <p className="font-bold text-slate-800">Iuran Kas</p>
+                              <p className="font-bold text-[#4a6741]">Iuran Kas</p>
                               <p className="text-xs text-orange-500 font-medium">Iuran bulan {formatBulanTahun(data.nextBulanKas, data.nextTahunKas)}</p>
                             </div>
                           </div>
-                          <span className="font-bold text-slate-800">{formatRp(data.tagihanKas)}</span>
+                          <span className="font-bold text-[#4a6741]">{formatRp(data.tagihanKas)}</span>
                           <input type="checkbox" className="hidden" checked={payKas} onChange={(e) => setPayKas(e.target.checked)} />
                         </label>
                       )}
                       
                       {showInfaq && (
-                        <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payInfaq ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                        <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payInfaq ? 'border-emerald-500 bg-[#4a6741]/5/50' : 'border-slate-200 hover:bg-[#faf8f5]'}`}>
                           <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payInfaq ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
+                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payInfaq ? 'bg-[#4a6741] border-emerald-500' : 'border-slate-300'}`}>
                               {payInfaq && <CheckSquare className="w-4 h-4 text-white" />}
                             </div>
                             <div>
-                              <p className="font-bold text-slate-800">Infaq Bulanan</p>
+                              <p className="font-bold text-[#4a6741]">Infaq Bulanan</p>
                               <p className="text-xs text-orange-500 font-medium">Infaq bulan {formatBulanTahun(data.nextBulanInfaq, data.nextTahunInfaq)}</p>
                             </div>
                           </div>
-                          <span className="font-bold text-slate-800">{formatRp(data.tagihanInfaq)}</span>
+                          <span className="font-bold text-[#4a6741]">{formatRp(data.tagihanInfaq)}</span>
                           <input type="checkbox" className="hidden" checked={payInfaq} onChange={(e) => setPayInfaq(e.target.checked)} />
                         </label>
                       )}
 
-                      <div className={`p-4 rounded-xl border transition-colors ${payTabungan ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <div className={`p-4 rounded-xl border transition-colors ${payTabungan ? 'border-emerald-500 bg-[#4a6741]/5/50' : 'border-slate-200 hover:bg-[#faf8f5]'}`}>
                         <label className="flex items-center justify-between cursor-pointer">
                           <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payTabungan ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
+                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payTabungan ? 'bg-[#4a6741] border-emerald-500' : 'border-slate-300'}`}>
                               {payTabungan && <CheckSquare className="w-4 h-4 text-white" />}
                             </div>
                             <div>
-                              <p className="font-bold text-slate-800">Top-Up Tabungan</p>
-                              <p className="text-xs text-slate-500">Isi saldo mandiri</p>
+                              <p className="font-bold text-[#4a6741]">Top-Up Tabungan</p>
+                              <p className="text-xs text-[#374151]/80">Isi saldo mandiri</p>
                             </div>
                           </div>
                           <input type="checkbox" className="hidden" checked={payTabungan} onChange={(e) => setPayTabungan(e.target.checked)} />
                         </label>
                         {payTabungan && (
                           <div className="mt-4 relative animate-in fade-in slide-in-from-top-2">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">Rp</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#374151]/80 font-bold">Rp</span>
                             <input 
                               type="number"
                               value={topupInput}
                               onChange={(e) => setTopupInput(e.target.value)}
                               placeholder="Min. 5000"
-                              className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-lg font-bold transition-all outline-none"
+                              className="w-full pl-12 pr-4 py-3 bg-[#ffffff] rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-lg font-bold transition-all outline-none"
                             />
                           </div>
                         )}
@@ -382,7 +382,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Pilih Metode Pembayaran</h3>
+                    <h3 className="text-sm font-semibold text-[#374151] mb-3">Pilih Metode Pembayaran</h3>
                     <div className="space-y-3">
                       <button 
                         onClick={() => handleSelectPaymentMethod('qris')}
@@ -393,27 +393,27 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                             <QrCode className="w-6 h-6" />
                           </div>
                           <div className="text-left">
-                            <p className="font-bold text-slate-800 group-hover:text-indigo-700">QRIS</p>
-                            <p className="text-xs text-slate-500">Scan via GoPay, OVO, Dana, M-Banking</p>
+                            <p className="font-bold text-[#4a6741] group-hover:text-indigo-700">QRIS</p>
+                            <p className="text-xs text-[#374151]/80">Scan via GoPay, OVO, Dana, M-Banking</p>
                           </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-indigo-500" />
+                        <ChevronRight className="w-5 h-5 text-[#374151]/60 group-hover:text-indigo-500" />
                       </button>
 
                       <button 
                         onClick={() => handleSelectPaymentMethod('va')}
-                        className="w-full p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 flex items-center justify-between group transition-all"
+                        className="w-full p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-[#4a6741]/5 flex items-center justify-between group transition-all"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="bg-emerald-100 p-2.5 rounded-lg text-emerald-600">
+                          <div className="bg-[#4a6741]/10 p-2.5 rounded-lg text-[#4a6741]">
                             <Building className="w-6 h-6" />
                           </div>
                           <div className="text-left">
-                            <p className="font-bold text-slate-800 group-hover:text-emerald-700">Transfer Bank</p>
-                            <p className="text-xs text-slate-500">Bank Central Asia (BCA)</p>
+                            <p className="font-bold text-[#4a6741] group-hover:text-[#4a6741]">Transfer Bank</p>
+                            <p className="text-xs text-[#374151]/80">Bank Central Asia (BCA)</p>
                           </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-emerald-500" />
+                        <ChevronRight className="w-5 h-5 text-[#374151]/60 group-hover:text-[#4a6741]" />
                       </button>
                     </div>
                   </div>
@@ -422,7 +422,7 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                 // Tampilan Instruksi Pembayaran (QRIS / VA)
                   <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
                     <div className="flex items-center justify-between mb-1">
-                      <button onClick={() => setPaymentMethod(null)} className="text-slate-400 hover:text-slate-800 font-medium text-sm flex items-center">
+                      <button onClick={() => setPaymentMethod(null)} className="text-[#374151]/60 hover:text-[#4a6741] font-medium text-sm flex items-center">
                         <ChevronRight className="w-4 h-4 rotate-180" /> Kembali
                       </button>
                       <div className="text-rose-600 font-bold bg-rose-50 px-3 py-1 rounded-full text-xs flex items-center gap-1.5">
@@ -431,17 +431,17 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                     </div>
 
                     <div className="text-center">
-                      <p className="text-slate-500 font-medium mb-0.5 text-sm">Total Pembayaran</p>
-                      <h3 className="text-3xl font-black text-emerald-600">
+                      <p className="text-[#374151]/80 font-medium mb-0.5 text-sm">Total Pembayaran</p>
+                      <h3 className="text-3xl font-black text-[#4a6741]">
                         {formatRp(totalNominal)}
                       </h3>
-                      <p className="text-[11px] text-slate-500 mt-1 bg-slate-100 px-3 py-1 rounded-lg inline-block">Termasuk angka unik: <span className="font-bold text-slate-800">{uniqueCode}</span></p>
+                      <p className="text-[11px] text-[#374151]/80 mt-1 bg-[#f3f1ed] px-3 py-1 rounded-lg inline-block">Termasuk angka unik: <span className="font-bold text-[#4a6741]">{uniqueCode}</span></p>
                     </div>
 
                     {paymentMethod === 'qris' && (
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center relative">
+                      <div className="bg-[#faf8f5] p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center relative">
                         <div className="w-full flex justify-center mb-3 relative overflow-hidden">
-                          <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-200 w-max">
+                          <div className="bg-[#ffffff] p-3 rounded-xl shadow-sm border border-slate-200 w-max">
                             <QRCodeCanvas 
                               id="qris-canvas"
                               value={generateDynamicQRIS(STATIC_QRIS, totalNominal)} 
@@ -466,27 +466,27 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                           <Download className="w-4 h-4" /> Download QRIS
                         </button>
 
-                        <p className="text-[10px] text-slate-500 text-center leading-tight max-w-[200px]">Scan QR code menggunakan aplikasi M-Banking atau e-Wallet kesayangan Anda.</p>
+                        <p className="text-[10px] text-[#374151]/80 text-center leading-tight max-w-[200px]">Scan QR code menggunakan aplikasi M-Banking atau e-Wallet kesayangan Anda.</p>
                       </div>
                     )}
 
                   {paymentMethod === 'va' && (
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+                    <div className="bg-[#faf8f5] p-6 rounded-xl border border-slate-200 space-y-4">
                       <div>
-                        <p className="text-xs text-slate-500 font-medium mb-1">Bank Tujuan</p>
-                        <p className="font-bold text-emerald-700 flex items-center gap-2">
+                        <p className="text-xs text-[#374151]/80 font-medium mb-1">Bank Tujuan</p>
+                        <p className="font-bold text-[#4a6741] flex items-center gap-2">
                           <Building className="w-4 h-4" /> Bank Central Asia (BCA)
                         </p>
                       </div>
-                      <div className="h-px bg-slate-200 w-full" />
+                      <div className="h-px bg-[#eae7e0] w-full" />
                       <div>
-                        <p className="text-xs text-slate-500 font-medium mb-1">Nomor Rekening</p>
+                        <p className="text-xs text-[#374151]/80 font-medium mb-1">Nomor Rekening</p>
                         <div className="flex items-center justify-between">
-                          <p className="font-bold text-2xl tracking-widest text-slate-800">148 125 4359</p>
+                          <p className="font-bold text-2xl tracking-widest text-[#4a6741]">148 125 4359</p>
                         </div>
                       </div>
-                      <div className="h-px bg-slate-200 w-full" />
-                      <ul className="text-xs text-slate-500 list-disc pl-4 space-y-1">
+                      <div className="h-px bg-[#eae7e0] w-full" />
+                      <ul className="text-xs text-[#374151]/80 list-disc pl-4 space-y-1">
                         <li>Pilih menu Transfer Antar Rekening BCA.</li>
                         <li>Masukkan nomor rekening di atas.</li>
                         <li>Pastikan atas nama <span className="font-bold">Ayi H Mardiansyah</span>.</li>
@@ -495,8 +495,8 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                     </div>
                   )}
 
-                    <div className="mt-4 p-4 bg-white border border-slate-200 rounded-xl space-y-3">
-                      <label className="text-sm font-semibold text-slate-700 block">Unggah Bukti Transfer <span className="text-rose-500">*</span></label>
+                    <div className="mt-4 p-4 bg-[#ffffff] border border-slate-200 rounded-xl space-y-3">
+                      <label className="text-sm font-semibold text-[#374151] block">Unggah Bukti Transfer <span className="text-rose-500">*</span></label>
                       <input 
                         type="file"
                         accept="image/*"
@@ -507,10 +507,10 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                             setBuktiFile(null);
                           }
                         }}
-                        className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                        className="w-full text-sm text-[#374151]/80 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#4a6741]/5 file:text-[#4a6741] hover:file:bg-[#4a6741]/10"
                       />
                       {buktiFile && (
-                        <p className="text-xs text-emerald-600 font-medium break-all">
+                        <p className="text-xs text-[#4a6741] font-medium break-all">
                           Terpilih: {buktiFile.name}
                         </p>
                       )}

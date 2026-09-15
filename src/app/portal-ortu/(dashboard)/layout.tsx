@@ -11,8 +11,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   }
 
   return (
-    <div className="bg-slate-200 h-screen overflow-hidden">
-      <div className="max-w-md mx-auto bg-slate-50 h-full relative shadow-2xl flex flex-col">
+    <div className="bg-[#1a1915] sm:bg-slate-200 h-screen overflow-hidden">
+      <div className="max-w-md mx-auto bg-[#faf8f5] text-[#374151] h-full relative shadow-2xl flex flex-col font-sans">
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto w-full pb-20 relative">
           {children}
