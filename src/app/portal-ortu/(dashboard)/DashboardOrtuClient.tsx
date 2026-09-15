@@ -176,31 +176,31 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
         </div>
 
         {/* Balance Card (Gradient) */}
-        <div className="bg-[var(--bg-surface)] border border-[var(--border-line)] rounded-[24px] p-6 text-white shadow-md relative overflow-hidden">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-line)] rounded-[24px] p-6 text-[var(--text-ink)] shadow-md relative overflow-hidden">
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div>
-              <div className="text-[var(--text-ink)] text-sm font-medium mb-1">Saldo Tabungan</div>
+              <div className="text-[var(--text-mute)] text-sm font-medium mb-1">Saldo Tabungan</div>
               <div className="text-3xl font-bold">{formatRp(keuangan?.saldo || 0)}</div>
             </div>
-            <div className="p-3 bg-[var(--bg-surface)]/20 rounded-full backdrop-blur-sm">
-              <Wallet className="w-6 h-6 text-white" />
+            <div className="p-3 bg-[var(--primary-accent)]/10 rounded-full backdrop-blur-sm">
+              <Wallet className="w-6 h-6 text-[var(--primary-accent)]" />
             </div>
           </div>
           
           <div className="space-y-2 relative z-10">
-            <div className="bg-[var(--bg-surface)]/10 rounded-[var(--radius-card)] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-white/10 flex justify-between items-center">
-              <span>Kas Terakhir:</span>
+            <div className="bg-[var(--bg-muted)]/30 rounded-[var(--radius-card)] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-[var(--border-line)] flex justify-between items-center">
+              <span className="text-[var(--text-mute)]">Kas Terakhir:</span>
               <span className="text-[var(--primary-accent)]">{lastPaidKas}</span>
             </div>
-            <div className="bg-[var(--bg-surface)]/10 rounded-[var(--radius-card)] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-white/10 flex justify-between items-center">
-              <span>Infaq Terakhir:</span>
+            <div className="bg-[var(--bg-muted)]/30 rounded-[var(--radius-card)] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-[var(--border-line)] flex justify-between items-center">
+              <span className="text-[var(--text-mute)]">Infaq Terakhir:</span>
               <span className="text-[var(--primary-accent)]">{lastPaidInfaq}</span>
             </div>
           </div>
 
           {/* Decorative circles */}
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-[var(--bg-surface)]/10 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-emerald-400/20 rounded-full blur-2xl"></div>
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-[var(--bg-muted)]/50 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-[var(--primary-accent)]/10 rounded-full blur-2xl"></div>
         </div>
 
         {/* Action Grid */}
