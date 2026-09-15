@@ -36,18 +36,18 @@ export function BottomNavOrtu() {
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-surface)] border-t border-slate-200">
       <div className="max-w-md mx-auto relative">
         {/* Visual cue that it's scrollable */}
         {canScrollLeft && (
           <div className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-start bg-gradient-to-r from-white via-white/90 to-transparent pointer-events-none z-10 pl-1">
-            <ChevronLeft className="w-4 h-4 text-emerald-600 opacity-60 animate-pulse" />
+            <ChevronLeft className="w-4 h-4 text-[var(--primary-accent)] opacity-60 animate-pulse" />
           </div>
         )}
         
         {canScrollRight && (
           <div className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-end bg-gradient-to-l from-white via-white/90 to-transparent pointer-events-none z-10 pr-1">
-            <ChevronRight className="w-4 h-4 text-emerald-600 opacity-60 animate-pulse" />
+            <ChevronRight className="w-4 h-4 text-[var(--primary-accent)] opacity-60 animate-pulse" />
           </div>
         )}
         
@@ -66,10 +66,10 @@ export function BottomNavOrtu() {
                 key={item.name} 
                 href={item.href}
                 className={`flex-shrink-0 flex flex-col items-center justify-center w-[72px] h-full space-y-1 transition-colors snap-center ${
-                  isActive ? "text-emerald-600" : "text-slate-400 hover:text-slate-600"
+                  isActive ? "text-[var(--primary-accent)]" : "text-[var(--text-ash)] hover:text-slate-600"
                 }`}
               >
-                <div className={`p-1.5 rounded-full ${isActive ? "bg-emerald-50" : ""}`}>
+                <div className={`p-1.5 rounded-full ${isActive ? "bg-[var(--primary-accent)]/10" : ""}`}>
                   <item.icon className={`w-5 h-5 ${isActive ? "stroke-[2.5px]" : "stroke-2"}`} />
                 </div>
                 <span className={`text-[10px] font-medium ${isActive ? "font-semibold" : ""}`}>

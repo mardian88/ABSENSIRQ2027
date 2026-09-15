@@ -8,6 +8,7 @@ import { useState, useTransition } from "react";
 import { logoutOrtu } from "../actions";
 import { useRouter } from "next/navigation";
 import { markNotifikasiRead } from "../notifikasi-actions";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }: any) {
   const router = useRouter();
@@ -47,17 +48,18 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
   return (
     <div className="flex flex-col min-h-full pb-6">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0f0f0f]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-[#2e2e2e]">
+      <header className="sticky top-0 z-50 bg-[var(--bg-canvas)]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between border-b border-[var(--border-line)]">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#3ecf8e]/10 rounded-full text-[#3ecf8e]">
+          <div className="p-2 bg-[var(--primary-accent)]/10 rounded-full text-[var(--primary-accent)]">
             <Home className="w-5 h-5" />
           </div>
-          <h1 className="text-lg font-bold text-[#fafafa]">Beranda</h1>
+          <h1 className="text-lg font-bold text-[var(--text-ink)]">Beranda</h1>
         </div>
         <div className="flex items-center gap-4">
+          <ThemeSwitcher />
           <button 
             onClick={() => setShowNotif(true)}
-            className="relative p-2 text-[#b4b4b4] hover:bg-[#0f0f0f] rounded-full transition-colors"
+            className="relative p-2 text-[var(--text-mute)] hover:bg-[var(--bg-canvas)] rounded-full transition-colors"
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
@@ -85,15 +87,15 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
       {/* Notification Modal */}
       {showNotif && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-[#171717] rounded-[8px] w-full max-w-md max-h-[80vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-[#2e2e2e] flex justify-between items-center bg-[#0f0f0f]">
-              <h3 className="font-bold text-[#fafafa] flex items-center gap-2">
-                <Bell className="w-4 h-4 text-[#3ecf8e]" />
+          <div className="bg-[var(--bg-surface)] rounded-[var(--radius-card)] w-full max-w-md max-h-[80vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-[var(--border-line)] flex justify-between items-center bg-[var(--bg-canvas)]">
+              <h3 className="font-bold text-[var(--text-ink)] flex items-center gap-2">
+                <Bell className="w-4 h-4 text-[var(--primary-accent)]" />
                 Notifikasi
               </h3>
               <button 
                 onClick={() => setShowNotif(false)}
-                className="p-1 text-[#898989] hover:bg-[#0f0f0f] rounded-full transition-colors"
+                className="p-1 text-[var(--text-ash)] hover:bg-[var(--bg-canvas)] rounded-full transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -104,7 +106,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                   {notifikasi.map((item: any) => (
                     <div 
                       key={item.id} 
-                      className={`border rounded-[8px] transition-colors cursor-pointer ${!item.isRead ? 'bg-blue-50/50 border-blue-100' : 'bg-[#171717] border-[#2e2e2e]'}`}
+                      className={`border rounded-[var(--radius-card)] transition-colors cursor-pointer ${!item.isRead ? 'bg-blue-50/50 border-blue-100' : 'bg-[var(--bg-surface)] border-[var(--border-line)]'}`}
                       onClick={() => handleReadNotif(item.id, item.isRead)}
                     >
                       <div className="w-full text-left p-4 flex gap-3 items-start">
@@ -117,26 +119,26 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-1">
-                            <h4 className={`text-sm ${!item.isRead ? 'font-bold text-[#fafafa]' : 'font-medium text-[#b4b4b4]'}`}>
+                            <h4 className={`text-sm ${!item.isRead ? 'font-bold text-[var(--text-ink)]' : 'font-medium text-[var(--text-mute)]'}`}>
                               {item.judul}
                             </h4>
                             {expandedNotif === item.id ? (
-                              <ChevronUp className="w-4 h-4 text-[#898989]" />
+                              <ChevronUp className="w-4 h-4 text-[var(--text-ash)]" />
                             ) : (
-                              <ChevronDown className="w-4 h-4 text-[#898989]" />
+                              <ChevronDown className="w-4 h-4 text-[var(--text-ash)]" />
                             )}
                           </div>
-                          <p suppressHydrationWarning className="text-[10px] text-[#898989] mb-1">
+                          <p suppressHydrationWarning className="text-[10px] text-[var(--text-ash)] mb-1">
                             {formatDateTimeID(item.tanggal)}
                           </p>
                           {expandedNotif === item.id ? (
                             <div 
-                              className="text-sm text-[#b4b4b4] leading-relaxed mt-2 pt-2 border-t border-[#2e2e2e] whitespace-pre-wrap"
+                              className="text-sm text-[var(--text-mute)] leading-relaxed mt-2 pt-2 border-t border-[var(--border-line)] whitespace-pre-wrap"
                               dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
                             />
                           ) : (
                             <div 
-                              className="text-xs text-[#b4b4b4] line-clamp-1"
+                              className="text-xs text-[var(--text-mute)] line-clamp-1"
                               dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
                             />
                           )}
@@ -146,7 +148,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-[#898989] text-sm">
+                <div className="text-center py-8 text-[var(--text-ash)] text-sm">
                   Belum ada notifikasi
                 </div>
               )}
@@ -157,89 +159,89 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
 
       <div className="px-6 mt-4 space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-[#fafafa]">Ahlan wa Sahlan!</h2>
+          <h2 className="text-2xl font-bold text-[var(--text-ink)]">Ahlan wa Sahlan!</h2>
         </div>
 
         {/* Data Santri Card */}
-        <div className="bg-[#171717] rounded-[24px] p-6 shadow-sm border border-[#2e2e2e] flex flex-col gap-1 relative overflow-hidden">
-          <div className="text-xs font-semibold text-[#898989] uppercase tracking-wider mb-1">
+        <div className="bg-[var(--bg-surface)] rounded-[24px] p-6 shadow-sm border border-[var(--border-line)] flex flex-col gap-1 relative overflow-hidden">
+          <div className="text-xs font-semibold text-[var(--text-ash)] uppercase tracking-wider mb-1">
             Data Santri
           </div>
-          <h3 className="text-xl font-bold text-[#fafafa]">{profil.namaLengkap}</h3>
+          <h3 className="text-xl font-bold text-[var(--text-ink)]">{profil.namaLengkap}</h3>
           <div>
-            <span className="inline-block px-3 py-1 bg-[#141414] text-[#b4b4b4] rounded-full text-xs font-medium mt-2">
+            <span className="inline-block px-3 py-1 bg-[var(--bg-muted)] text-[var(--text-mute)] rounded-full text-xs font-medium mt-2">
               NIS: {profil.nomorInduk}
             </span>
           </div>
         </div>
 
         {/* Balance Card (Gradient) */}
-        <div className="bg-[#171717] border border-[#2e2e2e] rounded-[24px] p-6 text-white shadow-md relative overflow-hidden">
+        <div className="bg-[var(--bg-surface)] border border-[var(--border-line)] rounded-[24px] p-6 text-white shadow-md relative overflow-hidden">
           <div className="flex justify-between items-start mb-6 relative z-10">
             <div>
-              <div className="text-[#fafafa] text-sm font-medium mb-1">Saldo Tabungan</div>
+              <div className="text-[var(--text-ink)] text-sm font-medium mb-1">Saldo Tabungan</div>
               <div className="text-3xl font-bold">{formatRp(keuangan?.saldo || 0)}</div>
             </div>
-            <div className="p-3 bg-[#171717]/20 rounded-full backdrop-blur-sm">
+            <div className="p-3 bg-[var(--bg-surface)]/20 rounded-full backdrop-blur-sm">
               <Wallet className="w-6 h-6 text-white" />
             </div>
           </div>
           
           <div className="space-y-2 relative z-10">
-            <div className="bg-[#171717]/10 rounded-[8px] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-white/10 flex justify-between items-center">
+            <div className="bg-[var(--bg-surface)]/10 rounded-[var(--radius-card)] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-white/10 flex justify-between items-center">
               <span>Kas Terakhir:</span>
-              <span className="text-[#3ecf8e]">{lastPaidKas}</span>
+              <span className="text-[var(--primary-accent)]">{lastPaidKas}</span>
             </div>
-            <div className="bg-[#171717]/10 rounded-[8px] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-white/10 flex justify-between items-center">
+            <div className="bg-[var(--bg-surface)]/10 rounded-[var(--radius-card)] px-4 py-2.5 backdrop-blur-md text-sm font-medium border border-white/10 flex justify-between items-center">
               <span>Infaq Terakhir:</span>
-              <span className="text-[#3ecf8e]">{lastPaidInfaq}</span>
+              <span className="text-[var(--primary-accent)]">{lastPaidInfaq}</span>
             </div>
           </div>
 
           {/* Decorative circles */}
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-[#171717]/10 rounded-full blur-2xl"></div>
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-[var(--bg-surface)]/10 rounded-full blur-2xl"></div>
           <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-emerald-400/20 rounded-full blur-2xl"></div>
         </div>
 
         {/* Action Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link href="/portal-ortu/keuangan" className="bg-[#171717] rounded-[24px] p-5 shadow-sm border border-[#2e2e2e] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
+          <Link href="/portal-ortu/keuangan" className="bg-[var(--bg-surface)] rounded-[24px] p-5 shadow-sm border border-[var(--border-line)] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
             <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-1">
               <Wallet className="w-7 h-7" />
             </div>
             <div>
-              <div className="font-bold text-[#fafafa]">Keuangan</div>
-              <div className="text-xs text-[#b4b4b4] mt-0.5">Cek mutasi & tagihan</div>
+              <div className="font-bold text-[var(--text-ink)]">Keuangan</div>
+              <div className="text-xs text-[var(--text-mute)] mt-0.5">Cek mutasi & tagihan</div>
             </div>
           </Link>
           
-          <Link href="/portal-ortu/izin" className="bg-[#171717] rounded-[24px] p-5 shadow-sm border border-[#2e2e2e] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
+          <Link href="/portal-ortu/izin" className="bg-[var(--bg-surface)] rounded-[24px] p-5 shadow-sm border border-[var(--border-line)] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
             <div className="w-14 h-14 rounded-full bg-[#f5c542]/10 flex items-center justify-center text-[#f5c542] mb-1">
               <FileText className="w-7 h-7" />
             </div>
             <div>
-              <div className="font-bold text-[#fafafa]">Perizinan</div>
-              <div className="text-xs text-[#b4b4b4] mt-0.5">Ajukan & riwayat izin</div>
+              <div className="font-bold text-[var(--text-ink)]">Perizinan</div>
+              <div className="text-xs text-[var(--text-mute)] mt-0.5">Ajukan & riwayat izin</div>
             </div>
           </Link>
 
-          <Link href="/portal-ortu/mutabaah" className="bg-[#171717] rounded-[24px] p-5 shadow-sm border border-[#2e2e2e] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
+          <Link href="/portal-ortu/mutabaah" className="bg-[var(--bg-surface)] rounded-[24px] p-5 shadow-sm border border-[var(--border-line)] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
             <div className="w-14 h-14 rounded-full bg-[#667cdc]/10 flex items-center justify-center text-[#667cdc] mb-1">
               <BookOpen className="w-7 h-7" />
             </div>
             <div>
-              <div className="font-bold text-[#fafafa]">Mutaba'ah</div>
-              <div className="text-xs text-[#b4b4b4] mt-0.5">Cek catatan ibadah</div>
+              <div className="font-bold text-[var(--text-ink)]">Mutaba'ah</div>
+              <div className="text-xs text-[var(--text-mute)] mt-0.5">Cek catatan ibadah</div>
             </div>
           </Link>
 
-          <Link href="/portal-ortu/kebutuhan" className="bg-[#171717] rounded-[24px] p-5 shadow-sm border border-[#2e2e2e] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
-            <div className="w-14 h-14 rounded-full bg-[#3ecf8e]/10 flex items-center justify-center text-[#3ecf8e] mb-1">
+          <Link href="/portal-ortu/kebutuhan" className="bg-[var(--bg-surface)] rounded-[24px] p-5 shadow-sm border border-[var(--border-line)] flex flex-col items-center text-center gap-3 active:scale-95 transition-transform">
+            <div className="w-14 h-14 rounded-full bg-[var(--primary-accent)]/10 flex items-center justify-center text-[var(--primary-accent)] mb-1">
               <ShoppingBag className="w-7 h-7" />
             </div>
             <div>
-              <div className="font-bold text-[#fafafa]">Kebutuhan</div>
-              <div className="text-xs text-[#b4b4b4] mt-0.5">Pesan seragam dll</div>
+              <div className="font-bold text-[var(--text-ink)]">Kebutuhan</div>
+              <div className="text-xs text-[var(--text-mute)] mt-0.5">Pesan seragam dll</div>
             </div>
           </Link>
         </div>
@@ -247,26 +249,26 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
         {/* Pengumuman Terbaru */}
         <div className="pt-2">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-[#fafafa]">Pengumuman Terbaru</h3>
-            <Bell className="w-5 h-5 text-[#898989]" />
+            <h3 className="text-lg font-bold text-[var(--text-ink)]">Pengumuman Terbaru</h3>
+            <Bell className="w-5 h-5 text-[var(--text-ash)]" />
           </div>
           
           <div>
             {pengumuman && pengumuman.length > 0 ? (
-              <div className="bg-[#171717] rounded-[8px] shadow-sm border border-[#2e2e2e] overflow-hidden divide-y divide-slate-100">
+              <div className="bg-[var(--bg-surface)] rounded-[var(--radius-card)] shadow-sm border border-[var(--border-line)] overflow-hidden divide-y divide-slate-100">
                 {pengumuman.map((item: any) => (
                   <div 
                     key={item.id} 
                     onClick={() => setSelectedPengumuman(item)}
-                    className="p-4 flex gap-3 cursor-pointer hover:bg-[#0f0f0f] transition-colors active:bg-[#141414]"
+                    className="p-4 flex gap-3 cursor-pointer hover:bg-[var(--bg-canvas)] transition-colors active:bg-[var(--bg-muted)]"
                   >
                     <div className="flex-1">
-                      <h4 className="font-bold text-[#fafafa] text-sm mb-0.5">{item.judul}</h4>
-                      <p suppressHydrationWarning className="text-[10px] text-[#898989] mb-1.5">
+                      <h4 className="font-bold text-[var(--text-ink)] text-sm mb-0.5">{item.judul}</h4>
+                      <p suppressHydrationWarning className="text-[10px] text-[var(--text-ash)] mb-1.5">
                         {formatDateID(item.tanggal)}
                       </p>
                       <div 
-                        className="text-xs text-[#b4b4b4] leading-relaxed line-clamp-1"
+                        className="text-xs text-[var(--text-mute)] leading-relaxed line-clamp-1"
                         dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(item.isi) }}
                       />
                     </div>
@@ -277,7 +279,7 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
                 ))}
               </div>
             ) : (
-              <div className="text-center p-8 border-2 border-dashed border-[#2e2e2e] rounded-[8px] text-[#898989] text-sm">
+              <div className="text-center p-8 border-2 border-dashed border-[var(--border-line)] rounded-[var(--radius-card)] text-[var(--text-ash)] text-sm">
                 Belum ada pengumuman
               </div>
             )}
@@ -288,31 +290,31 @@ export function DashboardOrtuClient({ profil, keuangan, pengumuman, notifikasi }
       {/* Pengumuman Modal */}
       {selectedPengumuman && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#171717] rounded-[8px] w-full max-w-md max-h-[85vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-[#2e2e2e] flex justify-between items-start bg-[#0f0f0f]">
+          <div className="bg-[var(--bg-surface)] rounded-[var(--radius-card)] w-full max-w-md max-h-[85vh] flex flex-col shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-[var(--border-line)] flex justify-between items-start bg-[var(--bg-canvas)]">
               <div>
-                <h3 className="font-bold text-[#fafafa] text-lg pr-4">{selectedPengumuman.judul}</h3>
-                <p suppressHydrationWarning className="text-xs text-[#b4b4b4] mt-1">
+                <h3 className="font-bold text-[var(--text-ink)] text-lg pr-4">{selectedPengumuman.judul}</h3>
+                <p suppressHydrationWarning className="text-xs text-[var(--text-mute)] mt-1">
                   {formatDateID(selectedPengumuman.tanggal)}
                 </p>
               </div>
               <button 
                 onClick={() => setSelectedPengumuman(null)}
-                className="p-1.5 text-[#898989] hover:bg-[#0f0f0f] hover:text-[#fafafa] rounded-full transition-colors shrink-0"
+                className="p-1.5 text-[var(--text-ash)] hover:bg-[var(--bg-canvas)] hover:text-[var(--text-ink)] rounded-full transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-5 overflow-y-auto">
               <div 
-                className="text-sm text-[#fafafa] leading-relaxed whitespace-pre-wrap"
+                className="text-sm text-[var(--text-ink)] leading-relaxed whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{ __html: formatWhatsAppStyle(selectedPengumuman.isi) }}
               />
             </div>
-            <div className="p-4 border-t border-[#2e2e2e] bg-[#0f0f0f]">
+            <div className="p-4 border-t border-[var(--border-line)] bg-[var(--bg-canvas)]">
               <button 
                 onClick={() => setSelectedPengumuman(null)}
-                className="w-full py-3 bg-[#3ecf8e] text-white rounded-[8px] font-bold hover:bg-[#2ea06b] transition-colors shadow-lg shadow-emerald-600/20 text-sm"
+                className="w-full py-3 bg-[var(--primary-accent)] text-white rounded-[var(--radius-card)] font-bold hover:bg-[var(--primary-accent-hover)] transition-colors shadow-lg shadow-emerald-600/20 text-sm"
               >
                 Tutup
               </button>
