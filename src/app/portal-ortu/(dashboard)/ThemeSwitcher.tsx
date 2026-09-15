@@ -30,10 +30,17 @@ export function ThemeSwitcher() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--bg-surface)] border border-[var(--border-line)] rounded-[var(--radius-card)] shadow-lg overflow-hidden z-50 p-1">
+        <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--bg-surface)] border border-[var(--border-line)] rounded-[var(--radius-card)] shadow-lg overflow-hidden z-50 p-1">
+          <button 
+            onClick={() => { setTheme("default"); setOpen(false); }}
+            className={`w-full text-left px-3 py-2 text-sm rounded-[calc(var(--radius-card)-4px)] flex items-center gap-2 ${theme === "default" ? "bg-[var(--bg-muted)] font-bold text-[var(--text-ink)]" : "text-[var(--text-mute)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-ink)]"}`}
+          >
+            <div className="w-3 h-3 rounded-full bg-[#f4ece2] border border-gray-300 shadow-sm" />
+            Recipe Theme (Default)
+          </button>
           <button 
             onClick={() => { setTheme("supabase-light"); setOpen(false); }}
-            className={`w-full text-left px-3 py-2 text-sm rounded-[calc(var(--radius-card)-4px)] flex items-center gap-2 ${theme === "supabase-light" ? "bg-[var(--bg-muted)] font-medium text-[var(--text-ink)]" : "text-[var(--text-mute)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-ink)]"}`}
+            className={`w-full text-left px-3 py-2 text-sm rounded-[calc(var(--radius-card)-4px)] flex items-center gap-2 mt-1 ${theme === "supabase-light" ? "bg-[var(--bg-muted)] font-medium text-[var(--text-ink)]" : "text-[var(--text-mute)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-ink)]"}`}
           >
             <div className="w-3 h-3 rounded-full bg-[#fafafa] border border-gray-200 shadow-sm" />
             Supabase Light

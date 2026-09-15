@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -129,6 +130,22 @@
   }
 }
 @layer utilities {
+  .theme-default {
+    --bg-canvas: #f4ece2;
+    --bg-surface: #ffffff;
+    --bg-muted: #e8ded2;
+    --text-ink: #293e2b;
+    --text-mute: #8b9087;
+    --text-ash: #a8b0a5;
+    --border-line: #f4ece2;
+    --border-strong: #d9cfc4;
+    --primary-accent: #425a3d;
+    --primary-accent-hover: #33472f;
+    --radius-card: 28px;
+    --radius-btn: 9999px;
+    --shadow-soft: 0 10px 30px rgba(41, 62, 43, 0.08);
+    font-family: 'Nunito', sans-serif;
+  }
   .theme-supabase-light {
     --bg-canvas: #fafafa;
     --bg-surface: #ffffff;

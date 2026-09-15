@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "supabase-light" | "supabase-dark" | "grove";
+type Theme = "default" | "supabase-light" | "supabase-dark" | "grove";
 
 interface ThemeContextType {
   theme: Theme;
@@ -12,7 +12,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("supabase-light");
+  const [theme, setThemeState] = useState<Theme>("default");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (!mounted) {
     return (
       <ThemeContext.Provider value={{ theme, setTheme }}>
-        <div className={`theme-supabase-light h-full`} style={{ visibility: 'hidden' }}>
+        <div className={`theme-default h-full`} style={{ visibility: 'hidden' }}>
           {children}
         </div>
       </ThemeContext.Provider>
