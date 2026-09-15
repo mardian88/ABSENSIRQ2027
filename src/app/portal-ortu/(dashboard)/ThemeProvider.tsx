@@ -29,7 +29,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   if (!mounted) {
-    return <div className="theme-supabase-light" style={{ visibility: 'hidden' }}>{children}</div>;
+    return (
+      <ThemeContext.Provider value={{ theme, setTheme }}>
+        <div className={`theme-supabase-light h-full`} style={{ visibility: 'hidden' }}>
+          {children}
+        </div>
+      </ThemeContext.Provider>
+    );
   }
 
   return (
