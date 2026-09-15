@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/rapor-bulanan",
       "schedule": "0 10 28 * *"
+    },
+    {
+      "path": "/api/cron/reminder-keuangan",
+      "schedule": "0 1 26 * *"
     }
   ]
 }

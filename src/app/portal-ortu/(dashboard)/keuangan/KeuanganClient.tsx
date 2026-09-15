@@ -51,18 +51,22 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
     return `${m}:${s}`;
   };
 
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+  const currentDay = currentDate.getDate();
+
+  const isKasLate = data.nextTahunKas < currentYear || (data.nextTahunKas === currentYear && data.nextBulanKas <= currentMonth);
+  const isInfaqLate = data.nextTahunInfaq < currentYear || (data.nextTahunInfaq === currentYear && data.nextBulanInfaq <= currentMonth);
+  
+  const showKas = isKasLate || currentDay >= 26;
+  const showInfaq = isInfaqLate || currentDay >= 26;
+
   const handleOpenUnified = () => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentYear = currentDate.getFullYear();
-
-    const isKasLate = data.nextTahunKas < currentYear || (data.nextTahunKas === currentYear && data.nextBulanKas <= currentMonth);
-    const isInfaqLate = data.nextTahunInfaq < currentYear || (data.nextTahunInfaq === currentYear && data.nextBulanInfaq <= currentMonth);
-
     setPayTabungan(false);
     setTopupInput("");
-    setPayKas(isKasLate);
-    setPayInfaq(isInfaqLate);
+    setPayKas(showKas ? isKasLate : false);
+    setPayInfaq(showInfaq ? isInfaqLate : false);
     setPaymentMethod(null);
     setBuktiFile(null);
     setUniqueCode(Math.floor(Math.random() * (300 - 10 + 1)) + 10);
@@ -311,33 +315,37 @@ export function KeuanganOrtuClient({ data }: { data: any }) {
                   <div className="space-y-4">
                     <label className="block text-sm font-semibold text-slate-700">Pilih Item yang Dibayar</label>
                     <div className="space-y-3">
-                      <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payKas ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded flex items-center justify-center border ${payKas ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
-                            {payKas && <CheckSquare className="w-4 h-4 text-white" />}
+                      {showKas && (
+                        <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payKas ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payKas ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
+                              {payKas && <CheckSquare className="w-4 h-4 text-white" />}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">Iuran Kas</p>
+                              <p className="text-xs text-orange-500 font-medium">Iuran bulan {formatBulanTahun(data.nextBulanKas, data.nextTahunKas)}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-800">Iuran Kas</p>
-                            <p className="text-xs text-orange-500 font-medium">Iuran bulan {formatBulanTahun(data.nextBulanKas, data.nextTahunKas)}</p>
-                          </div>
-                        </div>
-                        <span className="font-bold text-slate-800">{formatRp(data.tagihanKas)}</span>
-                        <input type="checkbox" className="hidden" checked={payKas} onChange={(e) => setPayKas(e.target.checked)} />
-                      </label>
+                          <span className="font-bold text-slate-800">{formatRp(data.tagihanKas)}</span>
+                          <input type="checkbox" className="hidden" checked={payKas} onChange={(e) => setPayKas(e.target.checked)} />
+                        </label>
+                      )}
                       
-                      <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payInfaq ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded flex items-center justify-center border ${payInfaq ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
-                            {payInfaq && <CheckSquare className="w-4 h-4 text-white" />}
+                      {showInfaq && (
+                        <label className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${payInfaq ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded flex items-center justify-center border ${payInfaq ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
+                              {payInfaq && <CheckSquare className="w-4 h-4 text-white" />}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">Infaq Bulanan</p>
+                              <p className="text-xs text-orange-500 font-medium">Infaq bulan {formatBulanTahun(data.nextBulanInfaq, data.nextTahunInfaq)}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-800">Infaq Bulanan</p>
-                            <p className="text-xs text-orange-500 font-medium">Infaq bulan {formatBulanTahun(data.nextBulanInfaq, data.nextTahunInfaq)}</p>
-                          </div>
-                        </div>
-                        <span className="font-bold text-slate-800">{formatRp(data.tagihanInfaq)}</span>
-                        <input type="checkbox" className="hidden" checked={payInfaq} onChange={(e) => setPayInfaq(e.target.checked)} />
-                      </label>
+                          <span className="font-bold text-slate-800">{formatRp(data.tagihanInfaq)}</span>
+                          <input type="checkbox" className="hidden" checked={payInfaq} onChange={(e) => setPayInfaq(e.target.checked)} />
+                        </label>
+                      )}
 
                       <div className={`p-4 rounded-xl border transition-colors ${payTabungan ? 'border-emerald-500 bg-emerald-50/50' : 'border-slate-200 hover:bg-slate-50'}`}>
                         <label className="flex items-center justify-between cursor-pointer">
