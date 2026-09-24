@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/auto-alpa",
-      "schedule": "0 14 * * 1-6"
+      "schedule": "59 16 * * 1-6"
     },
     {
       "path": "/api/cron/reminder-absen",
