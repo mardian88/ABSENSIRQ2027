@@ -90,7 +90,7 @@ export async function getLaporanAlpa(period: string = "semua"): Promise<AlpaData
 }
 
 export async function resetLaporanAlpa(password: string): Promise<{success: boolean, message: string}> {
-  if (password !== 'rqm2828') return { success: false, message: 'Password salah!' };
+  if (password !== 'HapusAlpaMuharrik2027!') return { success: false, message: 'Password salah!' };
   try {
     await db.delete(absensi).where(eq(absensi.statusKehadiran, 'alpa'));
     revalidatePath('/laporan-absensi/alpa');

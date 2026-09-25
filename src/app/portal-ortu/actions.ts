@@ -16,6 +16,8 @@ cloudinary.config({
 import { sendTemplatedMessage } from "@/lib/fonnte";
 import { halaqoh } from "@/db/schema";
 
+import { signToken, verifyToken } from "@/lib/jwt";
+
 export async function loginOrtu(nis: string) {
   const [data] = await db.select().from(santri).where(eq(santri.nomorInduk, nis)).limit(1);
   if (!data) return { success: false, message: "NIS tidak ditemukan" };
@@ -26,7 +28,8 @@ export async function loginOrtu(nis: string) {
 
   // Set session cookie
   const cookieStore = await cookies();
-  cookieStore.set("ortu_session", data.id, {
+  const token = await signToken({ id: data.id, role: 'ortu' });
+  cookieStore.set("ortu_session", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -38,8 +41,12 @@ export async function loginOrtu(nis: string) {
 
 export async function getOrtuSession() {
   const cookieStore = await cookies();
-  const idSantri = cookieStore.get("ortu_session")?.value;
-  if (!idSantri) return null;
+  const token = cookieStore.get("ortu_session")?.value;
+  if (!token) return null;
+
+  const payload = await verifyToken(token);
+  if (!payload || !payload.id) return null;
+  const idSantri = payload.id as string;
 
   const [data] = await db.select().from(santri).where(eq(santri.id, idSantri)).limit(1);
   return data || null;
@@ -83,13 +90,18 @@ export async function cekStatusLiburIzin() {
 }
 
 export async function submitIzin(formData: FormData) {
-  const idSantri = formData.get("idSantri") as string;
+  const session = await getOrtuSession();
+  if (!session) {
+    return { success: false, message: "Akses ditolak. Silakan login kembali." };
+  }
+  const idSantri = session.id;
+
   const kategori = formData.get("kategori") as string;
   const keterangan = formData.get("keterangan") as string;
   const jumlahHariStr = formData.get("jumlahHari") as string;
   const buktiFile = formData.get("buktiFile") as File | null;
 
-  if (!idSantri || !kategori || !keterangan || !jumlahHariStr) {
+  if (!kategori || !keterangan || !jumlahHariStr) {
     return { success: false, message: "Data tidak lengkap" };
   }
 

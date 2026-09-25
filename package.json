@@ -31,6 +31,7 @@
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "html-to-image": "^1.11.13",
+    "jose": "^6.2.12",
     "jsqr": "^1.4.0",
     "lucide-react": "^1.27.0",
     "next": "16.2.12",

@@ -5,6 +5,7 @@ import { guru, absensiGuru, kontrakGuru, kafalahBonus, perizinanSantri, santri, 
 import { eq, and, desc, between, lte, gte, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { signToken, verifyToken } from "@/lib/jwt";
 
 const GURU_SESSION_COOKIE = "guru_session";
 
@@ -21,8 +22,9 @@ export async function loginGuru(nip: string, kontakWa: string) {
     return { success: false, message: "Akun Anda berstatus Non-Aktif." };
   }
 
-  // Set cookie
-  (await cookies()).set(GURU_SESSION_COOKIE, guruData.id, {
+  // Set encrypted cookie
+  const token = await signToken({ id: guruData.id, role: 'guru' });
+  (await cookies()).set(GURU_SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -39,8 +41,12 @@ export async function logoutGuru() {
 
 export async function getGuruSession() {
   const cookieStore = await cookies();
-  const idGuru = cookieStore.get(GURU_SESSION_COOKIE)?.value;
-  if (!idGuru) return null;
+  const token = cookieStore.get(GURU_SESSION_COOKIE)?.value;
+  if (!token) return null;
+
+  const payload = await verifyToken(token);
+  if (!payload || !payload.id) return null;
+  const idGuru = payload.id as string;
 
   const [guruData] = await db.select().from(guru).where(eq(guru.id, idGuru));
   if (!guruData) return null;
