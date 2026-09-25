@@ -168,12 +168,21 @@ export const pengaturanHumas = sqliteTable('pengaturan_humas', {
   nomorAdmin: text('nomor_admin'), // WhatsApp Admin penerima notif
   isAktif: integer('is_aktif', { mode: 'boolean' }).default(false),
   nomorReminder: text('nomor_reminder'),
-  isReminderAktif: integer('is_reminder_aktif', { mode: 'boolean' }).default(false)
+  isReminderAktif: integer('is_reminder_aktif', { mode: 'boolean' }).default(false),
+  waktuKirimWaAlpa: text('waktu_kirim_wa_alpa').default('08:00') // Format HH:mm
 });
 
 export const logReminder = sqliteTable('log_reminder', {
   id: text('id').primaryKey(),
   idSantri: text('id_santri').references(() => santri.id).notNull(),
+  tanggal: text('tanggal').notNull(), // Format YYYY-MM-DD
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+});
+
+export const logPesanOtomatis = sqliteTable('log_pesan_otomatis', {
+  id: text('id').primaryKey(),
+  idSantri: text('id_santri').references(() => santri.id).notNull(),
+  jenisPesan: text('jenis_pesan').notNull(), // e.g. 'alpa_ortu'
   tanggal: text('tanggal').notNull(), // Format YYYY-MM-DD
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 });

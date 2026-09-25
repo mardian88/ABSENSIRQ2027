@@ -252,12 +252,12 @@ export async function getPengaturanHumas() {
       nomorAdmin: "",
       isAktif: false
     });
-    return { id: newId, tokenFonnte: "", nomorAdmin: "", isAktif: false, nomorReminder: "", isReminderAktif: false };
+    return { id: newId, tokenFonnte: "", nomorAdmin: "", isAktif: false, nomorReminder: "", isReminderAktif: false, waktuKirimWaAlpa: "08:00" };
   }
   return data;
 }
 
-export async function updatePengaturanHumas(data: { id: string, tokenFonnte: string, nomorAdmin?: string, isAktif: boolean, nomorReminder?: string, isReminderAktif?: boolean }) {
+export async function updatePengaturanHumas(data: { id: string, tokenFonnte: string, nomorAdmin?: string, isAktif: boolean, nomorReminder?: string, isReminderAktif?: boolean, waktuKirimWaAlpa?: string }) {
   const { id, ...updateData } = data;
   await db.update(pengaturanHumas).set(updateData).where(eq(pengaturanHumas.id, id));
   revalidatePath("/pengaturan");

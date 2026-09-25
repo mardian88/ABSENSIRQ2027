@@ -38,27 +38,27 @@ export function AutoAlpaManager() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Zap className="h-5 w-5 text-amber-500" />
-            <span>Otomatisasi Auto-Alpa</span>
+            <span>Otomatisasi Kirim WA Auto-Alpa</span>
           </CardTitle>
           <CardDescription>
-            Atur sistem untuk memberikan status "Alpa" secara otomatis kepada santri yang tidak memiliki rekam absensi (Hadir/Izin/Sakit) pada hari aktif.
+            Pencatatan Alpa H-1 <strong>selalu berjalan secara otomatis</strong> setiap pukul 00:01 WIB. Toggle di bawah ini khusus untuk mengontrol pengiriman notifikasi WhatsApp-nya.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className={`p-6 border rounded-xl flex items-start justify-between transition-colors ${data.isAutoAlpaAktif ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
             <div className="space-y-2 max-w-[80%]">
               <h3 className={`font-semibold text-lg ${data.isAutoAlpaAktif ? 'text-emerald-800' : 'text-slate-700'}`}>
-                {data.isAutoAlpaAktif ? "Status: AKTIF" : "Status: NONAKTIF"}
+                {data.isAutoAlpaAktif ? "Status WA Alpa: AKTIF" : "Status WA Alpa: NONAKTIF"}
               </h3>
               <p className="text-sm text-slate-600">
                 {data.isAutoAlpaAktif 
-                  ? "Sistem akan mengecek kehadiran santri pada pukul 23:59 (lewat Cron Job). Jika hari ini adalah Hari Aktif dan bukan Hari Libur, santri yang kosong datanya akan ditandai ALPA."
-                  : "Sistem tidak akan melakukan perubahan otomatis. Santri yang tidak absen akan dibiarkan kosong (tanpa keterangan) di database."}
+                  ? "Sistem akan mengirimkan pesan WhatsApp ke orang tua/wali santri (dan admin) untuk menginfokan status Alpa. Waktu pengiriman mengikuti jam yang diatur di menu Pesan Otomatis."
+                  : "Sistem HANYA MENCATAT Alpa di halaman laporan, TETAPI TIDAK AKAN MENGIRIM pesan WhatsApp ke orang tua."}
               </p>
               {data.isAutoAlpaAktif && (
                 <div className="mt-4 flex items-start space-x-2 text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
                   <AlertTriangle className="h-5 w-5 shrink-0" />
-                  <p className="text-xs">Pastikan Anda telah mengatur <strong>Endpoint Cron Job</strong> (/api/cron/auto-alpa) di layanan seperti Vercel Cron atau UptimeRobot agar fungsi ini berjalan tepat waktu.</p>
+                  <p className="text-xs">Pastikan Vercel Cron telah dikonfigurasi (<code>/api/cron/kirim-wa-alpa</code>) dan jadwal pengiriman sudah diatur di menu Pengaturan &gt; Pesan Otomatis.</p>
                 </div>
               )}
             </div>

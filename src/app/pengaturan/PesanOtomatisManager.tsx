@@ -44,6 +44,7 @@ export function PesanOtomatisManager() {
   const [isFonnteAktif, setIsFonnteAktif] = useState(false);
   const [nomorReminder, setNomorReminder] = useState("");
   const [isReminderAktif, setIsReminderAktif] = useState(false);
+  const [waktuKirimWaAlpa, setWaktuKirimWaAlpa] = useState("08:00");
   const [savingFonnte, setSavingFonnte] = useState(false);
 
   // Templates
@@ -68,6 +69,7 @@ export function PesanOtomatisManager() {
     setIsFonnteAktif(humas.isAktif ?? false);
     setNomorReminder(humas.nomorReminder || "");
     setIsReminderAktif(humas.isReminderAktif ?? false);
+    setWaktuKirimWaAlpa(humas.waktuKirimWaAlpa || "08:00");
 
     const tmpls = await getTemplatePesanList();
     // Sort templates by jenisPesan to group them together
@@ -85,7 +87,8 @@ export function PesanOtomatisManager() {
         nomorAdmin,
         isAktif: isFonnteAktif,
         nomorReminder,
-        isReminderAktif
+        isReminderAktif,
+        waktuKirimWaAlpa
       });
       toast.success("Pengaturan Fonnte berhasil disimpan!");
     } catch (e) {
@@ -220,6 +223,26 @@ export function PesanOtomatisManager() {
                   onChange={(e) => setNomorAdmin(e.target.value)}
                   placeholder="Contoh: 081234567890"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Waktu Pengiriman WA Auto-Alpa (WIB)</Label>
+                <select 
+                  value={waktuKirimWaAlpa.split(':')[0]}
+                  onChange={(e) => setWaktuKirimWaAlpa(`${e.target.value}:00`)}
+                  className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const hour = String(i).padStart(2, '0');
+                    return (
+                      <option key={hour} value={hour}>
+                        Jam {hour}:00 WIB
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-xs text-slate-500">
+                  Sistem mengecek dan merekam alpa pada pukul 00:01 WIB, lalu mengirimkan notifikasi WA ke orang tua & admin pada jam yang ditentukan di atas (esok harinya).
+                </p>
               </div>
               <div className="flex items-center gap-2 mb-4">
                 <input 
