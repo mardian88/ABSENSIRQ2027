@@ -11,7 +11,7 @@ import { getColumns } from "./columns";
 
 export default function LaporanAlpaClient() {
   const [dataAlpa, setDataAlpa] = useState<AlpaData[]>([]);
-  const [filterPeriod, setFilterPeriod] = useState("semua");
+  const [filterPeriod, setFilterPeriod] = useState("bulan_ini");
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
@@ -35,7 +35,7 @@ export default function LaporanAlpaClient() {
 
   // initial load
   useEffect(() => {
-    fetchAlpaData("semua");
+    fetchAlpaData("bulan_ini");
   }, []);
 
   const handleRefresh = async () => {
