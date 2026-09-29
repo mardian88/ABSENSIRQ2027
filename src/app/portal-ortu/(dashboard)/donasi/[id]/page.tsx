@@ -22,6 +22,6 @@ export default async function DonasiDetailPage({ params }: { params: Promise<{ i
     return <div className="p-8 text-center text-slate-500">Program tidak ditemukan: {res.message}</div>;
   }
 
-  return <DonasiDetailClient program={res.data} donaturs={res.donaturs || []} idSantri={idSantri} namaSantri={sArr[0].namaLengkap} />;
+  return <DonasiDetailClient program={res.data} donaturs={res.donaturs || []} idSantri={idSantri} namaSantri={profil.namaLengkap} />;
 }
 
