@@ -4,10 +4,7 @@
       "path": "/api/cron/auto-alpa",
       "schedule": "1 17 * * *"
     },
-    {
-      "path": "/api/cron/kirim-wa-alpa",
-      "schedule": "0 22 * * *"
-    },
+
     {
       "path": "/api/cron/reminder-absen",
       "schedule": "0 10 * * 1-6"
