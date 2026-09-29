@@ -5,21 +5,17 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { santri } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { getOrtuSession } from "../../../actions";
 
 export default async function DonasiDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const sessionValue = cookieStore.get("ortu_session")?.value;
+  const profil = await getOrtuSession();
   
-  if (!sessionValue) {
+  if (!profil) {
     redirect("/portal-ortu/login");
   }
 
-  const idSantri = sessionValue;
-
-  const sArr = await db.select().from(santri).where(eq(santri.id, idSantri));
-  if(sArr.length === 0) redirect("/portal-ortu/login");
+  const idSantri = profil.id;
 
   const res = await getDetailProgramDonasi(id);
   if (!res.success || !res.data) {

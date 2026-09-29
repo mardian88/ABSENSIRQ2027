@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
+import { verifyToken } from "@/lib/jwt";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -17,11 +18,15 @@ cloudinary.config({
 
 async function getOrtuSantriId() {
   const cookieStore = await cookies();
-  const idSantri = cookieStore.get("ortu_session")?.value;
-  if (!idSantri) {
+  const token = cookieStore.get("ortu_session")?.value;
+  if (!token) {
     redirect("/portal-ortu/login");
   }
-  return idSantri;
+  const payload = await verifyToken(token);
+  if (!payload || !payload.id) {
+    redirect("/portal-ortu/login");
+  }
+  return payload.id as string;
 }
 
 export async function getKeuanganData() {

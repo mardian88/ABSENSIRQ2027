@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { getKatalogOrtu, getRiwayatPesananOrtu } from "./actions";
 import KebutuhanOrtuClient from "./KebutuhanOrtuClient";
-import { cookies } from "next/headers";
+import { getOrtuSession } from "../../actions";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { santri } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -11,15 +12,14 @@ export const metadata = {
 };
 
 export default async function KebutuhanOrtuPage() {
-  const c = await cookies();
-  const santriId = c.get("ortu_session")?.value || "";
+  const profil = await getOrtuSession();
+  if (!profil) {
+    redirect("/portal-ortu/login");
+  }
+  const santriId = profil.id;
 
   // Ambil saldo tabungan langsung dari tabel santri
-  let totalSaldo = 0;
-  if (santriId) {
-    const santriData = await db.select({ saldo: santri.saldoTabungan }).from(santri).where(eq(santri.id, santriId));
-    totalSaldo = santriData[0]?.saldo || 0;
-  }
+  let totalSaldo = profil.saldoTabungan || 0;
 
   const [katalogRes, riwayatRes] = await Promise.all([
     getKatalogOrtu(),
