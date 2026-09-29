@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     const currentHour = String(wibDate.getHours()).padStart(2, '0');
     
     // waktuKirimWaAlpa formatnya "HH:mm"
-    const targetTime = humas.waktuKirimWaAlpa || "08:00";
+    const targetTime = humas.waktuKirimWaAlpa || "05:00";
     const targetHour = targetTime.split(":")[0];
 
     if (currentHour !== targetHour) {

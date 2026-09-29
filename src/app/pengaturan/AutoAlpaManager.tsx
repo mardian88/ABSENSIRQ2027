@@ -41,7 +41,7 @@ export function AutoAlpaManager() {
             <span>Otomatisasi Kirim WA Auto-Alpa</span>
           </CardTitle>
           <CardDescription>
-            Pencatatan Alpa H-1 <strong>selalu berjalan secara otomatis</strong> setiap pukul 00:01 WIB. Toggle di bawah ini khusus untuk mengontrol pengiriman notifikasi WhatsApp-nya.
+            Pencatatan Alpa otomatis berjalan setiap tengah malam (00:01 WIB) untuk H-1. Toggle di bawah ini mengontrol pengiriman notifikasi WhatsApp ke orang tua/wali santri. Waktu pengiriman WA diatur di menu Pesan Otomatis.
           </CardDescription>
         </CardHeader>
         <CardContent>

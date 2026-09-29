@@ -44,7 +44,7 @@ export function PesanOtomatisManager() {
   const [isFonnteAktif, setIsFonnteAktif] = useState(false);
   const [nomorReminder, setNomorReminder] = useState("");
   const [isReminderAktif, setIsReminderAktif] = useState(false);
-  const [waktuKirimWaAlpa, setWaktuKirimWaAlpa] = useState("08:00");
+  const [waktuKirimWaAlpa, setWaktuKirimWaAlpa] = useState("05:00");
   const [savingFonnte, setSavingFonnte] = useState(false);
 
   // Templates
@@ -241,7 +241,7 @@ export function PesanOtomatisManager() {
                   })}
                 </select>
                 <p className="text-xs text-slate-500">
-                  Sistem mengecek dan merekam alpa pada pukul 00:01 WIB, lalu mengirimkan notifikasi WA ke orang tua & admin pada jam yang ditentukan di atas (esok harinya).
+                  Sistem merekam alpa secara otomatis pada pukul 00:01 WIB untuk hari sebelumnya (H-1). Notifikasi WA ke orang tua dikirim pada jam yang dipilih di atas.
                 </p>
               </div>
               <div className="flex items-center gap-2 mb-4">
