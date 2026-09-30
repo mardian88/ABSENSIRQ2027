@@ -3,12 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { bayarTagihan, batalkanPembayaran } from "./actions";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import toast from "react-hot-toast";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 export default function BayarButton({ idTagihan, status }: { idTagihan: string, status: string }) {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleBayar = async () => {
     if (!confirm("Tandai tagihan ini sebagai Lunas?")) return;
@@ -18,9 +17,9 @@ export default function BayarButton({ idTagihan, status }: { idTagihan: string, 
     setLoading(false);
     
     if (res.success) {
-      toast({ title: "Berhasil", description: res.message });
+      toast.success(res.message);
     } else {
-      toast({ title: "Gagal", description: res.message, variant: "destructive" });
+      toast.error(res.message);
     }
   };
 
@@ -32,9 +31,9 @@ export default function BayarButton({ idTagihan, status }: { idTagihan: string, 
     setLoading(false);
     
     if (res.success) {
-      toast({ title: "Berhasil", description: res.message });
+      toast.success(res.message);
     } else {
-      toast({ title: "Gagal", description: res.message, variant: "destructive" });
+      toast.error(res.message);
     }
   };
 

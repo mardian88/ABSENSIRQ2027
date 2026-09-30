@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { submitAbsensiPrivat } from "./actions";
-import { useToast } from "@/components/ui/use-toast";
+import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
 type SantriPrivat = {
@@ -17,7 +17,6 @@ type SantriPrivat = {
 
 export default function FormAbsensiPrivat({ daftarSantri }: { daftarSantri: SantriPrivat[] }) {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   
   const [idSantri, setIdSantri] = useState<string>("");
   const [status, setStatus] = useState<string>("hadir");
@@ -25,7 +24,7 @@ export default function FormAbsensiPrivat({ daftarSantri }: { daftarSantri: Sant
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!idSantri) {
-      toast({ title: "Gagal", description: "Pilih santri terlebih dahulu.", variant: "destructive" });
+      toast.error("Pilih santri terlebih dahulu.");
       return;
     }
 
@@ -38,12 +37,12 @@ export default function FormAbsensiPrivat({ daftarSantri }: { daftarSantri: Sant
     setLoading(false);
 
     if (res.success) {
-      toast({ title: "Berhasil", description: res.message });
+      toast.success(res.message);
       const form = e.target as HTMLFormElement;
       form.reset();
       setIdSantri("");
     } else {
-      toast({ title: "Gagal", description: res.message, variant: "destructive" });
+      toast.error(res.message);
     }
   };
 

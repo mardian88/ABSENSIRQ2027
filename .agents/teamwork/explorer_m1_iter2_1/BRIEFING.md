@@ -33,7 +33,9 @@ Investigate and formulate fix strategy for Next.js `revalidatePath` Invariant er
 - **Unexplored areas**: None. Root cause empirically proven and reproduced.
 
 ## Key Decisions Made
-- Formulate safe revalidate wrapper pattern and provide exact patch / implementation.
+- Formulate safe revalidate wrapper pattern (`safeRevalidatePath`) using local unexported try/catch function to avoid exposing extra Next.js Server Action RPC endpoints.
+- Provided both unified diff patch (`proposed_actions.patch`) and full reference file (`proposed_actions.ts`).
+- Completed technical analysis (`analysis.md`) and 5-component handoff report (`handoff.md`).
 
 ## Artifact Index
 - `.agents/teamwork/explorer_m1_iter2_1/DISPATCH.md` — incoming instructions
@@ -41,3 +43,5 @@ Investigate and formulate fix strategy for Next.js `revalidatePath` Invariant er
 - `.agents/teamwork/explorer_m1_iter2_1/analysis.md` — technical investigation report
 - `.agents/teamwork/explorer_m1_iter2_1/handoff.md` — 5-component handoff report
 - `.agents/teamwork/explorer_m1_iter2_1/proposed_actions.patch` — patch for actions.ts
+- `.agents/teamwork/explorer_m1_iter2_1/proposed_actions.ts` — full proposed actions.ts reference
+

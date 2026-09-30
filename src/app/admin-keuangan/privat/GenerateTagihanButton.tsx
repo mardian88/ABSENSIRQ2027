@@ -3,12 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { generateTagihanBulanan } from "./actions";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import toast from "react-hot-toast";
 import { Loader2, PlusCircle } from "lucide-react";
 
 export default function GenerateTagihanButton({ bulan, tahun, namaBulan }: { bulan: number, tahun: number, namaBulan: string }) {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleGenerate = async () => {
     if (!confirm(`Generate tagihan privat bulan ${namaBulan} ${tahun}?`)) return;
@@ -18,9 +17,9 @@ export default function GenerateTagihanButton({ bulan, tahun, namaBulan }: { bul
     setLoading(false);
     
     if (res.success) {
-      toast({ title: "Berhasil", description: res.message });
+      toast.success(res.message);
     } else {
-      toast({ title: "Gagal", description: res.message, variant: "destructive" });
+      toast.error(res.message);
     }
   };
 
