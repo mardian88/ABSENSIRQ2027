@@ -130,3 +130,25 @@ export async function resetLaporanAlpa(password: string): Promise<{success: bool
     return { success: false, message: 'Terjadi kesalahan sistem' };
   }
 }
+
+export async function deleteLaporanAlpa(ids: string[]): Promise<{success: boolean, message: string}> {
+  try {
+    if (!ids || ids.length === 0) return { success: false, message: 'Tidak ada data yang dipilih' };
+    
+    // We can't use inArray easily if it's too large, but for typical use it's fine.
+    // Alternatively, we loop. But inArray is standard Drizzle.
+    const { inArray } = await import("drizzle-orm");
+    await db.delete(absensi).where(
+      and(
+        eq(absensi.statusKehadiran, 'alpa'),
+        inArray(absensi.id, ids)
+      )
+    );
+
+    revalidatePath('/laporan-absensi/alpa');
+    return { success: true, message: `Berhasil menghapus ${ids.length} data laporan alpa.` };
+  } catch (error: any) {
+    console.error(error);
+    return { success: false, message: 'Terjadi kesalahan sistem: ' + error.message };
+  }
+}

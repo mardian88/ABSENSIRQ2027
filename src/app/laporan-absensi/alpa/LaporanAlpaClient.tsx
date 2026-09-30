@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getLaporanAlpa, AlpaData, resetLaporanAlpa } from "./actions";
+import { getLaporanAlpa, AlpaData, resetLaporanAlpa, deleteLaporanAlpa } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
-import { Download, Search, Loader2, RefreshCw, Trash2, Filter } from "lucide-react";
+import { Download, Search, Loader2, RefreshCw, Trash2, Filter, Trash } from "lucide-react";
 import * as XLSX from "xlsx";
 import toast from "react-hot-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -18,6 +18,8 @@ export default function LaporanAlpaClient() {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [resetPassword, setResetPassword] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
   const fetchAlpaData = async (period: string) => {
     setIsLoading(true);
@@ -98,6 +100,33 @@ export default function LaporanAlpaClient() {
     }
   };
 
+  const handleBulkDelete = async (table: any) => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const selectedIds = selectedRows.map((row: any) => row.original.id);
+    
+    if (selectedIds.length === 0) return;
+
+    if (!confirm(`Yakin ingin menghapus ${selectedIds.length} data absensi alpa secara permanen?`)) {
+      return;
+    }
+
+    setIsDeletingBulk(true);
+    try {
+      const result = await deleteLaporanAlpa(selectedIds);
+      if (result.success) {
+        toast.success(result.message);
+        table.toggleAllRowsSelected(false);
+        await fetchAlpaData(filterPeriod);
+      } else {
+        toast.error(result.message);
+      }
+    } catch (e) {
+      toast.error("Gagal menghapus data");
+    } finally {
+      setIsDeletingBulk(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -164,6 +193,22 @@ export default function LaporanAlpaClient() {
               columns={getColumns()} 
               data={dataAlpa} 
               searchKey="namaLengkap"
+              toolbarActions={(table) => {
+                const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+                if (selectedCount > 0) {
+                  return (
+                    <button
+                      onClick={() => handleBulkDelete(table)}
+                      disabled={isDeletingBulk}
+                      className="ml-2 flex items-center gap-2 bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-rose-200 disabled:opacity-50"
+                    >
+                      {isDeletingBulk ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash className="w-4 h-4" />}
+                      Hapus Terpilih ({selectedCount})
+                    </button>
+                  );
+                }
+                return null;
+              }}
             />
           </div>
         )}
