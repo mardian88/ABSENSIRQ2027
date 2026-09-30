@@ -700,3 +700,37 @@ export const raportTahfidzProgress = sqliteTable('raport_tahfidz_progress', {
   catatanKh: text('catatan_kh'),
 });
 
+
+// ==========================================
+// FITUR SANTRI PRIVAT
+// ==========================================
+
+export const santriPrivat = sqliteTable('santri_privat', {
+  id: text('id').primaryKey(),
+  namaLengkap: text('nama_lengkap').notNull(),
+  nomorInduk: text('nomor_induk'),
+  kontakOrtu: text('kontak_ortu').notNull(),
+  statusSantri: text('status_santri').notNull().default('aktif'), // aktif, nonaktif
+  nominalTagihanBulanan: integer('nominal_tagihan_bulanan').notNull().default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+});
+
+export const absensiPrivat = sqliteTable('absensi_privat', {
+  id: text('id').primaryKey(),
+  idSantriPrivat: text('id_santri_privat').references(() => santriPrivat.id),
+  idGuru: text('id_guru').references(() => guru.id),
+  waktuSesi: integer('waktu_sesi', { mode: 'timestamp' }).notNull(),
+  statusKehadiran: text('status_kehadiran').notNull(), // hadir, izin, alpa
+  capaianHafalan: text('capaian_hafalan'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+});
+
+export const keuanganPrivat = sqliteTable('keuangan_privat', {
+  id: text('id').primaryKey(),
+  idSantriPrivat: text('id_santri_privat').references(() => santriPrivat.id),
+  bulan: integer('bulan').notNull(),
+  tahun: integer('tahun').notNull(),
+  nominalTagihan: integer('nominal_tagihan').notNull(),
+  status: text('status').notNull().default('belum_lunas'), // belum_lunas, lunas
+  tanggalLunas: integer('tanggal_lunas', { mode: 'timestamp' })
+});

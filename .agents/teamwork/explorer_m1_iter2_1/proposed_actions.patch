@@ -1,0 +1,29 @@
+--- a/src/app/admin/santri-privat/actions.ts
++++ b/src/app/admin/santri-privat/actions.ts
+@@ -8,2 +8,10 @@ import { v4 as uuidv4 } from "uuid";
+ import { z } from "zod";
+ 
++function safeRevalidatePath(path: string, type?: "page" | "layout"): void {
++  try {
++    revalidatePath(path, type);
++  } catch {
++    // Ignore static generation store missing error outside request context (e.g. tests, scripts)
++  }
++}
++
+ export type SantriPrivat = typeof santriPrivat.$inferSelect;
+@@ -101,3 +109,3 @@ export async function createSantriPrivat(
+ 
+-    revalidatePath("/admin/santri-privat");
++    safeRevalidatePath("/admin/santri-privat");
+     return { success: true, id: newId };
+@@ -163,3 +171,3 @@ export async function updateSantriPrivat(
+ 
+-    revalidatePath("/admin/santri-privat");
++    safeRevalidatePath("/admin/santri-privat");
+     return { success: true };
+@@ -220,3 +228,3 @@ export async function deleteSantriPrivat(
+ 
+-    revalidatePath("/admin/santri-privat");
++    safeRevalidatePath("/admin/santri-privat");
+     return { success: true };

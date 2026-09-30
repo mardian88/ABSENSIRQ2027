@@ -38,6 +38,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       items: [
         { name: "Hasil PSB", href: "/admin-psb", icon: Users },
         { name: "Database Santri", href: "/santri", icon: Users },
+        { name: "Santri Privat", href: "/admin/santri-privat", icon: Users },
         { name: "Database Alumni", href: "/alumni", icon: GraduationCap },
         { name: "Data Pengurus/Guru", href: "/admin-guru", icon: Briefcase },
       ]
