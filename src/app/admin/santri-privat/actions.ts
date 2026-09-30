@@ -9,7 +9,7 @@ import { z } from "zod";
 
 export type SantriPrivat = typeof santriPrivat.$inferSelect;
 
-export const santriPrivatInputSchema = z.object({
+const santriPrivatInputSchema = z.object({
   namaLengkap: z
     .string()
     .trim()
@@ -41,7 +41,7 @@ export const santriPrivatInputSchema = z.object({
     }, z.number().int("Nominal harus berupa bilangan bulat").min(0, "Nominal tagihan bulanan tidak boleh negatif")),
 });
 
-export const updateSantriPrivatSchema = santriPrivatInputSchema.partial();
+const updateSantriPrivatSchema = santriPrivatInputSchema.partial();
 
 export type CreateSantriPrivatInput = z.input<typeof santriPrivatInputSchema>;
 export type UpdateSantriPrivatInput = z.input<typeof updateSantriPrivatSchema>;
