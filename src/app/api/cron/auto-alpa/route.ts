@@ -56,91 +56,63 @@ export async function GET(request: Request) {
     // -------------------------------------------------------------
     // Auto-Pulang Guru (Untuk H-1)
     // -------------------------------------------------------------
-    let jumlahGuruPulang = 0;
     const daftarGuru = await db.select().from(guru).where(eq(guru.statusAktif, true));
+    
+    const guruAbsen = await db.select({ idGuru: absensiGuru.idGuru, jenisAbsen: absensiGuru.jenisAbsen }).from(absensiGuru).where(
+      and(gte(absensiGuru.waktuScan, startOfDayWIB), lt(absensiGuru.waktuScan, endOfDayWIB))
+    );
+    const guruMasukSet = new Set(guruAbsen.filter(a => a.jenisAbsen === 'masuk').map(a => a.idGuru));
+    const guruPulangSet = new Set(guruAbsen.filter(a => a.jenisAbsen === 'pulang').map(a => a.idGuru));
 
-    for (const g of daftarGuru) {
-      const [absenMasuk] = await db.select().from(absensiGuru).where(
-        and(
-          eq(absensiGuru.idGuru, g.id),
-          eq(absensiGuru.jenisAbsen, 'masuk'),
-          gte(absensiGuru.waktuScan, startOfDayWIB),
-          lt(absensiGuru.waktuScan, endOfDayWIB)
-        )
-      ).limit(1);
-
-      if (absenMasuk) {
-        const [absenPulang] = await db.select().from(absensiGuru).where(
-          and(
-            eq(absensiGuru.idGuru, g.id),
-            eq(absensiGuru.jenisAbsen, 'pulang'),
-            gte(absensiGuru.waktuScan, startOfDayWIB),
-            lt(absensiGuru.waktuScan, endOfDayWIB)
-          )
-        ).limit(1);
-
-        if (!absenPulang) {
-          await db.insert(absensiGuru).values({
-            id: uuidv4(),
-            idGuru: g.id,
-            waktuScan: new Date(`${targetDateString}T23:59:00.000+07:00`), // Waktu pulang virtual H-1
-            metodeScan: 'sistem (otomatis)',
-            statusKehadiran: 'pulang',
-            jenisAbsen: 'pulang'
-          });
-          jumlahGuruPulang++;
-        }
+    const guruToPulang = daftarGuru.filter(g => guruMasukSet.has(g.id) && !guruPulangSet.has(g.id));
+    
+    if (guruToPulang.length > 0) {
+      const insertData = guruToPulang.map(g => ({
+        id: uuidv4(),
+        idGuru: g.id,
+        waktuScan: new Date(`${targetDateString}T23:59:00.000+07:00`),
+        metodeScan: 'sistem (otomatis)',
+        statusKehadiran: 'pulang',
+        jenisAbsen: 'pulang' as 'pulang'
+      }));
+      for (let i = 0; i < insertData.length; i += 100) {
+        await db.insert(absensiGuru).values(insertData.slice(i, i + 100));
       }
     }
+    const jumlahGuruPulang = guruToPulang.length;
 
     // -------------------------------------------------------------
     // Auto-Alpa Santri (Untuk H-1)
     // -------------------------------------------------------------
     const daftarSantri = await db.select().from(santri).where(eq(santri.statusSantri, 'aktif'));
-    let jumlahAlpa = 0;
+    
+    const absenToday = await db.select({ idSantri: absensi.idSantri, statusKehadiran: absensi.statusKehadiran }).from(absensi).where(
+      and(eq(absensi.jenisAbsen, 'masuk'), gte(absensi.waktuScan, startOfDayWIB), lt(absensi.waktuScan, endOfDayWIB))
+    );
+    const absenMasukSet = new Set(absenToday.filter(a => a.statusKehadiran !== 'alpa').map(a => a.idSantri));
+    const sudahAlpaSet = new Set(absenToday.filter(a => a.statusKehadiran === 'alpa').map(a => a.idSantri));
 
-    for (const s of daftarSantri) {
-      const [sudahAbsen] = await db.select().from(absensi).where(
-        and(
-          eq(absensi.idSantri, s.id),
-          eq(absensi.jenisAbsen, 'masuk'),
-          gte(absensi.waktuScan, startOfDayWIB),
-          lt(absensi.waktuScan, endOfDayWIB)
-        )
-      ).limit(1);
+    const izinToday = await db.select({ idSantri: perizinanSantri.idSantri }).from(perizinanSantri).where(
+      and(gte(perizinanSantri.tanggalSelesai, startOfDayWIB), lte(perizinanSantri.tanggalMulai, endOfDayWIB))
+    );
+    const izinSet = new Set(izinToday.map(i => i.idSantri));
 
-      const [sudahIzin] = await db.select().from(perizinanSantri).where(
-        and(
-          eq(perizinanSantri.idSantri, s.id),
-          gte(perizinanSantri.tanggalSelesai, startOfDayWIB),
-          lte(perizinanSantri.tanggalMulai, endOfDayWIB)
-        )
-      ).limit(1);
-
-      if (!sudahAbsen && !sudahIzin) {
-        // Cek idempotency: Jangan sampai insert alpa double jika cron terpanggil >1 kali
-        const [sudahAlpa] = await db.select().from(absensi).where(
-          and(
-            eq(absensi.idSantri, s.id),
-            eq(absensi.statusKehadiran, 'alpa'),
-            gte(absensi.waktuScan, startOfDayWIB),
-            lt(absensi.waktuScan, endOfDayWIB)
-          )
-        ).limit(1);
-
-        if (!sudahAlpa) {
-          await db.insert(absensi).values({
-            id: uuidv4(),
-            idSantri: s.id,
-            waktuScan: new Date(`${targetDateString}T23:59:00.000+07:00`), // Waktu alpa virtual H-1
-            metodeScan: 'sistem',
-            statusKehadiran: 'alpa',
-            jenisAbsen: 'masuk'
-          });
-          jumlahAlpa++;
-        }
+    const toInsert = daftarSantri.filter(s => !absenMasukSet.has(s.id) && !izinSet.has(s.id) && !sudahAlpaSet.has(s.id));
+    
+    if (toInsert.length > 0) {
+      const insertData = toInsert.map(s => ({
+        id: uuidv4(),
+        idSantri: s.id,
+        waktuScan: new Date(`${targetDateString}T23:59:00.000+07:00`),
+        metodeScan: 'sistem',
+        statusKehadiran: 'alpa',
+        jenisAbsen: 'masuk' as 'masuk'
+      }));
+      for (let i = 0; i < insertData.length; i += 100) {
+         await db.insert(absensi).values(insertData.slice(i, i + 100));
       }
     }
+    const jumlahAlpa = toInsert.length;
 
     return NextResponse.json({ 
       success: true, 

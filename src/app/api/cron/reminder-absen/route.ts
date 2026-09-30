@@ -5,6 +5,8 @@ import { eq, and, gte, lt, lte } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendTemplatedMessage } from "@/lib/fonnte";
 
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -29,99 +31,85 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, message: "Reminder tidak aktif atau nomor reminder belum diatur." });
     }
 
-    const daftarSantri = await db.select().from(santri).where(eq(santri.statusSantri, 'aktif'));
-    let jumlahDikirim = 0;
+    const daftarSantri = await db.select({
+      id: santri.id,
+      namaLengkap: santri.namaLengkap,
+      nomorInduk: santri.nomorInduk,
+      idSesiAbsensi: santri.idSesiAbsensi,
+      halaqoh: halaqoh.namaHalaqoh
+    }).from(santri)
+    .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
+    .where(eq(santri.statusSantri, 'aktif'));
 
-    for (const s of daftarSantri) {
-      if (!s.idSesiAbsensi) continue;
+    const daftarSesi = await db.select().from(sesiAbsensi);
+    const sesiMap = new Map();
+    daftarSesi.forEach(s => sesiMap.set(s.id, s));
 
-      // 1. Cek Sesi Absensi
-      const [sesi] = await db.select().from(sesiAbsensi).where(eq(sesiAbsensi.id, s.idSesiAbsensi));
-      if (!sesi) continue;
+    const absenToday = await db.select({ idSantri: absensi.idSantri }).from(absensi).where(
+      and(eq(absensi.jenisAbsen, 'masuk'), gte(absensi.waktuScan, startOfDayWIB), lt(absensi.waktuScan, endOfDayWIB))
+    );
+    const absenSet = new Set(absenToday.map(a => a.idSantri));
 
-      // 2. Hitung apakah sesi sudah berjalan >= 60 menit
+    const izinToday = await db.select({ idSantri: perizinanSantri.idSantri }).from(perizinanSantri).where(
+      and(gte(perizinanSantri.tanggalSelesai, startOfDayWIB), lte(perizinanSantri.tanggalMulai, endOfDayWIB))
+    );
+    const izinSet = new Set(izinToday.map(i => i.idSantri));
+
+    const logToday = await db.select({ idSantri: logReminder.idSantri }).from(logReminder).where(eq(logReminder.tanggal, wibDateString));
+    const logSet = new Set(logToday.map(l => l.idSantri));
+
+    const toProcess = daftarSantri.filter(s => {
+      if (!s.idSesiAbsensi) return false;
+      const sesi = sesiMap.get(s.idSesiAbsensi);
+      if (!sesi) return false;
+
       const [jamMasuk, menitMasuk] = sesi.waktuMulaiMasuk.split(':').map(Number);
       const sesiMulaiDate = new Date(`${wibDateString}T${sesi.waktuMulaiMasuk}:00.000+07:00`);
-      
-      // Tambah 60 menit
       const reminderTime = new Date(sesiMulaiDate.getTime() + 60 * 60 * 1000);
       
-      // Cek apakah waktu saat ini (nowWIB) sudah melewati waktu reminder
-      if (nowWIB < reminderTime) {
-        continue; // Belum waktunya direminder
-      }
+      if (nowWIB < reminderTime) return false;
+      if (currentHHmm >= sesi.waktuTutup) return false;
+      if (absenSet.has(s.id)) return false;
+      if (izinSet.has(s.id)) return false;
+      if (logSet.has(s.id)) return false;
+
+      return true;
+    });
+
+    let jumlahDikirim = 0;
+    const chunkSize = 5;
+
+    for (let i = 0; i < toProcess.length; i += chunkSize) {
+      const chunk = toProcess.slice(i, i + chunkSize);
       
-      // Batasi jangan kirim reminder jika sesi sudah tutup/pulang
-      if (currentHHmm >= sesi.waktuTutup) {
-          continue; 
-      }
+      await Promise.all(chunk.map(async (s) => {
+        const payload = {
+          namaSantri: s.namaLengkap,
+          nis: s.nomorInduk || "-",
+          waktu: new Intl.DateTimeFormat('id-ID', { timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(now),
+          tanggal: new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Jakarta' }).format(now),
+          halaqah: s.halaqoh || "Belum Ada Halaqoh",
+          keterangan: "Belum absen lebih dari 60 menit"
+        };
 
-      // 3. Cek apakah sudah absen masuk hari ini
-      const [sudahAbsen] = await db.select().from(absensi).where(
-        and(
-          eq(absensi.idSantri, s.id),
-          eq(absensi.jenisAbsen, 'masuk'),
-          gte(absensi.waktuScan, startOfDayWIB),
-          lt(absensi.waktuScan, endOfDayWIB)
-        )
-      ).limit(1);
+        const result = await sendTemplatedMessage(humas.nomorReminder, "reminder_absen_admin", payload);
 
-      if (sudahAbsen) continue;
-
-      // 4. Cek apakah ada izin (perizinan_santri) hari ini
-      const [sudahIzin] = await db.select().from(perizinanSantri).where(
-        and(
-          eq(perizinanSantri.idSantri, s.id),
-          gte(perizinanSantri.tanggalSelesai, startOfDayWIB),
-          lte(perizinanSantri.tanggalMulai, endOfDayWIB)
-        )
-      ).limit(1);
-      
-      if (sudahIzin) continue;
-
-      // 5. Cek apakah log_reminder sudah dikirim hari ini untuk anak ini
-      const [sudahDiingatkan] = await db.select().from(logReminder).where(
-        and(
-          eq(logReminder.idSantri, s.id),
-          eq(logReminder.tanggal, wibDateString)
-        )
-      ).limit(1);
-
-      if (sudahDiingatkan) continue;
-
-      // 6. Lakukan Pengiriman Pesan
-      const [halaqohData] = s.idHalaqoh 
-        ? await db.select().from(halaqoh).where(eq(halaqoh.id, s.idHalaqoh)) 
-        : [null];
-
-      const payload = {
-        namaSantri: s.namaLengkap,
-        nis: s.nomorInduk || "-",
-        waktu: new Intl.DateTimeFormat('id-ID', { timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(now),
-        tanggal: new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeZone: 'Asia/Jakarta' }).format(now),
-        halaqah: halaqohData ? halaqohData.namaHalaqoh : "Belum Ada Halaqoh",
-        keterangan: "Belum absen lebih dari 60 menit"
-      };
-
-      await sendTemplatedMessage(humas.nomorReminder, "reminder_absen_admin", payload);
-
-      // 7. Catat di Log
-      await db.insert(logReminder).values({
-        id: uuidv4(),
-        idSantri: s.id,
-        tanggal: wibDateString,
-        createdAt: now
-      });
-
-      jumlahDikirim++;
+        if (result && result.success) {
+          await db.insert(logReminder).values({
+            id: uuidv4(),
+            idSantri: s.id,
+            tanggal: wibDateString,
+            createdAt: now
+          });
+          jumlahDikirim++;
+        }
+      }));
     }
 
     return NextResponse.json({ 
       success: true, 
       message: `Cron Reminder dieksekusi.`,
-      data: {
-        jumlahDikirim
-      }
+      data: { jumlahDikirim }
     });
 
   } catch (error: any) {
