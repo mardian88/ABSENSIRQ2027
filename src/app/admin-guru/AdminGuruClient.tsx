@@ -89,6 +89,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
     
     // Konversi statusAktif ke boolean
     payload.statusAktif = payload.statusAktif === 'true';
+    payload.isGuruPrivat = payload.isGuruPrivat === 'true';
 
     let res;
     if (editingData) {
@@ -203,6 +204,13 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
                   <option value="false">Non-Aktif</option>
                 </select>
               </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status Guru Privat</label>
+                  <select name="isGuruPrivat" defaultValue={editingData ? String(editingData.isGuruPrivat) : "false"} className="w-full p-2 border border-slate-300 rounded-lg">
+                    <option value="true">Ya (Mengajar Privat)</option>
+                    <option value="false">Tidak</option>
+                  </select>
+                </div>
               <div className="pt-4 flex justify-end gap-2 border-t border-slate-100">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">Batal</button>
                 <button type="submit" disabled={isLoading} className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50">Simpan</button>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -287,7 +288,19 @@ export function PortalGuruClient({ initialData }: { initialData: any }) {
 
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* PENGUMUMAN SECTION */}
+            {initialData.profil.isGuruPrivat && (
+              <div className="bg-purple-50 p-5 rounded-2xl border border-purple-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-bold text-purple-800 text-lg">Area Guru Privat</h3>
+                  <p className="text-sm text-purple-600 mt-1">Kelola presensi, mutaba'ah hafalan, dan tagihan santri privat Anda.</p>
+                </div>
+                <Link href="/portal-guru/absensi-privat" className="whitespace-nowrap px-5 py-2.5 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition shadow-sm border border-purple-700">
+                  Masuk Menu Privat
+                </Link>
+              </div>
+            )}
+
+              {/* PENGUMUMAN SECTION */}
             <div className="pt-2">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-slate-800">Pengumuman Terbaru</h3>

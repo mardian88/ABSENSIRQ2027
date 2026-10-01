@@ -36,6 +36,7 @@ export async function addGuru(data: any) {
       tanggalLahir: data.tanggalLahir,
       alamat: data.alamat,
       statusAktif: data.statusAktif,
+      isGuruPrivat: data.isGuruPrivat,
       kodeQr: data.nip, // Auto-assign QR = NIP
       tanggalMasuk: data.tanggalMasuk ? new Date(data.tanggalMasuk) : new Date(),
     });
@@ -58,6 +59,7 @@ export async function updateGuru(id: string, data: any) {
       tanggalLahir: data.tanggalLahir,
       alamat: data.alamat,
       statusAktif: data.statusAktif,
+      isGuruPrivat: data.isGuruPrivat,
       tanggalMasuk: data.tanggalMasuk ? new Date(data.tanggalMasuk) : undefined,
     }).where(eq(guru.id, id));
     revalidatePath("/admin-guru");

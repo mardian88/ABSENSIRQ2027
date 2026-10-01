@@ -1,4 +1,8 @@
-import { db } from "@/db";
+const fs = require('fs');
+const file = 'src/app/portal-guru/(dashboard)/absensi-privat/page.tsx';
+let content = fs.readFileSync(file, 'utf8');
+
+const replacement = `import { db } from "@/db";
 import { santriPrivat, absensiPrivat } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -99,4 +103,7 @@ export default async function AbsensiPrivatPage() {
       </div>
     </div>
   );
-}
+}`;
+
+fs.writeFileSync(file, replacement);
+console.log("Updated absensi-privat page!");

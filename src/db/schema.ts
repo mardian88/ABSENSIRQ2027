@@ -45,6 +45,7 @@ export const guru = sqliteTable('guru', {
   dataVektorWajah: text('data_vektor_wajah'),
   kodeQr: text('kode_qr').unique(),
   statusAktif: integer('status_aktif', { mode: 'boolean' }).default(true),
+  isGuruPrivat: integer('is_guru_privat', { mode: 'boolean' }).default(false),
   tanggalMasuk: integer('tanggal_masuk', { mode: 'timestamp' }),
 });
 

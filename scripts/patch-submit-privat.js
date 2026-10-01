@@ -1,4 +1,7 @@
-"use server";
+const fs = require('fs');
+const file = 'src/app/portal-guru/(dashboard)/absensi-privat/actions.ts';
+
+const newContent = `"use server";
 
 import { db } from "@/db";
 import { absensiPrivat } from "@/db/schema";
@@ -35,4 +38,7 @@ export async function submitAbsensiPrivat(formData: FormData) {
   } catch (error: any) {
     return { success: false, message: error.message };
   }
-}
+}`;
+
+fs.writeFileSync(file, newContent);
+console.log("Updated absensi privat actions!");
