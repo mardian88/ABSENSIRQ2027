@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 const COOKIE_NAME = "session_privat";
 
 export async function getSantriPrivatSession() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   
   if (!token) return null;
@@ -30,7 +30,7 @@ export async function getSantriPrivatSession() {
 
 export async function setSantriPrivatSession(id: string) {
   const token = await signToken({ id, role: "santri_privat" });
-  cookies().set(COOKIE_NAME, token, {
+  (await cookies()).set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -40,5 +40,5 @@ export async function setSantriPrivatSession(id: string) {
 }
 
 export async function clearSantriPrivatSession() {
-  cookies().delete(COOKIE_NAME);
+  (await cookies()).delete(COOKIE_NAME);
 }
