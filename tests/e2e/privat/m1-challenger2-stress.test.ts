@@ -43,7 +43,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const createRes = await createSantriPrivat({
         namaLengkap: 'Santri Toggle Test',
         kontakOrtu: '081234567890',
-        nominalTagihanBulanan: 250000,
+        nominalTagihanBulanan: 250000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
 
@@ -79,7 +79,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const createRes = await createSantriPrivat({
         namaLengkap: 'Santri Invalid Status Target',
         kontakOrtu: '081234567891',
-        nominalTagihanBulanan: 150000,
+        nominalTagihanBulanan: 150000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.ok(createRes.id);
@@ -107,7 +107,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
         namaLengkap: 'Santri Empty NIS String',
         nomorInduk: '',
         kontakOrtu: '081299990001',
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: 200000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.equal(resEmpty.success, true);
@@ -121,7 +121,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
         namaLengkap: 'Santri Whitespace NIS',
         nomorInduk: '     ',
         kontakOrtu: '081299990002',
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: 200000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.equal(resSpaces.success, true);
@@ -137,7 +137,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
         namaLengkap: 'Santri Null NIS',
         nomorInduk: null,
         kontakOrtu: '081299990003',
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: 200000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.equal(resNull.success, true);
@@ -150,7 +150,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const resUndefined = await createSantriPrivat({
         namaLengkap: 'Santri Undefined NIS',
         kontakOrtu: '081299990004',
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: 200000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.equal(resUndefined.success, true);
@@ -166,7 +166,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
         namaLengkap: 'Santri With NIS',
         nomorInduk: 'NIS-PRV-999',
         kontakOrtu: '081299990005',
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: 200000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.equal(resValid.success, true);
@@ -190,7 +190,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
         namaLengkap: 'Santri Oversized NIS',
         nomorInduk: oversizedNIS,
         kontakOrtu: '081299990006',
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: 200000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
 
@@ -207,7 +207,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const student = await createSantriPrivat({
         namaLengkap: 'Santri Linked Absensi',
         kontakOrtu: '081112223331',
-        nominalTagihanBulanan: 300000,
+        nominalTagihanBulanan: 300000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.ok(student.id);
@@ -242,7 +242,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const student = await createSantriPrivat({
         namaLengkap: 'Santri Linked Billing',
         kontakOrtu: '081112223332',
-        nominalTagihanBulanan: 350000,
+        nominalTagihanBulanan: 350000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.ok(student.id);
@@ -277,7 +277,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const student = await createSantriPrivat({
         namaLengkap: 'Santri Standalone Deletable',
         kontakOrtu: '081112223333',
-        nominalTagihanBulanan: 400000,
+        nominalTagihanBulanan: 400000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
       assert.ok(student.id);
@@ -307,7 +307,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const res = await createSantriPrivat({
         namaLengkap: 'Santri Formatted Tuition',
         kontakOrtu: '081255556666',
-        nominalTagihanBulanan: 'Rp 450.000' as unknown as number,
+        nominalTagihanBulanan: 'Rp 450.000' as unknown as number, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
 
@@ -323,7 +323,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const res = await createSantriPrivat({
         namaLengkap: 'Santri Negative Input',
         kontakOrtu: '081255557777',
-        nominalTagihanBulanan: -1000,
+        nominalTagihanBulanan: -1000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
 
@@ -335,7 +335,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const res = await createSantriPrivat({
         namaLengkap: '    \t   ',
         kontakOrtu: '081255558888',
-        nominalTagihanBulanan: 100000,
+        nominalTagihanBulanan: 100000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
 
@@ -347,7 +347,7 @@ describe('Milestone 1 Challenger 2: Adversarial & Boundary Stress Tests', () => 
       const res = await createSantriPrivat({
         namaLengkap: 'Santri Long Phone',
         kontakOrtu: '+6281234567890123456789012345678901',
-        nominalTagihanBulanan: 100000,
+        nominalTagihanBulanan: 100000, tarifPerPertemuan: 0,
         statusSantri: 'aktif',
       });
 
