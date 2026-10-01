@@ -45,7 +45,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const resEmpty = await createSantriPrivat({
         namaLengkap: "",
         kontakOrtu: "081234567890",
-        nominalTagihanBulanan: 250000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       assert.equal(resEmpty.success, false, "Should reject empty name");
@@ -54,7 +54,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const resWhitespace = await createSantriPrivat({
         namaLengkap: "     ",
         kontakOrtu: "081234567890",
-        nominalTagihanBulanan: 250000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       assert.equal(resWhitespace.success, false, "Should reject whitespace-only name");
@@ -65,7 +65,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const res = await createSantriPrivat({
         namaLengkap: longName,
         kontakOrtu: "081234567890",
-        nominalTagihanBulanan: 250000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       assert.equal(res.success, false, "Should reject name > 150 chars");
@@ -76,7 +76,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const resNeg = await createSantriPrivat({
         namaLengkap: "Santri Negatif Test",
         kontakOrtu: "081234567890",
-        nominalTagihanBulanan: -100000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       assert.equal(resNeg.success, false, "Should reject negative fee");
@@ -91,7 +91,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const res = await createSantriPrivat({
         namaLengkap: "Santri No Contact",
         kontakOrtu: "    ",
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       assert.equal(res.success, false, "Should reject blank contact");
@@ -102,7 +102,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const res = await createSantriPrivat({
         namaLengkap: "Santri Long Contact",
         kontakOrtu: "081234567890123456789012345678901",
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       assert.equal(res.success, false, "Should reject contact > 30 chars");
@@ -112,7 +112,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const res = await createSantriPrivat({
         namaLengkap: "Santri Invalid Status",
         kontakOrtu: "081234567890",
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "pending" as unknown as "aktif",
       });
       assert.equal(res.success, false, "Should reject invalid status enum");
@@ -128,7 +128,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const res = await createSantriPrivat({
         namaLengkap: sqlPayload,
         kontakOrtu: "081299998888",
-        nominalTagihanBulanan: 300000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
 
@@ -149,7 +149,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
       const res = await createSantriPrivat({
         namaLengkap: xssPayload,
         kontakOrtu: "081299998888",
-        nominalTagihanBulanan: 300000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
 
@@ -176,7 +176,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
         namaLengkap: "Santri With Attendance History",
         nomorInduk: "NIS-ATT-01",
         kontakOrtu: "0811223344",
-        nominalTagihanBulanan: 250000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       studentWithAbsensiId = s1.id!;
@@ -197,7 +197,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
         namaLengkap: "Santri With Bill History",
         nomorInduk: "NIS-BILL-01",
         kontakOrtu: "0811223355",
-        nominalTagihanBulanan: 300000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       studentWithKeuanganId = s2.id!;
@@ -217,7 +217,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
         namaLengkap: "Santri Standalone Deletable",
         nomorInduk: "NIS-DEL-01",
         kontakOrtu: "0811223366",
-        nominalTagihanBulanan: 200000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       standaloneStudentId = s3.id!;
@@ -281,7 +281,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
         namaLengkap: "Santri For Update Testing",
         nomorInduk: "NIS-UPD-01",
         kontakOrtu: "081987654321",
-        nominalTagihanBulanan: 275000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
         statusSantri: "aktif",
       });
       studentId = s.id!;
@@ -303,7 +303,7 @@ describe("Milestone 1 Adversarial & Stress Testing", () => {
 
     test("ADV4.2: Update rejects invalid negative fee", async () => {
       const res = await updateSantriPrivat(studentId, {
-        nominalTagihanBulanan: -50000,
+        nominalTagihanBulanan: , tarifPerPertemuan: 0
       });
       assert.equal(res.success, false);
     });
