@@ -1,12 +1,9 @@
-"use server";
+const fs = require('fs');
 
-import { db } from "@/db";
-import { santriPrivat, keuanganPrivat } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
-import { v4 as uuidv4 } from "uuid";
+const file = 'src/app/admin-keuangan/privat/actions.ts';
+let content = fs.readFileSync(file, 'utf8');
 
-export async function generateTagihanBulanan(bulan: number, tahun: number) {
+const newGenerator = `export async function generateTagihanBulanan(bulan: number, tahun: number) {
   try {
     const aktifSantri = await db.select().from(santriPrivat).where(eq(santriPrivat.statusSantri, 'aktif'));
     
@@ -62,34 +59,19 @@ export async function generateTagihanBulanan(bulan: number, tahun: number) {
     }
     
     revalidatePath("/admin-keuangan/privat");
-    return { success: true, message: `${tagihanDibuat} tagihan berhasil di-generate.` };
+    return { success: true, message: \`\${tagihanDibuat} tagihan berhasil di-generate.\` };
   } catch (error: any) {
     return { success: false, message: error.message };
   }
-}
+}`;
 
-export async function bayarTagihan(idTagihan: string) {
-  try {
-    await db.update(keuanganPrivat)
-      .set({ status: 'lunas', tanggalLunas: new Date() })
-      .where(eq(keuanganPrivat.id, idTagihan));
-      
-    revalidatePath("/admin-keuangan/privat");
-    return { success: true, message: "Tagihan berhasil dilunasi." };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
-}
+const startIndex = content.indexOf("export async function generateTagihanBulanan");
+const endIndex = content.indexOf("export async function bayarTagihan");
 
-export async function batalkanPembayaran(idTagihan: string) {
-  try {
-    await db.update(keuanganPrivat)
-      .set({ status: 'belum_lunas', tanggalLunas: null })
-      .where(eq(keuanganPrivat.id, idTagihan));
-      
-    revalidatePath("/admin-keuangan/privat");
-    return { success: true, message: "Pembayaran berhasil dibatalkan." };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
+if (startIndex !== -1 && endIndex !== -1) {
+  content = content.substring(0, startIndex) + newGenerator + "\n\n" + content.substring(endIndex);
+  fs.writeFileSync(file, content);
+  console.log("Updated generateTagihanBulanan!");
+} else {
+  console.error("Could not find function bounds.");
 }

@@ -710,9 +710,21 @@ export const santriPrivat = sqliteTable('santri_privat', {
   namaLengkap: text('nama_lengkap').notNull(),
   nomorInduk: text('nomor_induk'),
   kontakOrtu: text('kontak_ortu').notNull(),
+  password: text('password'), // Untuk login portal client
   statusSantri: text('status_santri').notNull().default('aktif'), // aktif, nonaktif
+  jenisTagihan: text('jenis_tagihan').notNull().default('bulanan'), // bulanan, per_pertemuan
   nominalTagihanBulanan: integer('nominal_tagihan_bulanan').notNull().default(0),
+  tarifPerPertemuan: integer('tarif_per_pertemuan').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' })
+});
+
+export const jadwalPrivat = sqliteTable('jadwal_privat', {
+  id: text('id').primaryKey(),
+  idSantriPrivat: text('id_santri_privat').references(() => santriPrivat.id),
+  idGuru: text('id_guru').references(() => guru.id),
+  hari: text('hari').notNull(), // Senin, Selasa, dll
+  jamMulai: text('jam_mulai').notNull(), // format HH:mm
+  jamSelesai: text('jam_selesai').notNull(), // format HH:mm
 });
 
 export const absensiPrivat = sqliteTable('absensi_privat', {

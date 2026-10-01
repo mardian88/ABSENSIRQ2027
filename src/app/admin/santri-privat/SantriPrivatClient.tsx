@@ -32,9 +32,18 @@ const formSchema = z.object({
     .trim()
     .min(1, "Nomor kontak orang tua/wali wajib diisi")
     .max(30, "Nomor kontak maksimal 30 karakter"),
+  password: z
+    .string()
+    .trim()
+    .max(100, "Password maksimal 100 karakter")
+    .optional(),
+  jenisTagihan: z.enum(["bulanan", "per_pertemuan"]),
   nominalTagihanBulanan: z
     .number()
     .min(0, "Nominal tagihan tidak boleh bernilai negatif"),
+  tarifPerPertemuan: z
+    .number()
+    .min(0, "Tarif per pertemuan tidak boleh negatif"),
   statusSantri: z.enum(["aktif", "nonaktif"]),
 });
 
@@ -51,6 +60,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
   const [editingSantri, setEditingSantri] = useState<SantriPrivat | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [displayNominal, setDisplayNominal] = useState<string>("");
+  const [displayTarif, setDisplayTarif] = useState<string>("");
 
   // Keep local state in sync when initialData changes from server revalidation
   useEffect(() => {
@@ -63,7 +73,10 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
       namaLengkap: "",
       nomorInduk: "",
       kontakOrtu: "",
+      password: "",
+      jenisTagihan: "bulanan",
       nominalTagihanBulanan: 0,
+      tarifPerPertemuan: 0,
       statusSantri: "aktif",
     },
   });
@@ -73,24 +86,35 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
     if (isModalOpen) {
       if (editingSantri) {
         const nominal = editingSantri.nominalTagihanBulanan ?? 0;
+        const tarif = editingSantri.tarifPerPertemuan ?? 0;
         setDisplayNominal(
           nominal > 0 ? new Intl.NumberFormat("id-ID").format(nominal) : "0"
+        );
+        setDisplayTarif(
+          tarif > 0 ? new Intl.NumberFormat("id-ID").format(tarif) : "0"
         );
         form.reset({
           namaLengkap: editingSantri.namaLengkap,
           nomorInduk: editingSantri.nomorInduk || "",
           kontakOrtu: editingSantri.kontakOrtu,
+          password: editingSantri.password || "",
+          jenisTagihan: (editingSantri.jenisTagihan as any) || "bulanan",
           nominalTagihanBulanan: nominal,
+          tarifPerPertemuan: tarif,
           statusSantri:
             editingSantri.statusSantri === "nonaktif" ? "nonaktif" : "aktif",
         });
       } else {
         setDisplayNominal("");
+        setDisplayTarif("");
         form.reset({
           namaLengkap: "",
           nomorInduk: "",
           kontakOrtu: "",
+          password: "",
+          jenisTagihan: "bulanan",
           nominalTagihanBulanan: 0,
+          tarifPerPertemuan: 0,
           statusSantri: "aktif",
         });
       }
@@ -114,6 +138,25 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
     if (!displayNominal || displayNominal.trim() === "") {
       setDisplayNominal("0");
       form.setValue("nominalTagihanBulanan", 0, { shouldValidate: true });
+    }
+  };
+
+  const handleTarifChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawDigits = e.target.value.replace(/\D/g, "");
+    if (!rawDigits) {
+      setDisplayTarif("");
+      form.setValue("tarifPerPertemuan", 0, { shouldValidate: true });
+    } else {
+      const parsed = parseInt(rawDigits, 10);
+      setDisplayTarif(new Intl.NumberFormat("id-ID").format(parsed));
+      form.setValue("tarifPerPertemuan", parsed, { shouldValidate: true });
+    }
+  };
+
+  const handleTarifBlur = () => {
+    if (!displayTarif || displayTarif.trim() === "") {
+      setDisplayTarif("0");
+      form.setValue("tarifPerPertemuan", 0, { shouldValidate: true });
     }
   };
 
@@ -172,7 +215,10 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
           namaLengkap: values.namaLengkap,
           nomorInduk: values.nomorInduk || null,
           kontakOrtu: values.kontakOrtu,
+          password: values.password || null,
+          jenisTagihan: values.jenisTagihan,
           nominalTagihanBulanan: values.nominalTagihanBulanan,
+          tarifPerPertemuan: values.tarifPerPertemuan,
           statusSantri: values.statusSantri,
         });
 
@@ -185,7 +231,10 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
                     namaLengkap: values.namaLengkap,
                     nomorInduk: values.nomorInduk || null,
                     kontakOrtu: values.kontakOrtu,
+                    password: values.password || null,
+                    jenisTagihan: values.jenisTagihan,
                     nominalTagihanBulanan: values.nominalTagihanBulanan,
+                    tarifPerPertemuan: values.tarifPerPertemuan,
                     statusSantri: values.statusSantri,
                   }
                 : item
@@ -207,7 +256,10 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
           namaLengkap: values.namaLengkap,
           nomorInduk: values.nomorInduk || null,
           kontakOrtu: values.kontakOrtu,
+          password: values.password || null,
+          jenisTagihan: values.jenisTagihan,
           nominalTagihanBulanan: values.nominalTagihanBulanan,
+          tarifPerPertemuan: values.tarifPerPertemuan,
           statusSantri: values.statusSantri,
         });
 
@@ -217,7 +269,10 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
             namaLengkap: values.namaLengkap,
             nomorInduk: values.nomorInduk || null,
             kontakOrtu: values.kontakOrtu,
+            password: values.password || null,
+            jenisTagihan: values.jenisTagihan,
             nominalTagihanBulanan: values.nominalTagihanBulanan,
+            tarifPerPertemuan: values.tarifPerPertemuan,
             statusSantri: values.statusSantri,
             createdAt: new Date(),
           };
@@ -447,40 +502,119 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
                 )}
               </div>
 
-              {/* Nominal Tagihan Bulanan (Auto-formatting IDR) */}
+              {form.watch("jenisTagihan") === "bulanan" ? (
+                <div>
+                  <label
+                    htmlFor="nominalTagihanBulanan"
+                    className="block text-sm font-semibold text-slate-700 mb-1"
+                  >
+                    Nominal Tagihan Bulanan (Flat-rate) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative rounded-xl shadow-xs">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                      <span className="text-slate-500 font-semibold text-sm">Rp</span>
+                    </div>
+                    <input
+                      id="nominalTagihanBulanan"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={displayNominal}
+                      onChange={handleNominalChange}
+                      onBlur={handleNominalBlur}
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                  {form.formState.errors.nominalTagihanBulanan && (
+                    <p className="text-xs text-rose-500 mt-1 font-medium">
+                      {form.formState.errors.nominalTagihanBulanan.message}
+                    </p>
+                  )}
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Nominal tagihan tetap yang akan digenerate otomatis setiap bulan untuk santri ini.
+                  </p>
+                </div>
+              ) : null}
+\n
+              {/* Password Portal Santri */}
               <div>
                 <label
-                  htmlFor="nominalTagihanBulanan"
+                  htmlFor="password"
                   className="block text-sm font-semibold text-slate-700 mb-1"
                 >
-                  Nominal Tagihan Bulanan (Flat-rate) <span className="text-rose-500">*</span>
+                  Password (Opsional untuk login Portal Santri)
                 </label>
                 <div className="relative rounded-xl shadow-xs">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                    <span className="text-slate-500 font-semibold text-sm">Rp</span>
-                  </div>
                   <input
-                    id="nominalTagihanBulanan"
+                    id="password"
                     type="text"
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={displayNominal}
-                    onChange={handleNominalChange}
-                    onBlur={handleNominalBlur}
-                    className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
+                    {...form.register("password")}
+                    placeholder="Minimal 6 karakter"
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
                   />
                 </div>
-                {form.formState.errors.nominalTagihanBulanan && (
+                {form.formState.errors.password && (
                   <p className="text-xs text-rose-500 mt-1 font-medium">
-                    {form.formState.errors.nominalTagihanBulanan.message}
+                    {form.formState.errors.password.message}
                   </p>
                 )}
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Nominal tagihan tetap yang akan digenerate otomatis setiap bulan untuk santri ini.
-                </p>
               </div>
 
-              {/* Status Santri */}
+              {/* Jenis Tagihan */}
+              <div>
+                <label
+                  htmlFor="jenisTagihan"
+                  className="block text-sm font-semibold text-slate-700 mb-1"
+                >
+                  Jenis Tagihan <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  id="jenisTagihan"
+                  {...form.register("jenisTagihan")}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                >
+                  <option value="bulanan">Bulanan (Flat-rate per bulan)</option>
+                  <option value="per_pertemuan">Per Pertemuan (Dihitung berdasarkan kehadiran)</option>
+                </select>
+                {form.formState.errors.jenisTagihan && (
+                  <p className="text-xs text-rose-500 mt-1 font-medium">
+                    {form.formState.errors.jenisTagihan.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Tarif Per Pertemuan (Conditionally rendered or always shown but styled differently) */}
+              {form.watch("jenisTagihan") === "per_pertemuan" ? (
+                <div>
+                  <label
+                    htmlFor="tarifPerPertemuan"
+                    className="block text-sm font-semibold text-slate-700 mb-1"
+                  >
+                    Tarif Per Pertemuan <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative rounded-xl shadow-xs">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                      <span className="text-slate-500 font-semibold text-sm">Rp</span>
+                    </div>
+                    <input
+                      id="tarifPerPertemuan"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={displayTarif}
+                      onChange={handleTarifChange}
+                      onBlur={handleTarifBlur}
+                      className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                  {form.formState.errors.tarifPerPertemuan && (
+                    <p className="text-xs text-rose-500 mt-1 font-medium">
+                      {form.formState.errors.tarifPerPertemuan.message}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+{/* Status Santri */}
               <div>
                 <label
                   htmlFor="statusSantri"

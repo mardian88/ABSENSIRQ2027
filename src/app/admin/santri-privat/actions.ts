@@ -27,7 +27,15 @@ const santriPrivatInputSchema = z.object({
     .trim()
     .min(1, "Kontak orang tua/wali wajib diisi")
     .max(30, "Kontak orang tua/wali maksimal 30 karakter"),
+  password: z
+    .string()
+    .trim()
+    .max(100)
+    .optional()
+    .nullable()
+    .transform((val) => (val && val.length > 0 ? val : null)),
   statusSantri: z.enum(["aktif", "nonaktif"]).default("aktif"),
+  jenisTagihan: z.enum(["bulanan", "per_pertemuan"]).default("bulanan"),
   nominalTagihanBulanan: z
     .preprocess((val) => {
       if (typeof val === "string") {
@@ -38,7 +46,18 @@ const santriPrivatInputSchema = z.object({
         return Math.floor(val);
       }
       return 0;
-    }, z.number().int("Nominal harus berupa bilangan bulat").min(0, "Nominal tagihan bulanan tidak boleh negatif")),
+    }, z.number().int().min(0)),
+  tarifPerPertemuan: z
+    .preprocess((val) => {
+      if (typeof val === "string") {
+        const digits = val.replace(/\D/g, "");
+        return digits === "" ? 0 : parseInt(digits, 10);
+      }
+      if (typeof val === "number") {
+        return Math.floor(val);
+      }
+      return 0;
+    }, z.number().int().min(0)),
 });
 
 const updateSantriPrivatSchema = santriPrivatInputSchema.partial();
@@ -93,8 +112,11 @@ export async function createSantriPrivat(
       namaLengkap: data.namaLengkap,
       nomorInduk: data.nomorInduk ?? null,
       kontakOrtu: data.kontakOrtu,
+      password: data.password ?? null,
       statusSantri: data.statusSantri,
+      jenisTagihan: data.jenisTagihan,
       nominalTagihanBulanan: data.nominalTagihanBulanan,
+      tarifPerPertemuan: data.tarifPerPertemuan,
       createdAt: new Date(),
     });
 
@@ -146,11 +168,20 @@ export async function updateSantriPrivat(
     if (validData.kontakOrtu !== undefined) {
       updatePayload.kontakOrtu = validData.kontakOrtu;
     }
+    if (validData.password !== undefined) {
+      updatePayload.password = validData.password;
+    }
     if (validData.nominalTagihanBulanan !== undefined) {
       updatePayload.nominalTagihanBulanan = validData.nominalTagihanBulanan;
     }
+    if (validData.tarifPerPertemuan !== undefined) {
+      updatePayload.tarifPerPertemuan = validData.tarifPerPertemuan;
+    }
     if (validData.statusSantri !== undefined) {
       updatePayload.statusSantri = validData.statusSantri;
+    }
+    if (validData.jenisTagihan !== undefined) {
+      updatePayload.jenisTagihan = validData.jenisTagihan;
     }
 
     if (Object.keys(updatePayload).length > 0) {

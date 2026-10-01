@@ -94,14 +94,22 @@ export const getSantriPrivatColumns = ({
   {
     accessorKey: "nominalTagihanBulanan",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} label="Tagihan Bulanan" />
+      <DataTableColumnHeader column={column} label="Tarif / Tagihan" />
     ),
     cell: ({ row }) => {
       const nominal = Number(row.getValue("nominalTagihanBulanan")) || 0;
+      const tarifPerPertemuan = Number(row.original.tarifPerPertemuan) || 0;
+      const jenisTagihan = row.original.jenisTagihan as string;
+      
       return (
-        <span className="font-bold text-slate-800 text-sm">
-          {formatRp(nominal)}
-        </span>
+        <div className="flex flex-col gap-0.5">
+          <span className="font-bold text-slate-800 text-sm">
+            {jenisTagihan === "bulanan" ? formatRp(nominal) : formatRp(tarifPerPertemuan)}
+          </span>
+          <span className="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">
+            {jenisTagihan === "bulanan" ? "Per Bulan" : "Per Pertemuan"}
+          </span>
+        </div>
       );
     },
   },
