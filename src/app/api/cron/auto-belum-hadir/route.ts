@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { santri, absensi, halaqoh, perizinanSantri, logPesanManual } from "@/db/schema";
+import { santri, absensi, halaqoh, perizinanSantri, logPesanManual, hariLibur, pengaturanHariAktif } from "@/db/schema";
 import { eq, and, gte, lt, lte } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendTemplatedMessage } from "@/lib/fonnte";
@@ -21,6 +21,27 @@ export async function GET(request: Request) {
     const dateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" });
     const wibDateString = dateFormatter.format(now);
     
+    // 1. Cek apakah hari ini adalah Hari Aktif
+    const namaHariIntl = new Intl.DateTimeFormat('id-ID', { weekday: 'long', timeZone: 'Asia/Jakarta' }).format(now);
+    const namaHari = namaHariIntl.toLowerCase(); // senin, selasa, dst
+
+    const [hariAktif] = await db.select().from(pengaturanHariAktif).where(
+      and(eq(pengaturanHariAktif.id, namaHari), eq(pengaturanHariAktif.isAktif, true))
+    );
+
+    if (!hariAktif) {
+      return NextResponse.json({ success: true, message: `Hari ini (${namaHariIntl}) bukan hari aktif. Auto reminder Belum Hadir dibatalkan.` });
+    }
+
+    // 2. Cek apakah hari ini Libur Nasional/Khusus
+    const [libur] = await db.select().from(hariLibur).where(
+      and(eq(hariLibur.tanggal, wibDateString), eq(hariLibur.isAktif, true))
+    );
+    
+    if (libur) {
+      return NextResponse.json({ success: true, message: `Hari ini libur: ${libur.keterangan}. Auto reminder Belum Hadir dibatalkan.` });
+    }
+
     const startOfDayWIB = new Date(`${wibDateString}T00:00:00.000+07:00`);
     const endOfDayWIB = new Date(`${wibDateString}T23:59:59.999+07:00`);
     
