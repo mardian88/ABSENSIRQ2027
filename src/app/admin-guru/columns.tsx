@@ -1,6 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Edit, Camera, QrCode, Briefcase, Badge as BadgeIcon } from "lucide-react";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 export const getGuruColumns = ({
   handleDownloadQR,
@@ -43,19 +44,19 @@ export const getGuruColumns = ({
   },
   {
     accessorKey: "nip",
-    header: "NIP",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="NIP" />,
   },
   {
     accessorKey: "namaLengkap",
-    header: "Nama Lengkap",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Nama Lengkap" />,
   },
   {
     accessorKey: "kontakWa",
-    header: "No. WA",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="No. WA" />,
   },
   {
     accessorKey: "statusAktif",
-    header: "Status",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Status" />,
     cell: ({ row }) => {
       const isActive = row.getValue("statusAktif") as boolean;
       return (
@@ -63,6 +64,21 @@ export const getGuruColumns = ({
           {isActive ? 'AKTIF' : 'NON-AKTIF'}
         </span>
       );
+    }
+  },
+  {
+    accessorKey: "tanggalAktif",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Tanggal Aktif" />,
+    cell: ({ row }) => {
+      const tgl = row.getValue("tanggalAktif") as string;
+      if (!tgl) return <span>-</span>;
+      try {
+        const [y, m, d] = tgl.split("-");
+        if (y && m && d) return <span>{`${d}:${m}:${y}`}</span>;
+        return <span>{tgl}</span>;
+      } catch (e) {
+        return <span>{tgl}</span>;
+      }
     }
   },
   {
@@ -102,3 +118,4 @@ export const getGuruColumns = ({
     }
   }
 ];
+

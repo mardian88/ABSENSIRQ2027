@@ -25,6 +25,7 @@ export async function getAlumniList() {
       kodeQr: santri.kodeQr,
       hasFaceData: santri.dataVektorWajah,
       idCabang: santri.idCabang,
+      tanggalAktif: santri.tanggalAktif,
     })
     .from(santri)
     .leftJoin(halaqoh, eq(santri.idHalaqoh, halaqoh.id))
@@ -61,3 +62,4 @@ export async function hapusPermanen(id: string) {
   revalidatePath("/santri");
   return { success: true };
 }
+

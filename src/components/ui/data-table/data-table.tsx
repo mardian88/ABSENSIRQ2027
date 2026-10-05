@@ -33,7 +33,6 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
-  sortColumn?: string;
   toolbarActions?: (table: import("@tanstack/react-table").Table<TData>) => React.ReactNode;
   rowSelection?: any;
   onRowSelectionChange?: any;
@@ -44,7 +43,6 @@ export function DataTable<TData, TValue>({
   data,
   searchKey,
   searchPlaceholder = "Cari...",
-  sortColumn,
   toolbarActions,
   rowSelection: controlledRowSelection,
   onRowSelectionChange: setControlledRowSelection,
@@ -90,7 +88,6 @@ export function DataTable<TData, TValue>({
         table={table} 
         searchKey={searchKey} 
         searchPlaceholder={searchPlaceholder}
-        sortColumn={sortColumn}
       >
         {toolbarActions?.(table)}
       </DataTableToolbar>
@@ -149,3 +146,4 @@ export function DataTable<TData, TValue>({
     </div>
   );
 }
+

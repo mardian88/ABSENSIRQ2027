@@ -76,8 +76,25 @@ export const getSantriPrivatColumns = ({
       );
     },
   },
-  {
-    accessorKey: "kontakOrtu",
+      {
+      accessorKey: "tanggalAktif",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} label="Tanggal Aktif" />
+      ),
+      cell: ({ row }) => {
+        const tgl = row.original.tanggalAktif;
+        if (!tgl) return <span>-</span>;
+        try {
+          const [y, m, d] = tgl.split("-");
+          if (y && m && d) return <span>{`${d}:${m}:${y}`}</span>;
+          return <span>{tgl}</span>;
+        } catch (e) {
+          return <span>{tgl}</span>;
+        }
+      },
+    },
+    {
+      accessorKey: "kontakOrtu",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} label="Kontak Wali" />
     ),
@@ -191,3 +208,5 @@ export const getSantriPrivatColumns = ({
     enableHiding: false,
   },
 ];
+
+

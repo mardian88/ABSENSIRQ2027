@@ -300,7 +300,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
             </div>
           ) : (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
-              <DataTable sortColumn="waktuPengajuan"
+              <DataTable
                 columns={getIzinColumns(handleOpenDetailModal, handleOpenEditModal)}
                 data={dataIzin}
                 searchKey="namaLengkap"
@@ -559,4 +559,5 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     </div>
   );
 }
+
 

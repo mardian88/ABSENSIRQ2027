@@ -39,6 +39,7 @@ export const guru = sqliteTable('guru', {
   jenisKelamin: text('jenis_kelamin'),
   tempatLahir: text('tempat_lahir'),
   tanggalLahir: text('tanggal_lahir'),
+  tanggalAktif: text('tanggal_aktif'),
   alamat: text('alamat'),
   kontakWa: text('kontak_wa').notNull(),
   urlFotoWajah: text('url_foto_wajah'),
@@ -109,7 +110,8 @@ export const santri = sqliteTable('santri', {
   
   // --- Extended fields from PSB ---
   tempatLahir: text('tempat_lahir'),
-  tanggalLahir: text('tanggal_lahir'), // ISO Date String format YYYY-MM-DD
+  tanggalLahir: text('tanggal_lahir'),
+  tanggalAktif: text('tanggal_aktif'), // ISO Date String format YYYY-MM-DD
   jenisKelamin: text('jenis_kelamin'), // Laki-laki / Perempuan
   alamatLengkap: text('alamat_lengkap'),
   isAlamatDomisiliSama: integer('is_alamat_domisili_sama', { mode: 'boolean' }).default(true),
@@ -710,6 +712,7 @@ export const santriPrivat = sqliteTable('santri_privat', {
   id: text('id').primaryKey(),
   namaLengkap: text('nama_lengkap').notNull(),
   nomorInduk: text('nomor_induk'),
+  tanggalAktif: text('tanggal_aktif'),
   kontakOrtu: text('kontak_ortu').notNull(),
   password: text('password'), // Untuk login portal client
   statusSantri: text('status_santri').notNull().default('aktif'), // aktif, nonaktif
@@ -747,3 +750,6 @@ export const keuanganPrivat = sqliteTable('keuangan_privat', {
   status: text('status').notNull().default('belum_lunas'), // belum_lunas, lunas
   tanggalLunas: integer('tanggal_lunas', { mode: 'timestamp' })
 });
+
+
+

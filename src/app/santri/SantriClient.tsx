@@ -30,6 +30,7 @@ const santriSchema = z.object({
   // Extended fields
   tempatLahir: z.string().optional(),
   tanggalLahir: z.string().optional(),
+  tanggalAktif: z.string().optional(),
   jenisKelamin: z.string().optional(),
   alamatLengkap: z.string().optional(),
   isAlamatDomisiliSama: z.boolean().optional(),
@@ -84,6 +85,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       statusSantri: "aktif",
       tempatLahir: "",
       tanggalLahir: "",
+      tanggalAktif: "",
       jenisKelamin: "",
       alamatLengkap: "",
       isAlamatDomisiliSama: true,
@@ -174,6 +176,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       statusSantri: santri.statusSantri || "aktif",
       tempatLahir: santri.tempatLahir || "",
       tanggalLahir: santri.tanggalLahir || "",
+      tanggalAktif: santri.tanggalAktif || "",
       jenisKelamin: santri.jenisKelamin || "",
       alamatLengkap: santri.alamatLengkap || "",
       isAlamatDomisiliSama: santri.isAlamatDomisiliSama ?? true,
@@ -407,6 +410,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
         "Nama Lengkap": s.namaLengkap || "",
         "Tempat Lahir": s.tempatLahir || "",
         "Tanggal Lahir": formatDate(s.tanggalLahir),
+        "Tanggal Aktif": formatDate(s.tanggalAktif),
         "Jenis Kelamin": s.jenisKelamin === 'laki-laki' ? 'Laki-Laki' : s.jenisKelamin === 'perempuan' ? 'Perempuan' : "",
         "Alamat Lengkap": s.alamatLengkap || "",
         "Alamat Domisili Sesuai KK": s.isAlamatDomisiliSama ? "Ya" : "Tidak",
@@ -643,7 +647,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
           </button>
         </div>
       </div>
-      <DataTable sortColumn="nomorInduk"
+      <DataTable
         columns={getSantriColumns({
           halaqohList,
           handleHalaqohChange,
@@ -805,16 +809,31 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
                       <Controller
                         control={form.control}
                         name="tanggalLahir"
-                        render={({ field }) => (
-                          <DatePicker
-                            name={field.name}
-                            date={field.value ? new Date(field.value) : undefined}
-                            setDate={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-                            placeholder="DD/MM/YYYY"
-                          />
-                        )}
-                      />
-                    </div>
+                          render={({ field }) => (
+                            <DatePicker
+                              name={field.name}
+                              date={field.value ? new Date(field.value) : undefined}
+                              setDate={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                              placeholder="DD/MM/YYYY"
+                            />
+                          )}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Aktif</label>
+                        <Controller
+                          control={form.control}
+                          name="tanggalAktif"
+                          render={({ field }) => (
+                            <DatePicker
+                              name={field.name}
+                              date={field.value ? new Date(field.value) : undefined}
+                              setDate={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                              placeholder="DD/MM/YYYY"
+                            />
+                          )}
+                        />
+                      </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Jenis Kelamin</label>
                       <select {...form.register("jenisKelamin")} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
@@ -1039,3 +1058,5 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
     </div>
   );
 }
+
+

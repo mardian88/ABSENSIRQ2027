@@ -22,6 +22,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
   const [faceRegistrationGuru, setFaceRegistrationGuru] = useState<{id: string, namaLengkap: string} | null>(null);
   const [kontrakGuru, setKontrakGuru] = useState<any>(null);
   const [tanggalLahir, setTanggalLahir] = useState<Date | undefined>(undefined);
+  const [tanggalAktif, setTanggalAktif] = useState<Date | undefined>(undefined);
 
   const [idCardPrintData, setIdCardPrintData] = useState<any[]>([]);
   const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false);
@@ -136,7 +137,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
             </>
           )}
           <button 
-            onClick={() => { setEditingData(null); setTanggalLahir(undefined); setIsModalOpen(true); }}
+            onClick={() => { setEditingData(null); setTanggalLahir(undefined); setTanggalAktif(undefined); setIsModalOpen(true); }}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -145,13 +146,14 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
         </div>
       </div>
 
-      <DataTable sortColumn="nip"
+      <DataTable
         columns={getGuruColumns({
           handleDownloadQR,
           setFaceRegistrationGuru,
           setEditingData: (data) => {
             setEditingData(data);
             setTanggalLahir(data?.tanggalLahir ? new Date(data.tanggalLahir) : undefined);
+            setTanggalAktif(data?.tanggalAktif ? new Date(data.tanggalAktif) : undefined);
           },
           setIsModalOpen,
           setKontrakGuru,

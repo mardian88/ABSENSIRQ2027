@@ -1,5 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { RefreshCw, Trash2 } from "lucide-react";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 export const getAlumniColumns = ({
   handleAktifkan,
@@ -12,11 +13,11 @@ export const getAlumniColumns = ({
 }): ColumnDef<any>[] => [
   {
     accessorKey: "nomorInduk",
-    header: "NIS",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="NIS" />,
   },
   {
     accessorKey: "namaLengkap",
-    header: "Nama Lengkap",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Nama Lengkap" />,
     cell: ({ row }) => {
       const nama = row.getValue("namaLengkap") as string;
       return (
@@ -31,14 +32,29 @@ export const getAlumniColumns = ({
   },
   {
     accessorKey: "halaqoh",
-    header: "Halaqoh Terakhir",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Halaqoh Terakhir" />,
     cell: ({ row }) => {
       return <span>{row.getValue("halaqoh") || "-"}</span>;
     }
   },
   {
     accessorKey: "kontakOrtu",
-    header: "Kontak Wali",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Kontak Wali" />,
+  },
+  {
+    accessorKey: "tanggalAktif",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Tanggal Aktif" />,
+    cell: ({ row }) => {
+      const tgl = row.getValue("tanggalAktif") as string;
+      if (!tgl) return <span>-</span>;
+      try {
+        const [y, m, d] = tgl.split("-");
+        if (y && m && d) return <span>{`${d}:${m}:${y}`}</span>;
+        return <span>{tgl}</span>;
+      } catch (e) {
+        return <span>{tgl}</span>;
+      }
+    }
   },
   {
     id: "actions",

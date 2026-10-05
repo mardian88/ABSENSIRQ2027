@@ -2,6 +2,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Edit2, Trash2, Camera, QrCode, GraduationCap, Badge as BadgeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 export const getSantriColumns = ({
   halaqohList,
@@ -48,11 +49,11 @@ export const getSantriColumns = ({
   },
   {
     accessorKey: "nomorInduk",
-    header: "NIS",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="NIS" />,
   },
   {
     accessorKey: "namaLengkap",
-    header: "Nama Lengkap",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Nama Lengkap" />,
     cell: ({ row }) => {
       const nama = row.getValue("namaLengkap") as string;
       return (
@@ -67,7 +68,7 @@ export const getSantriColumns = ({
   },
   {
     accessorKey: "idHalaqoh",
-    header: "Halaqoh",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Halaqoh" />,
     cell: ({ row }) => {
       const id = row.original.id;
       const idHalaqoh = row.getValue("idHalaqoh") as string;
@@ -87,7 +88,7 @@ export const getSantriColumns = ({
   },
   {
     accessorKey: "kontakOrtu",
-    header: "Kontak Wali",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Kontak Wali" />,
     cell: ({ row }) => {
       const kontak = row.getValue("kontakOrtu") as string;
       const qr = row.original.kodeQr;
@@ -100,8 +101,23 @@ export const getSantriColumns = ({
     }
   },
   {
+    accessorKey: "tanggalAktif",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Tanggal Aktif" />,
+    cell: ({ row }) => {
+      const tgl = row.getValue("tanggalAktif") as string;
+      if (!tgl) return <span>-</span>;
+      try {
+        const [y, m, d] = tgl.split("-");
+        if (y && m && d) return <span>{`${d}:${m}:${y}`}</span>;
+        return <span>{tgl}</span>;
+      } catch (e) {
+        return <span>{tgl}</span>;
+      }
+    }
+  },
+  {
     accessorKey: "statusSantri",
-    header: "Status",
+    header: ({ column }) => <DataTableColumnHeader column={column} label="Status" />,
     cell: ({ row }) => {
       const status = row.getValue("statusSantri") as string;
       return (

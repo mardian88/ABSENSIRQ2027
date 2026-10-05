@@ -22,6 +22,7 @@ const santriPrivatInputSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => (val && val.length > 0 ? val : null)),
+  tanggalAktif: z.string().trim().optional().nullable().transform((val) => (val && val.length > 0 ? val : null)),
   kontakOrtu: z
     .string()
     .trim()
@@ -111,6 +112,7 @@ export async function createSantriPrivat(
       id: newId,
       namaLengkap: data.namaLengkap,
       nomorInduk: data.nomorInduk ?? null,
+      tanggalAktif: data.tanggalAktif ?? null,
       kontakOrtu: data.kontakOrtu,
       password: data.password ?? null,
       statusSantri: data.statusSantri,
@@ -256,3 +258,4 @@ export async function deleteSantriPrivat(
     return { success: false, error: message };
   }
 }
+

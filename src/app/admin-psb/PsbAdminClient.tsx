@@ -102,7 +102,7 @@ export function PsbAdminClient({ initialData }: { initialData: any[] }) {
         </div>
       </div>
 
-      <DataTable sortColumn="tanggalDaftar"
+      <DataTable
         columns={getPsbColumns({ handleDetail })}
         data={initialData}
         searchKey="namaLengkap"
@@ -234,3 +234,4 @@ export function PsbAdminClient({ initialData }: { initialData: any[] }) {
     </div>
   );
 }
+

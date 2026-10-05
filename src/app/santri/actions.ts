@@ -29,6 +29,7 @@ export async function getSantriList() {
       idCabang: santri.idCabang,
       tempatLahir: santri.tempatLahir,
       tanggalLahir: santri.tanggalLahir,
+        tanggalAktif: santri.tanggalAktif,
       jenisKelamin: santri.jenisKelamin,
       alamatLengkap: santri.alamatLengkap,
       isAlamatDomisiliSama: santri.isAlamatDomisiliSama,
@@ -93,6 +94,7 @@ export async function createSantri(data: any) {
     kodeQr: finalQr,
     tempatLahir: data.tempatLahir,
     tanggalLahir: data.tanggalLahir,
+      tanggalAktif: data.tanggalAktif,
     jenisKelamin: data.jenisKelamin,
     alamatLengkap: data.alamatLengkap,
     isAlamatDomisiliSama: data.isAlamatDomisiliSama,
@@ -129,6 +131,7 @@ export async function updateSantri(id: string, data: any) {
     kodeQr: data.nomorInduk, // Always sync QR with NIS
     tempatLahir: data.tempatLahir,
     tanggalLahir: data.tanggalLahir,
+      tanggalAktif: data.tanggalAktif,
     jenisKelamin: data.jenisKelamin,
     alamatLengkap: data.alamatLengkap,
     isAlamatDomisiliSama: data.isAlamatDomisiliSama,

@@ -162,7 +162,7 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
             </div>
           )}
           
-          <DataTable sortColumn="waktuMasuk"
+          <DataTable
             columns={getLaporanColumns()}
             data={data}
             searchKey="namaLengkap"
@@ -242,3 +242,4 @@ export function LaporanClient({ initialData }: { initialData: LaporanData[] }) {
     </div>
   );
 }
+

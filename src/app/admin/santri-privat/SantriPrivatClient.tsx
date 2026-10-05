@@ -15,6 +15,9 @@ import { showConfirm, showSuccess, showError } from "@/lib/sweetalert";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Controller } from "react-hook-form";
+import { format } from "date-fns";
 
 const formSchema = z.object({
   namaLengkap: z
@@ -27,6 +30,7 @@ const formSchema = z.object({
     .trim()
     .max(50, "Nomor Induk maksimal 50 karakter")
     .optional(),
+  tanggalAktif: z.string().optional(),
   kontakOrtu: z
     .string()
     .trim()
@@ -72,6 +76,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
     defaultValues: {
       namaLengkap: "",
       nomorInduk: "",
+        tanggalAktif: "",
       kontakOrtu: "",
       password: "",
       jenisTagihan: "bulanan",
@@ -110,6 +115,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
         form.reset({
           namaLengkap: "",
           nomorInduk: "",
+        tanggalAktif: "",
           kontakOrtu: "",
           password: "",
           jenisTagihan: "bulanan",
@@ -214,6 +220,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
         const res = await updateSantriPrivat(editingSantri.id, {
           namaLengkap: values.namaLengkap,
           nomorInduk: values.nomorInduk || null,
+            tanggalAktif: values.tanggalAktif || null,
           kontakOrtu: values.kontakOrtu,
           password: values.password || null,
           jenisTagihan: values.jenisTagihan,
@@ -230,6 +237,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
                     ...item,
                     namaLengkap: values.namaLengkap,
                     nomorInduk: values.nomorInduk || null,
+            tanggalAktif: values.tanggalAktif || null,
                     kontakOrtu: values.kontakOrtu,
                     password: values.password || null,
                     jenisTagihan: values.jenisTagihan,
@@ -255,6 +263,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
         const res = await createSantriPrivat({
           namaLengkap: values.namaLengkap,
           nomorInduk: values.nomorInduk || null,
+            tanggalAktif: values.tanggalAktif || null,
           kontakOrtu: values.kontakOrtu,
           password: values.password || null,
           jenisTagihan: values.jenisTagihan,
@@ -268,6 +277,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
             id: res.id,
             namaLengkap: values.namaLengkap,
             nomorInduk: values.nomorInduk || null,
+            tanggalAktif: values.tanggalAktif || null,
             kontakOrtu: values.kontakOrtu,
             password: values.password || null,
             jenisTagihan: values.jenisTagihan,
@@ -384,7 +394,6 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
           data={data}
           searchKey="namaLengkap"
           searchPlaceholder="Cari nama santri privat..."
-          sortColumn="createdAt"
           rowSelection={rowSelection}
           onRowSelectionChange={setRowSelection}
           toolbarActions={(table) => {
@@ -478,9 +487,28 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
                     {form.formState.errors.nomorInduk.message}
                   </p>
                 )}
-              </div>
+                              </div>
+  
+                {/* Tanggal Aktif */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Tanggal Aktif <span className="text-xs text-slate-400 font-normal">(Opsional)</span>
+                  </label>
+                  <Controller
+                    control={form.control}
+                    name="tanggalAktif"
+                    render={({ field }) => (
+                      <DatePicker
+                        name={field.name}
+                        date={field.value ? new Date(field.value) : undefined}
+                        setDate={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                        placeholder="DD/MM/YYYY"
+                      />
+                    )}
+                  />
+                </div>
 
-              {/* Kontak Wali */}
+                {/* Kontak Wali */}
               <div>
                 <label
                   htmlFor="kontakOrtu"
@@ -664,3 +692,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
     </div>
   );
 }
+
+
+
+
