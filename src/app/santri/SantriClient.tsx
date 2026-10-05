@@ -85,7 +85,7 @@ export function SantriClient({ santriList, halaqohList, sesiList }: { santriList
       statusSantri: "aktif",
       tempatLahir: "",
       tanggalLahir: "",
-      tanggalAktif: "",
+      tanggalAktif: format(new Date(), "yyyy-MM-dd"),
       jenisKelamin: "",
       alamatLengkap: "",
       isAlamatDomisiliSama: true,

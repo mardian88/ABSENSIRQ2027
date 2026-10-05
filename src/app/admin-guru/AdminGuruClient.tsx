@@ -137,7 +137,7 @@ export function AdminGuruClient({ initialData }: { initialData: any[] }) {
             </>
           )}
           <button 
-            onClick={() => { setEditingData(null); setTanggalLahir(undefined); setTanggalAktif(undefined); setIsModalOpen(true); }}
+            onClick={() => { setEditingData(null); setTanggalLahir(undefined); setTanggalAktif(new Date()); setIsModalOpen(true); }}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg font-medium transition-colors"
           >
             <Plus className="w-4 h-4" />

@@ -76,7 +76,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
     defaultValues: {
       namaLengkap: "",
       nomorInduk: "",
-        tanggalAktif: "",
+        tanggalAktif: format(new Date(), "yyyy-MM-dd"),
       kontakOrtu: "",
       password: "",
       jenisTagihan: "bulanan",
@@ -115,7 +115,7 @@ export function SantriPrivatClient({ initialData }: SantriPrivatClientProps) {
         form.reset({
           namaLengkap: "",
           nomorInduk: "",
-        tanggalAktif: "",
+        tanggalAktif: format(new Date(), "yyyy-MM-dd"),
           kontakOrtu: "",
           password: "",
           jenisTagihan: "bulanan",
