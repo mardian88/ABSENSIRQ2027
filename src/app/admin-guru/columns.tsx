@@ -74,7 +74,7 @@ export const getGuruColumns = ({
       if (!tgl) return <span>-</span>;
       try {
         const [y, m, d] = tgl.split("-");
-        if (y && m && d) return <span>{`${d}:${m}:${y}`}</span>;
+        if (y && m && d) return <span>{`${d}/${m}/${y}`}</span>;
         return <span>{tgl}</span>;
       } catch (e) {
         return <span>{tgl}</span>;

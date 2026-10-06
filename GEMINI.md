@@ -9,8 +9,8 @@ Seluruh fitur yang menggunakan atau membutuhkan input/output tanggal dan waktu w
    - Jangan gunakan waktu default server.
 
 2. **Format Penulisan Tanggal:**
-   - Wajib menggunakan pemisah **titik dua (:)**. Jangan menggunakan garis miring (/) atau setrip (-).
-   - Format: `DD:MM:YYYY` atau `Hari:Bulan:Tahun` (contoh: `28:03:2026`).
+   - Wajib menggunakan pemisah **garis miring (/)**. Jangan menggunakan titik dua (:) atau setrip (-).
+   - Format: `DD/MM/YYYY` atau `Hari/Bulan/Tahun` (contoh: `28/03/2026`).
 
 3. **Format Penulisan Jam:**
    - Wajib menggunakan format 24 Jam.
