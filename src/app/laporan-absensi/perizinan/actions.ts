@@ -30,47 +30,99 @@ export type PerizinanData = {
 
 export async function getDaftarPerizinan(period: string = "semua"): Promise<PerizinanData[]> {
   const now = new Date();
+  
+  // Helper to get YYYY-MM-DD in WIB
+  const getWibStr = (d: Date) => {
+    const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
+    return formatter.format(d);
+  };
+
   let startDate: Date | undefined;
   let endDate: Date | undefined;
 
   switch (period) {
-    case 'hari_ini':
-      startDate = new Date(now.setHours(0, 0, 0, 0));
-      endDate = new Date(now.setHours(23, 59, 59, 999));
+    case 'hari_ini': {
+      const str = getWibStr(now);
+      startDate = new Date(`${str}T00:00:00+07:00`);
+      endDate = new Date(`${str}T23:59:59.999+07:00`);
       break;
-    case 'kemarin':
-      startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(startDate.getTime());
-      endDate.setHours(23, 59, 59, 999);
+    }
+    case 'kemarin': {
+      const kemarinDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const str = getWibStr(kemarinDate);
+      startDate = new Date(`${str}T00:00:00+07:00`);
+      endDate = new Date(`${str}T23:59:59.999+07:00`);
       break;
-    case 'minggu_ini':
-      const day = now.getDay();
-      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-      startDate = new Date(now.setDate(diff));
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 6);
-      endDate.setHours(23, 59, 59, 999);
+    }
+    case 'minggu_ini': {
+      const strToday = getWibStr(now);
+      const todayLocal = new Date(`${strToday}T00:00:00+07:00`);
+      const day = todayLocal.getDay();
+      const diffToMonday = todayLocal.getDate() - day + (day === 0 ? -6 : 1);
+      const mondayLocal = new Date(todayLocal);
+      mondayLocal.setDate(diffToMonday);
+      
+      const strMonday = getWibStr(mondayLocal);
+      startDate = new Date(`${strMonday}T00:00:00+07:00`);
+      
+      const sundayLocal = new Date(mondayLocal);
+      sundayLocal.setDate(mondayLocal.getDate() + 6);
+      const strSunday = getWibStr(sundayLocal);
+      endDate = new Date(`${strSunday}T23:59:59.999+07:00`);
       break;
-    case 'bulan_ini':
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
+    case 'bulan_ini': {
+      const strToday = getWibStr(now);
+      const y = parseInt(strToday.substring(0, 4));
+      const m = parseInt(strToday.substring(5, 7));
+      const firstDay = new Date(`${y}-${String(m).padStart(2, '0')}-01T00:00:00+07:00`);
+      const nextMonth = m === 12 ? 1 : m + 1;
+      const nextYear = m === 12 ? y + 1 : y;
+      const firstDayNextMonth = new Date(`${nextYear}-${String(nextMonth).padStart(2, '0')}-01T00:00:00+07:00`);
+      const lastDay = new Date(firstDayNextMonth.getTime() - 1);
+      startDate = firstDay;
+      endDate = lastDay;
       break;
-    case 'triwulan':
-      const quarter = Math.floor(now.getMonth() / 3);
-      startDate = new Date(now.getFullYear(), quarter * 3, 1);
-      endDate = new Date(now.getFullYear(), startDate.getMonth() + 3, 0, 23, 59, 59, 999);
+    }
+    case 'triwulan': {
+      const strToday = getWibStr(now);
+      const y = parseInt(strToday.substring(0, 4));
+      const m = parseInt(strToday.substring(5, 7));
+      const quarter = Math.floor((m - 1) / 3);
+      const startMonth = quarter * 3 + 1;
+      const firstDay = new Date(`${y}-${String(startMonth).padStart(2, '0')}-01T00:00:00+07:00`);
+      const nextStartMonth = startMonth + 3;
+      const nextYear = nextStartMonth > 12 ? y + 1 : y;
+      const nm = nextStartMonth > 12 ? 1 : nextStartMonth;
+      const firstDayNextQ = new Date(`${nextYear}-${String(nm).padStart(2, '0')}-01T00:00:00+07:00`);
+      const lastDay = new Date(firstDayNextQ.getTime() - 1);
+      startDate = firstDay;
+      endDate = lastDay;
       break;
-    case 'semester':
-      const semester = Math.floor(now.getMonth() / 6);
-      startDate = new Date(now.getFullYear(), semester * 6, 1);
-      endDate = new Date(now.getFullYear(), startDate.getMonth() + 6, 0, 23, 59, 59, 999);
+    }
+    case 'semester': {
+      const strToday = getWibStr(now);
+      const y = parseInt(strToday.substring(0, 4));
+      const m = parseInt(strToday.substring(5, 7));
+      const semester = Math.floor((m - 1) / 6);
+      const startMonth = semester * 6 + 1;
+      const firstDay = new Date(`${y}-${String(startMonth).padStart(2, '0')}-01T00:00:00+07:00`);
+      const nextStartMonth = startMonth + 6;
+      const nextYear = nextStartMonth > 12 ? y + 1 : y;
+      const nm = nextStartMonth > 12 ? 1 : nextStartMonth;
+      const firstDayNextS = new Date(`${nextYear}-${String(nm).padStart(2, '0')}-01T00:00:00+07:00`);
+      const lastDay = new Date(firstDayNextS.getTime() - 1);
+      startDate = firstDay;
+      endDate = lastDay;
       break;
-    case 'tahun_ini':
-      startDate = new Date(now.getFullYear(), 0, 1);
-      endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+    }
+    case 'tahun_ini': {
+      const strToday = getWibStr(now);
+      const y = parseInt(strToday.substring(0, 4));
+      startDate = new Date(`${y}-01-01T00:00:00+07:00`);
+      endDate = new Date(`${y}-12-31T23:59:59.999+07:00`);
       break;
+    }
     default:
       break;
   }
@@ -149,7 +201,6 @@ export async function hapusPerizinanBanyak(ids: string[]): Promise<{success: boo
       // 2. Hapus catatan absensi (Izin/Sakit) pada rentang tanggal tersebut
       // Kita set end date ke ujung hari agar semua absensi di hari terakhir ikut terhapus
       const endDate = new Date(d.tanggalSelesai);
-      endDate.setHours(23, 59, 59, 999);
       
       await db.delete(absensi).where(
         and(
@@ -173,11 +224,11 @@ export async function hapusPerizinanBanyak(ids: string[]): Promise<{success: boo
 
 export async function updateDurasiPerizinan(id: string, tanggalMulaiStr: string, tanggalSelesaiStr: string): Promise<{success: boolean, message: string}> {
   try {
-    const tanggalMulai = new Date(tanggalMulaiStr);
-    const tanggalSelesai = new Date(tanggalSelesaiStr);
+    const startStr = tanggalMulaiStr.substring(0, 10);
+    const endStr = tanggalSelesaiStr.substring(0, 10);
     
-    tanggalMulai.setHours(0, 0, 0, 0);
-    tanggalSelesai.setHours(23, 59, 59, 999);
+    const tanggalMulai = new Date(startStr + "T00:00:00+07:00");
+    const tanggalSelesai = new Date(endStr + "T23:59:59+07:00");
 
     if (tanggalMulai > tanggalSelesai) {
       return { success: false, message: "Tanggal mulai tidak boleh lebih dari tanggal selesai" };
@@ -190,7 +241,6 @@ export async function updateDurasiPerizinan(id: string, tanggalMulaiStr: string,
 
     // 1. Hapus catatan absensi lama
     const oldEndDate = new Date(existing.tanggalSelesai);
-    oldEndDate.setHours(23, 59, 59, 999);
     await db.delete(absensi).where(
       and(
         eq(absensi.idSantri, existing.idSantri),
@@ -211,7 +261,7 @@ export async function updateDurasiPerizinan(id: string, tanggalMulaiStr: string,
         jenisAbsen: 'masuk',
         statusKehadiran: existing.kategori.toLowerCase()
       });
-      current.setDate(current.getDate() + 1);
+      current.setUTCDate(current.getUTCDate() + 1);
     }
 
     // 3. Update data perizinan
@@ -250,11 +300,11 @@ export async function createPerizinanManual(idSantri: string, kategori: string, 
       return { success: false, message: "Semua form wajib diisi" };
     }
 
-    const tanggalMulai = new Date(tanggalMulaiStr);
-    const tanggalSelesai = new Date(tanggalSelesaiStr);
+    const startStr = tanggalMulaiStr.substring(0, 10);
+    const endStr = tanggalSelesaiStr.substring(0, 10);
     
-    tanggalMulai.setHours(0, 0, 0, 0);
-    tanggalSelesai.setHours(23, 59, 59, 999);
+    const tanggalMulai = new Date(startStr + "T00:00:00+07:00");
+    const tanggalSelesai = new Date(endStr + "T23:59:59+07:00");
 
     if (tanggalMulai > tanggalSelesai) {
       return { success: false, message: "Tanggal mulai tidak boleh lebih dari tanggal selesai" };
@@ -283,7 +333,7 @@ export async function createPerizinanManual(idSantri: string, kategori: string, 
         jenisAbsen: 'masuk',
         statusKehadiran: kategori.toLowerCase()
       });
-      current.setDate(current.getDate() + 1);
+      current.setUTCDate(current.getUTCDate() + 1);
     }
 
     revalidatePath('/laporan-absensi/perizinan');

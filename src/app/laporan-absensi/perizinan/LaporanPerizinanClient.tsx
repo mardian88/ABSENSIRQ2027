@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { format } from "date-fns";
 import { getDaftarPerizinan, PerizinanData, resetLaporanIzin } from "./actions";
 import { formatDateID, formatTimeID } from "@/lib/date";
 import { Download, Search, Loader2, ArrowUpDown, ChevronLeft, ChevronRight, Filter, ImageIcon, ExternalLink, X, Trash2, RefreshCw, CalendarClock, Plus } from "lucide-react";
@@ -59,7 +60,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     setIsSavingAdd(true);
     try {
       const { createPerizinanManual } = await import("./actions");
-      const res = await createPerizinanManual(addSantriId, addKategori, addTanggalMulai.toISOString(), addTanggalSelesai.toISOString(), addKeterangan);
+      const res = await createPerizinanManual(addSantriId, addKategori, format(addTanggalMulai, 'yyyy-MM-dd'), format(addTanggalSelesai, 'yyyy-MM-dd'), addKeterangan);
       if (res.success) {
         toast.success(res.message);
         setIsAddModalOpen(false);
@@ -98,7 +99,7 @@ export function LaporanPerizinanClient({ initialData }: { initialData: Perizinan
     setIsSavingEdit(true);
     try {
       const { updateDurasiPerizinan } = await import("./actions");
-      const res = await updateDurasiPerizinan(selectedIzin.id, editStartDate.toISOString(), editEndDate.toISOString());
+      const res = await updateDurasiPerizinan(selectedIzin.id, format(editStartDate, 'yyyy-MM-dd'), format(editEndDate, 'yyyy-MM-dd'));
       if (res.success) {
         toast.success(res.message);
         setIsEditModalOpen(false);

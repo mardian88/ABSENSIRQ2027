@@ -131,11 +131,12 @@ export async function getSantriIzinHariIni() {
 
     if (halaqohIds.length === 0) return { success: true, data: [] };
 
-    // Tentukan hari ini (mulai dari 00:00 sampai 23:59)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const endOfToday = new Date(today);
-    endOfToday.setHours(23, 59, 59, 999);
+    // Tentukan hari ini (mulai dari 00:00 sampai 23:59) dalam WIB
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
+    const strToday = formatter.format(now);
+    const today = new Date(`${strToday}T00:00:00+07:00`);
+    const endOfToday = new Date(`${strToday}T23:59:59.999+07:00`);
 
     // Dapatkan data perizinan aktif hari ini untuk santri di halaqoh guru tersebut
     const activeIzin = await db.select({

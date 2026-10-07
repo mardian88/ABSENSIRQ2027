@@ -42,9 +42,11 @@ export async function getRekapBulananData(bulan: number, tahun: number, idHalaqo
       return { success: true, data: [] };
     }
 
-    const startOfMonth = new Date(tahun, bulan - 1, 1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const endOfMonth = new Date(tahun, bulan, 0, 23, 59, 59, 999);
+    const startOfMonth = new Date(`${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00+07:00`);
+    const nextMonth = bulan === 12 ? 1 : bulan + 1;
+    const nextYear = bulan === 12 ? tahun + 1 : tahun;
+    const firstDayNextMonth = new Date(`${nextYear}-${String(nextMonth).padStart(2, '0')}-01T00:00:00+07:00`);
+    const endOfMonth = new Date(firstDayNextMonth.getTime() - 1);
 
     const absensiRecords = await db.select({
       idSantri: absensi.idSantri,
@@ -208,11 +210,9 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function updateAbsensiManual(idSantri: string, tanggalStr: string, status: string) {
   try {
-    const tanggal = new Date(tanggalStr);
-    const startOfDay = new Date(tanggal);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(tanggal);
-    endOfDay.setHours(23, 59, 59, 999);
+    const tStr = tanggalStr.substring(0, 10);
+    const startOfDay = new Date(`${tStr}T00:00:00+07:00`);
+    const endOfDay = new Date(`${tStr}T23:59:59.999+07:00`);
 
     // Hapus data absensi masuk (atau semua absensi harian) pada hari tersebut untuk santri ini
     await db.delete(absensi).where(and(
@@ -223,9 +223,8 @@ export async function updateAbsensiManual(idSantri: string, tanggalStr: string, 
 
     // Jika status tidak kosong, insert absensi baru
     if (status) {
-      // Kita set waktuScan ke tengah hari (12:00) agar aman
-      const waktuScan = new Date(tanggal);
-      waktuScan.setHours(12, 0, 0, 0);
+      // Kita set waktuScan ke tengah hari (12:00 WIB) agar aman
+      const waktuScan = new Date(`${tStr}T12:00:00+07:00`);
 
       await db.insert(absensi).values({
         id: uuidv4(),
